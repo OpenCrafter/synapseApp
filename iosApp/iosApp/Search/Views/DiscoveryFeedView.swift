@@ -100,6 +100,7 @@ struct DiscoveryFeedView: View {
 
 struct SuggestedUserCard: View {
     let user: SearchAccount
+    @State private var showComingSoon = false
 
     var body: some View {
         VStack(spacing: AppTheme.Spacing.space8) {
@@ -126,7 +127,7 @@ struct SuggestedUserCard: View {
             }
 
             Button(action: {
-                // To be implemented
+                showComingSoon = true
             }) {
                 Text("Follow")
                     .font(.caption)
@@ -144,5 +145,10 @@ struct SuggestedUserCard: View {
         .background(Color(.systemBackground))
         .cornerRadius(16)
         .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
+        .alert("Coming Soon", isPresented: $showComingSoon) {
+            Button("OK", role: .cancel) { }
+        } message: {
+            Text("Follow functionality is coming soon.")
+        }
     }
 }
