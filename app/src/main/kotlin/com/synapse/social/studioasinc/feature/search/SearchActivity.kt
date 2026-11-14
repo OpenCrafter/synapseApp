@@ -32,11 +32,7 @@ class SearchActivity : BaseComposeActivity() {
                 SearchScreen(
                     viewModel = viewModel,
                     onNavigateToProfile = { uid ->
-                        if (chatMode) {
-                            Toast.makeText(this@SearchActivity, "Chat feature not implemented", Toast.LENGTH_SHORT).show()
-                        } else {
-                            IntentUtils.openUrl(this@SearchActivity, DeepLink.profile(uid))
-                        }
+                        IntentUtils.openUrl(this@SearchActivity, DeepLink.profile(uid))
                     },
                     onNavigateToPost = { postId ->
                         val intent = Intent(this, HomeActivity::class.java)
