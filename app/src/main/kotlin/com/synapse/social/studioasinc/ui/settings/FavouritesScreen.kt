@@ -71,7 +71,15 @@ fun FavouritesScreen(
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
     val showFavouritesInChatList by viewModel.showFavouritesInChatList.collectAsState()
     val showFavouriteBadge by viewModel.showFavouriteBadge.collectAsState()
+    val isLoading by viewModel.isLoading.collectAsState()
     val error by viewModel.error.collectAsState()
+
+    val snackbarHostState = remember { SnackbarHostState() }
+    LaunchedEffect(error) {
+        if (error != null) {
+            snackbarHostState.showSnackbar(error)
+        }
+    }
 
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
@@ -91,18 +99,7 @@ fun FavouritesScreen(
             )
         },
         snackbarHost = {
-            error?.let { errorMessage ->
-                Snackbar(
-                    modifier = Modifier.padding(Spacing.space16),
-                    action = {
-                        TextButton(onClick = viewModel::clearError) {
-                            Text(stringResource(R.string.action_dismiss))
-                        }
-                    }
-                ) {
-                    Text(errorMessage)
-                }
-            }
+            SnackbarHost(snackbarHostState)
         }
     ) { paddingValues ->
         LazyColumn(
@@ -151,6 +148,7 @@ fun FavouritesScreen(
                         imageVector = Icons.AutoMirrored.Filled.Chat,
                         checked = showFavouritesInChatList,
                         onCheckedChange = { viewModel.toggleShowFavouritesInChatList() },
+                        enabled = !isLoading,
                         position = SettingsItemPosition.Top
                     )
                     SettingsToggleItem(
@@ -159,6 +157,7 @@ fun FavouritesScreen(
                         imageVector = Icons.Filled.Favorite,
                         checked = showFavouriteBadge,
                         onCheckedChange = { viewModel.toggleShowFavouriteBadge() },
+                        enabled = !isLoading,
                         position = SettingsItemPosition.Bottom
                     )
                 }
