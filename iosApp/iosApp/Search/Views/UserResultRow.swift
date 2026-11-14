@@ -3,6 +3,7 @@ import shared
 
 struct UserResultRow: View {
     let user: SearchAccount
+    @State private var showComingSoon = false
 
     var body: some View {
         HStack(spacing: AppTheme.Spacing.space12) {
@@ -45,9 +46,9 @@ struct UserResultRow: View {
 
             Spacer()
 
-            // Following button mock
+            // Follow button
             Button(action: {
-                // To be implemented
+                showComingSoon = true
             }) {
                 Text(user.isFollowing ? "Following" : "Follow")
                     .font(.system(size: 14, weight: .semibold))
@@ -64,5 +65,10 @@ struct UserResultRow: View {
         }
         .padding(.vertical, AppTheme.Spacing.space8)
         .padding(.horizontal)
+        .alert("Coming Soon", isPresented: $showComingSoon) {
+            Button("OK", role: .cancel) { }
+        } message: {
+            Text("Follow functionality is coming soon.")
+        }
     }
 }
