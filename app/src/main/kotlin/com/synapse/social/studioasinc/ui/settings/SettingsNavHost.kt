@@ -527,6 +527,9 @@ fun SettingsNavHost(
                 onNavigateToBrandPartnerships = {
                     android.widget.Toast.makeText(currentContext, "Brand Partnerships coming soon", android.widget.Toast.LENGTH_SHORT).show()
                 },
+                onNavigateToAnalytics = {
+                    android.widget.Toast.makeText(currentContext, "Analytics coming soon", android.widget.Toast.LENGTH_SHORT).show()
+                },
                 onNavigateToPayoutSettings = {
                     navController.navigate(SettingsDestination.ROUTE_PAYOUT_SETTINGS)
                 }
