@@ -541,10 +541,11 @@ fun ChatDetailView(
                             onSendMessage(messageText)
                             messageText = ""
                         } else {
-                            /* TODO: implement Mic click */
+                            // No voice-message flow exists on desktop; do not
+                            // present a clickable Mic affordance when blank.
                         }
                     },
-                    enabled = true
+                    enabled = messageText.isNotBlank()
                 ) {
                     if (messageText.isBlank()) {
                         Icon(Icons.Default.Mic, contentDescription = "Mic", tint = MaterialTheme.colorScheme.onSurfaceVariant)
