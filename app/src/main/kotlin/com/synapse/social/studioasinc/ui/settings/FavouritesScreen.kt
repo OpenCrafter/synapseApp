@@ -76,8 +76,9 @@ fun FavouritesScreen(
 
     val snackbarHostState = remember { SnackbarHostState() }
     LaunchedEffect(error) {
-        if (error != null) {
-            snackbarHostState.showSnackbar(error)
+        val currentError = error
+        if (currentError != null) {
+            snackbarHostState.showSnackbar(currentError)
         }
     }
 
