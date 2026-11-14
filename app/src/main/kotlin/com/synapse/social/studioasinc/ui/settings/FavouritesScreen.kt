@@ -65,11 +65,22 @@ private fun EmptyFavouritesCard() {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FavouritesScreen(
+    viewModel: FavouritesViewModel,
     onBackClick: () -> Unit
 ) {
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
-    var showFavouritesInChatList by remember { mutableStateOf(true) }
-    var showFavouriteBadge by remember { mutableStateOf(true) }
+    val showFavouritesInChatList by viewModel.showFavouritesInChatList.collectAsState()
+    val showFavouriteBadge by viewModel.showFavouriteBadge.collectAsState()
+    val isLoading by viewModel.isLoading.collectAsState()
+    val error by viewModel.error.collectAsState()
+
+    val snackbarHostState = remember { SnackbarHostState() }
+    LaunchedEffect(error) {
+        val currentError = error
+        if (currentError != null) {
+            snackbarHostState.showSnackbar(currentError)
+        }
+    }
 
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
@@ -87,6 +98,9 @@ fun FavouritesScreen(
                 },
                 scrollBehavior = scrollBehavior
             )
+        },
+        snackbarHost = {
+            SnackbarHost(snackbarHostState)
         }
     ) { paddingValues ->
         LazyColumn(
@@ -134,7 +148,8 @@ fun FavouritesScreen(
                         subtitle = stringResource(R.string.display_favourite_contacts_top),
                         imageVector = Icons.AutoMirrored.Filled.Chat,
                         checked = showFavouritesInChatList,
-                        onCheckedChange = { showFavouritesInChatList = it },
+                        onCheckedChange = { viewModel.toggleShowFavouritesInChatList() },
+                        enabled = !isLoading,
                         position = SettingsItemPosition.Top
                     )
                     SettingsToggleItem(
@@ -142,7 +157,8 @@ fun FavouritesScreen(
                         subtitle = stringResource(R.string.display_star_icon),
                         imageVector = Icons.Filled.Favorite,
                         checked = showFavouriteBadge,
-                        onCheckedChange = { showFavouriteBadge = it },
+                        onCheckedChange = { viewModel.toggleShowFavouriteBadge() },
+                        enabled = !isLoading,
                         position = SettingsItemPosition.Bottom
                     )
                 }

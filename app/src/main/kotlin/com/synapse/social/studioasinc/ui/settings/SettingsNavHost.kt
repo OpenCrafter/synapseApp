@@ -709,7 +709,9 @@ fun SettingsNavHost(
         }
 
         composable(route = SettingsDestination.ROUTE_FAVOURITES) {
+            val viewModel: FavouritesViewModel = hiltViewModel()
             FavouritesScreen(
+                viewModel = viewModel,
                 onBackClick = {
                     navController.popBackStack()
                 }
