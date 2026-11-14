@@ -3,7 +3,6 @@ import com.synapse.social.studioasinc.ui.navigation.DeepLink
 
 import android.content.Intent
 import android.os.Bundle
-import android.widget.Toast
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -16,13 +15,11 @@ import dagger.hilt.android.AndroidEntryPoint
 @AndroidEntryPoint
 class SearchActivity : BaseComposeActivity() {
 
-    private var chatMode = false
     private var origin = ""
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        chatMode = intent.getBooleanExtra("mode", false) || intent.getStringExtra("mode") == "chat"
         origin = intent.getStringExtra("origin") ?: ""
 
         setSynapseContent {
