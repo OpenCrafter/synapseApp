@@ -48,6 +48,7 @@ struct UserResultRow: View {
 
             // Follow button
             Button(action: {
+                guard !user.isFollowing else { return }
                 showComingSoon = true
             }) {
                 Text(user.isFollowing ? "Following" : "Follow")
