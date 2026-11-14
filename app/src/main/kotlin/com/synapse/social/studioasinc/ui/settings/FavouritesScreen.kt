@@ -65,11 +65,13 @@ private fun EmptyFavouritesCard() {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FavouritesScreen(
+    viewModel: FavouritesViewModel,
     onBackClick: () -> Unit
 ) {
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
-    var showFavouritesInChatList by remember { mutableStateOf(true) }
-    var showFavouriteBadge by remember { mutableStateOf(true) }
+    val showFavouritesInChatList by viewModel.showFavouritesInChatList.collectAsState()
+    val showFavouriteBadge by viewModel.showFavouriteBadge.collectAsState()
+    val error by viewModel.error.collectAsState()
 
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
@@ -87,6 +89,20 @@ fun FavouritesScreen(
                 },
                 scrollBehavior = scrollBehavior
             )
+        },
+        snackbarHost = {
+            error?.let { errorMessage ->
+                Snackbar(
+                    modifier = Modifier.padding(Spacing.space16),
+                    action = {
+                        TextButton(onClick = viewModel::clearError) {
+                            Text(stringResource(R.string.action_dismiss))
+                        }
+                    }
+                ) {
+                    Text(errorMessage)
+                }
+            }
         }
     ) { paddingValues ->
         LazyColumn(
@@ -134,7 +150,7 @@ fun FavouritesScreen(
                         subtitle = stringResource(R.string.display_favourite_contacts_top),
                         imageVector = Icons.AutoMirrored.Filled.Chat,
                         checked = showFavouritesInChatList,
-                        onCheckedChange = { showFavouritesInChatList = it },
+                        onCheckedChange = { viewModel.toggleShowFavouritesInChatList() },
                         position = SettingsItemPosition.Top
                     )
                     SettingsToggleItem(
@@ -142,7 +158,7 @@ fun FavouritesScreen(
                         subtitle = stringResource(R.string.display_star_icon),
                         imageVector = Icons.Filled.Favorite,
                         checked = showFavouriteBadge,
-                        onCheckedChange = { showFavouriteBadge = it },
+                        onCheckedChange = { viewModel.toggleShowFavouriteBadge() },
                         position = SettingsItemPosition.Bottom
                     )
                 }
