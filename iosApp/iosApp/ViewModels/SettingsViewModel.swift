@@ -19,12 +19,13 @@ class SettingsViewModel: ObservableObject {
     }
 
     func loadPreferences() async {
-        guard !currentUid.isEmpty else {
+        let userId = currentUid
+        guard !userId.isEmpty else {
             logger.warning("Cannot load preferences: no authenticated user ID")
             return
         }
         do {
-            let enabled = try await preferencesRepo.getSecurityNotificationsEnabled(userId: currentUid)
+            let enabled = try await preferencesRepo.getSecurityNotificationsEnabled(userId: userId)
             self.securityNotificationsEnabled = enabled
         } catch {
             logger.error("Error loading preferences: \(error)")

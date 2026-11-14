@@ -44,7 +44,6 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Create
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Call
-import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.EmojiEmotions
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.KeyboardArrowDown
@@ -119,9 +118,7 @@ fun DesktopMainScreen(
                             tooltip = { PlainTooltip { Text("Menu") } },
                             state = rememberTooltipState()
                         ) {
-                            IconButton(onClick = { /* TODO: implement Menu */ }) {
-                                Icon(Icons.Default.MoreVert, contentDescription = "Menu")
-                            }
+                            Icon(Icons.Default.MoreVert, contentDescription = "Menu")
                         }
                     }
 
@@ -456,27 +453,14 @@ fun ChatDetailView(
                         tooltip = { PlainTooltip { Text("Voice call") } },
                         state = rememberTooltipState()
                     ) {
-                        IconButton(onClick = { /* TODO: implement Voice call */ }) {
-                            Icon(Icons.Default.Call, contentDescription = "Voice call")
-                        }
+                        Icon(Icons.Default.Call, contentDescription = "Voice call")
                     }
                     TooltipBox(
                         positionProvider = TooltipDefaults.rememberTooltipPositionProvider(TooltipAnchorPosition.Above),
                         tooltip = { PlainTooltip { Text("Search in chat") } },
                         state = rememberTooltipState()
                     ) {
-                        IconButton(onClick = { /* TODO: implement Search in chat */ }) {
-                            Icon(Icons.Default.Search, contentDescription = "Search in chat")
-                        }
-                    }
-                    TooltipBox(
-                        positionProvider = TooltipDefaults.rememberTooltipPositionProvider(TooltipAnchorPosition.Above),
-                        tooltip = { PlainTooltip { Text("More options") } },
-                        state = rememberTooltipState()
-                    ) {
-                        IconButton(onClick = { /* TODO: implement More options */ }) {
-                            Icon(Icons.Default.MoreVert, contentDescription = "More options")
-                        }
+                        Icon(Icons.Default.Search, contentDescription = "Search in chat")
                     }
                 }
             }
@@ -550,9 +534,7 @@ fun ChatDetailView(
                     tooltip = { PlainTooltip { Text("Emoji") } },
                     state = rememberTooltipState()
                 ) {
-                    IconButton(onClick = { /* TODO: implement Emoji */ }) {
-                        Icon(Icons.Default.EmojiEmotions, contentDescription = "Emoji")
-                    }
+                    Icon(Icons.Default.EmojiEmotions, contentDescription = "Emoji")
                 }
                 Spacer(modifier = Modifier.width(DesktopSpacing.space4))
                 OutlinedTextField(
@@ -575,21 +557,12 @@ fun ChatDetailView(
                     shape = RoundedCornerShape(24.dp),
                     maxLines = 5
                 )
-                Spacer(modifier = Modifier.width(DesktopSpacing.space8))
-                IconButton(
-                    onClick = {
-                        if (messageText.isNotBlank()) {
-                            onSendMessage(messageText)
-                            messageText = ""
-                        } else {
-                            /* TODO: implement Mic click */
-                        }
-                    },
-                    enabled = true
-                ) {
-                    if (messageText.isBlank()) {
-                        Icon(Icons.Default.Mic, contentDescription = "Mic", tint = MaterialTheme.colorScheme.onSurfaceVariant)
-                    } else {
+                if (messageText.isNotBlank()) {
+                    Spacer(modifier = Modifier.width(DesktopSpacing.space8))
+                    IconButton(
+                        onClick = { onSendMessage(messageText); messageText = "" },
+                        enabled = true
+                    ) {
                         Icon(Icons.Default.ArrowUpward, contentDescription = "Send", tint = MaterialTheme.colorScheme.primary)
                     }
                 }

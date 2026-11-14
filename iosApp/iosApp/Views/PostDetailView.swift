@@ -2,6 +2,20 @@ import SwiftUI
 
 struct PostDetailView: View {
     @StateObject private var viewModel: PostDetailViewModel
+    @FocusState private var commentFieldFocused: Bool
+    @State private var activeSheet: ActiveSheet?
+
+    private enum ActiveSheet: Identifiable {
+        case summary
+        case share(Post)
+
+        var id: Int {
+            switch self {
+            case .summary: return 0
+            case .share(let post): return post.id.hashValue
+            }
+        }
+    }
 
     init(postId: String) {
         _viewModel = StateObject(wrappedValue: PostDetailViewModel(postId: postId))
@@ -18,6 +32,7 @@ struct PostDetailView: View {
                     if viewModel.post.commentsCount > 5 {
                         Button(action: {
                             viewModel.summarizeThread()
+                            activeSheet = .summary
                         }) {
                             HStack {
                                 Image(systemName: "sparkles")
@@ -34,10 +49,10 @@ struct PostDetailView: View {
                     // Full Post Card
                     PostCardView(
                         post: viewModel.post,
-                        onLike: { /* Detail like logic */ },
-                        onComment: { /* Scroll to comment field */ },
-                        onShare: { /* Detail share logic */ },
-                        onBookmark: { /* Detail bookmark logic */ }
+                        onLike: { viewModel.toggleLike() },
+                        onComment: { commentFieldFocused = true },
+                        onShare: { activeSheet = .share(viewModel.post) },
+                        onBookmark: { viewModel.toggleBookmark() }
                     )
 
                     Divider()
@@ -72,7 +87,14 @@ struct PostDetailView: View {
                                         Circle().fill(Color.secondary.opacity(0.3)).frame(width: 40, height: 40)
                                         Rectangle().fill(Color.secondary.opacity(0.5)).frame(width: 2).padding(.top, AppTheme.Spacing.space4)
                                     }
-                                    PostCardView(post: comment, onLike: {}, onComment: {}, onShare: {}, onBookmark: {})
+                                    PostCardView(
+                                        post: comment,
+                                        onLike: { viewModel.toggleLike(for: comment) },
+                                        onComment: { commentFieldFocused = true },
+                                        onShare: { activeSheet = .share(comment) },
+                                        onBookmark: { viewModel.toggleBookmark(for: comment) },
+                                        onMoreOptions: { /* More options menu */ }
+                                    )
                                 }
                             }
                         }
@@ -88,6 +110,7 @@ struct PostDetailView: View {
             HStack {
                 TextField("Add a comment...", text: $viewModel.commentText)
                     .textFieldStyle(RoundedBorderTextFieldStyle())
+                    .focused($commentFieldFocused)
                     .disabled(viewModel.isSubmittingComment)
 
                 Button(action: {
@@ -114,12 +137,21 @@ struct PostDetailView: View {
         }
         .navigationTitle("Post Detail")
         .navigationBarTitleDisplayMode(.inline)
-        .sheet(isPresented: $viewModel.showSummarySheet) {
-            AIThreadSummarySheet(
-                isSummarizing: viewModel.isSummarizing,
-                summary: viewModel.summary,
-                error: viewModel.summaryError
-            )
+        .sheet(item: $activeSheet) { sheet in
+            switch sheet {
+            case .summary:
+                AIThreadSummarySheet(
+                    isSummarizing: viewModel.isSummarizing,
+                    summary: viewModel.summary,
+                    error: viewModel.summaryError
+                )
+            case .share(let post):
+                ShareLink(
+                    item: "https://synapse.app/posts/\(post.id)",
+                    message: Text(post.postText ?? ""),
+                    subject: Text("Shared post")
+                )
+            }
         }
     }
 }

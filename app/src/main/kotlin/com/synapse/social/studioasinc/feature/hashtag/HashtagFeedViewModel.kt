@@ -10,13 +10,14 @@ import com.synapse.social.studioasinc.domain.usecase.post.RepostPostUseCase
 import com.synapse.social.studioasinc.domain.usecase.post.UnrepostPostUseCase
 import com.synapse.social.studioasinc.domain.usecase.post.VotePollUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.post.DeletePostUseCase
+import com.synapse.social.studioasinc.shared.domain.usecase.post.TogglePostCommentsUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.search.GetPostsByHashtagUseCase
 import com.synapse.social.studioasinc.shared.domain.repository.AuthRepository
 import com.synapse.social.studioasinc.domain.usecase.post.PopulatePostPollsUseCase
-import com.synapse.social.studioasinc.domain.usecase.post.QuotePostUseCase
 import com.synapse.social.studioasinc.domain.usecase.reaction.PopulatePostReactionsUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.blocking.BlockUserUseCase
-import com.synapse.social.studioasinc.shared.domain.usecase.post.TogglePostCommentsUseCase
+import com.synapse.social.studioasinc.domain.usecase.post.ReportPostUseCase
+import com.synapse.social.studioasinc.domain.usecase.post.RevokeVoteUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -43,14 +44,18 @@ class HashtagFeedViewModel @Inject constructor(
     private val unrepostPostUseCase: UnrepostPostUseCase,
     private val populatePostPollsUseCase: PopulatePostPollsUseCase,
     private val populatePostReactionsUseCase: PopulatePostReactionsUseCase,
-    private val quotePostUseCase: QuotePostUseCase,
     private val authRepository: AuthRepository,
     private val togglePostCommentsUseCase: TogglePostCommentsUseCase,
-    private val blockUserUseCase: BlockUserUseCase
+    private val blockUserUseCase: BlockUserUseCase,
+    private val reportPostUseCase: ReportPostUseCase,
+    private val revokeVoteUseCase: RevokeVoteUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(HashtagFeedUiState())
     val uiState: StateFlow<HashtagFeedUiState> = _uiState.asStateFlow()
+
+    /** Default reason used when reporting a post from the hashtag feed (no reason picker is shown there). */
+    private val defaultReportReason = "Reported from hashtag feed"
 
     fun init(tag: String) {
         if (_uiState.value.tag == tag) return
@@ -179,35 +184,22 @@ class HashtagFeedViewModel @Inject constructor(
         }
     }
 
-    fun quotePost(post: Post, text: String) {
-        viewModelScope.launch {
-            val result = quotePostUseCase(post.id, text)
-            result.onSuccess {
-                // Quote created
-            }.onFailure { e ->
-                _uiState.update { it.copy(error = e.message ?: "Failed to quote post") }
-            }
-        }
-    }
-
     fun isPostOwner(post: Post): Boolean {
         return authRepository.getCurrentUserId() == post.authorUid
     }
 
-    fun toggleComments(postId: String) {
+    fun toggleComments(post: Post) {
         viewModelScope.launch {
-            togglePostCommentsUseCase(postId).collect { result ->
+            togglePostCommentsUseCase(post.id).collect { result ->
                 result.onSuccess {
+                    val toggled = if (post.postDisableReplies == "true") "false" else "true"
                     _uiState.update { state ->
-                        state.copy(posts = state.posts.map { post ->
-                            if (post.id == postId) {
-                                val currentlyDisabled = post.postDisableReplies == "true"
-                                post.copy(postDisableReplies = if (currentlyDisabled) null else "true")
-                            } else post
+                        state.copy(posts = state.posts.map {
+                            if (it.id == post.id) it.copy(postDisableReplies = toggled) else it
                         })
                     }
                 }.onFailure { e ->
-                    _uiState.update { it.copy(error = e.message) }
+                    _uiState.update { it.copy(error = e.message ?: "Failed to toggle comments") }
                 }
             }
         }
@@ -215,11 +207,37 @@ class HashtagFeedViewModel @Inject constructor(
 
     fun blockUser(userId: String) {
         viewModelScope.launch {
-            val result = blockUserUseCase(userId)
-            result.onSuccess {
-                // Block succeeded server-side; the post remains visible until the feed refreshes.
-            }.onFailure { e ->
-                _uiState.update { it.copy(error = e.message) }
+            blockUserUseCase(userId).onSuccess {
+                _uiState.update { it.copy(error = null) }
+                loadPosts(_uiState.value.tag)
+            }.onFailure { error ->
+                _uiState.update { it.copy(error = error.message ?: "Failed to block user") }
+            }
+        }
+    }
+
+    fun reportPost(postId: String) {
+        viewModelScope.launch {
+            reportPostUseCase(postId, defaultReportReason, null).collect { result ->
+                result.onFailure { e ->
+                    _uiState.update { it.copy(error = e.message ?: "Failed to report post") }
+                }
+            }
+        }
+    }
+
+    fun revokeVote(post: Post) {
+        viewModelScope.launch {
+            revokeVoteUseCase(post).collect { result ->
+                result.onSuccess { updatedPost ->
+                    _uiState.update { state ->
+                        state.copy(posts = state.posts.map {
+                            if (it.id == post.id) updatedPost else it
+                        })
+                    }
+                }.onFailure { e ->
+                    _uiState.update { it.copy(error = e.message ?: "Failed to revoke vote") }
+                }
             }
         }
     }

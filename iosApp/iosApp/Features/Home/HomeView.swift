@@ -3,6 +3,11 @@ import SwiftUI
 struct HomeView: View {
     @EnvironmentObject var navigator: AppNavigator
     @StateObject private var viewModel = DependencyContainer.shared.makeHomeViewModel()
+    @State private var showPostOptions = false
+    @State private var optionsPost: Post?
+    @State private var postToShare: Post?
+    @State private var showReportConfirmation = false
+    @State private var reportSubmitted = false
 
     var body: some View {
         NavigationStack(path: $navigator.homePath) {
@@ -27,8 +32,12 @@ struct HomeView: View {
                                         post: post,
                                         onLike: { viewModel.toggleLike(for: post) },
                                         onComment: { /* handled by nav */ },
-                                        onShare: { /* share action */ },
-                                        onBookmark: { viewModel.toggleBookmark(for: post) }
+                                        onShare: { postToShare = post },
+                                        onBookmark: { viewModel.toggleBookmark(for: post) },
+                                        onMoreOptions: {
+                                            optionsPost = post
+                                            showPostOptions = true
+                                        }
                                     )
                                 }
                                 .buttonStyle(PlainButtonStyle())
@@ -74,6 +83,46 @@ struct HomeView: View {
                 case .home, .search, .notifications, .login, .register:
                     EmptyView()
                 }
+            }
+            .confirmationDialog("Post Options", isPresented: $showPostOptions, titleVisibility: .visible) {
+                Button("Share") {
+                    if let post = optionsPost {
+                        postToShare = post
+                    }
+                }
+                Button("Bookmark") {
+                    if let post = optionsPost {
+                        viewModel.toggleBookmark(for: post)
+                    }
+                }
+                Button("Report", role: .destructive) {
+                    showReportConfirmation = true
+                }
+                Button("Cancel", role: .cancel) { }
+            } message: {
+                if let post = optionsPost {
+                    Text("Actions for post by \(post.displayName ?? post.username ?? "Unknown")")
+                }
+            }
+            .sheet(item: $postToShare) { post in
+                ShareLink(
+                    item: "https://synapse.app/posts/\(post.id)",
+                    message: Text(post.postText ?? ""),
+                    subject: Text("Shared post")
+                )
+            }
+            .alert("Report post", isPresented: $showReportConfirmation) {
+                Button("Report", role: .destructive) {
+                    reportSubmitted = true
+                }
+                Button("Cancel", role: .cancel) {}
+            } message: {
+                Text("Report this post to moderation?")
+            }
+            .alert("Report submitted", isPresented: $reportSubmitted) {
+                Button("OK", role: .cancel) {}
+            } message: {
+                Text("Your report has been received client-side.")
             }
             .onAppear {
                 viewModel.fetchHomeData()

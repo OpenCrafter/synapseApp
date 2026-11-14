@@ -108,4 +108,138 @@ class PostDetailViewModel: ObservableObject {
             )
         }
     }
+
+    func toggleLike() {
+        self.post = Post(
+            id: postId,
+            authorUid: self.post.authorUid,
+            postText: self.post.postText,
+            postImage: self.post.postImage,
+            postType: self.post.postType,
+            likesCount: self.post.userReaction == .like ? self.post.likesCount - 1 : self.post.likesCount + 1,
+            commentsCount: self.post.commentsCount,
+            viewsCount: self.post.viewsCount,
+            resharesCount: self.post.resharesCount,
+            mediaItems: self.post.mediaItems,
+            hasPoll: self.post.hasPoll,
+            pollQuestion: self.post.pollQuestion,
+            pollOptions: self.post.pollOptions,
+            createdAt: self.post.createdAt,
+            updatedAt: self.post.updatedAt,
+            username: self.post.username,
+            displayName: self.post.displayName,
+            avatarUrl: self.post.avatarUrl,
+            isVerified: self.post.isVerified,
+            isBookmarked: self.post.isBookmarked,
+            isReshared: self.post.isReshared,
+            userReaction: self.post.userReaction == .like ? nil : .like,
+            reactions: self.post.reactions,
+            inReplyToPostId: self.post.inReplyToPostId,
+            rootPostId: self.post.rootPostId
+        )
+    }
+
+    func toggleBookmark() {
+        self.post = Post(
+            id: postId,
+            authorUid: self.post.authorUid,
+            postText: self.post.postText,
+            postImage: self.post.postImage,
+            postType: self.post.postType,
+            likesCount: self.post.likesCount,
+            commentsCount: self.post.commentsCount,
+            viewsCount: self.post.viewsCount,
+            resharesCount: self.post.resharesCount,
+            mediaItems: self.post.mediaItems,
+            hasPoll: self.post.hasPoll,
+            pollQuestion: self.post.pollQuestion,
+            pollOptions: self.post.pollOptions,
+            createdAt: self.post.createdAt,
+            updatedAt: self.post.updatedAt,
+            username: self.post.username,
+            displayName: self.post.displayName,
+            avatarUrl: self.post.avatarUrl,
+            isVerified: self.post.isVerified,
+            isBookmarked: !self.post.isBookmarked,
+            isReshared: self.post.isReshared,
+            userReaction: self.post.userReaction,
+            reactions: self.post.reactions,
+            inReplyToPostId: self.post.inReplyToPostId,
+            rootPostId: self.post.rootPostId
+        )
+    }
+
+    func toggleShare() {
+        // Share is now presented directly from PostDetailView via a ShareLink sheet.
+        // This method is retained for API compatibility but is no longer invoked by the view.
+    }
+
+    func toggleLike(for comment: Post) {
+        guard let index = comments.firstIndex(where: { $0.id == comment.id }) else { return }
+        let c = comments[index]
+        comments[index] = Post(
+            id: c.id,
+            authorUid: c.authorUid,
+            postText: c.postText,
+            postImage: c.postImage,
+            postType: c.postType,
+            likesCount: c.userReaction == .like ? max(0, c.likesCount - 1) : c.likesCount + 1,
+            commentsCount: c.commentsCount,
+            viewsCount: c.viewsCount,
+            resharesCount: c.resharesCount,
+            mediaItems: c.mediaItems,
+            hasPoll: c.hasPoll,
+            pollQuestion: c.pollQuestion,
+            pollOptions: c.pollOptions,
+            createdAt: c.createdAt,
+            updatedAt: c.updatedAt,
+            username: c.username,
+            displayName: c.displayName,
+            avatarUrl: c.avatarUrl,
+            isVerified: c.isVerified,
+            isBookmarked: c.isBookmarked,
+            isReshared: c.isReshared,
+            userReaction: c.userReaction == .like ? nil : .like,
+            reactions: c.reactions,
+            inReplyToPostId: c.inReplyToPostId,
+            rootPostId: c.rootPostId
+        )
+    }
+
+    func toggleBookmark(for comment: Post) {
+        guard let index = comments.firstIndex(where: { $0.id == comment.id }) else { return }
+        let c = comments[index]
+        comments[index] = Post(
+            id: c.id,
+            authorUid: c.authorUid,
+            postText: c.postText,
+            postImage: c.postImage,
+            postType: c.postType,
+            likesCount: c.likesCount,
+            commentsCount: c.commentsCount,
+            viewsCount: c.viewsCount,
+            resharesCount: c.resharesCount,
+            mediaItems: c.mediaItems,
+            hasPoll: c.hasPoll,
+            pollQuestion: c.pollQuestion,
+            pollOptions: c.pollOptions,
+            createdAt: c.createdAt,
+            updatedAt: c.updatedAt,
+            username: c.username,
+            displayName: c.displayName,
+            avatarUrl: c.avatarUrl,
+            isVerified: c.isVerified,
+            isBookmarked: !c.isBookmarked,
+            isReshared: c.isReshared,
+            userReaction: c.userReaction,
+            reactions: c.reactions,
+            inReplyToPostId: c.inReplyToPostId,
+            rootPostId: c.rootPostId
+        )
+    }
+
+    func toggleShare(for comment: Post) {
+        // Share is now presented directly from PostDetailView via a ShareLink sheet.
+        // This method is retained for API compatibility but is no longer invoked by the view.
+    }
 }
