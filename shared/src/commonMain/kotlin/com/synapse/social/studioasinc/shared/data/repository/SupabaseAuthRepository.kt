@@ -616,18 +616,14 @@ class SupabaseAuthRepository(
         return try {
             withContext(AppDispatchers.IO) {
                 val userId = client.auth.currentUserOrNull()?.id
-                val identities = if (userId != null) {
-                    client.from("user_identities")
-                        .eq("user_id", userId)
-                        .select()
-                        .decodeList<JsonObject>()
-                } else {
-                    emptyList<JsonObject>()
-                }
-
-                val providers = identities.mapNotNull {
-                    it["provider"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull
-                }
+                val identities = client.from("user_identities")
+                    .select()
+                    .decodeList<JsonObject>()
+                val providers = identities
+                    .filter { userId != null && it["user_id"]?.let { elem -> (elem as? kotlinx.serialization.json.JsonPrimitive)?.contentOrNull } == userId }
+                    .mapNotNull {
+                        it["provider"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull
+                    }
                 Result.success(providers)
             }
         } catch (e: Exception) {
