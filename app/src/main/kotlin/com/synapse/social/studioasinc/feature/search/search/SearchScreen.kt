@@ -2,7 +2,6 @@ package com.synapse.social.studioasinc.ui.search
 
 import android.content.Intent
 import android.net.Uri
-import android.widget.Toast
 import androidx.compose.animation.*
 import androidx.compose.animation.core.tween
 import com.synapse.social.studioasinc.R
@@ -21,7 +20,6 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.SearchOff
 import androidx.compose.material3.*
-import androidx.compose.ui.res.stringResource
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -38,6 +36,7 @@ import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.layout.boundsInRoot
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -64,6 +63,36 @@ import com.synapse.social.studioasinc.domain.model.MediaItem
 import com.synapse.social.studioasinc.domain.model.MediaType
 import kotlinx.coroutines.launch
 import com.synapse.social.studioasinc.ui.components.EmptyState
+
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
+@Composable
+fun SearchLoadingShimmer() {
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(Spacing.space16)
+    ) {
+        items(5) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = Spacing.space12),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                ShimmerCircle(size = Sizes.AvatarDefault)
+                Spacer(modifier = Modifier.width(Spacing.space16))
+                Column {
+                    ShimmerBox(modifier = Modifier.width(Sizes.ShimmerWidthLarge).height(Sizes.ShimmerLineHeight))
+                    Spacer(modifier = Modifier.height(Spacing.space8))
+                    ShimmerBox(modifier = Modifier.width(Sizes.WidthLarge).height(Sizes.ShimmerLineHeightSmall))
+                }
+            }
+            HorizontalDivider(
+                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
+                thickness = Sizes.BorderHairline
+            )
+        }
+    }
+}
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
@@ -141,367 +170,352 @@ fun SearchScreen(
         }
     }
 
-    Box(modifier = Modifier.fillMaxSize()) {
-        Scaffold(
-            containerColor = MaterialTheme.colorScheme.background,
-            contentColor = MaterialTheme.colorScheme.onBackground,
-            snackbarHost = { SnackbarHost(snackbarHostState) },
-            topBar = {
-                AnimatedVisibility(
-                    visible = true,
-                    enter = fadeIn(animationSpec = tween(600)) + expandVertically(animationSpec = tween(600))
-                ) {
-                    // M3 SearchBar/InputField are deprecated in favour of the state-driven redesign
-                    // (SearchBarState + TextFieldState + Expanded*SearchBar). Adopting it is a UI rewrite
-                    // with regression risk, not a warning fix — hence the documented suppression.
-                    @Suppress("DEPRECATION")
-                    SearchBar(
-                        inputField = {
-                            SearchBarDefaults.InputField(
-                                query = uiState.query,
-                                onQueryChange = viewModel::onQueryChange,
-                                onSearch = viewModel::onSearch,
-                                expanded = false,
-                                onExpandedChange = {},
-                                placeholder = { Text(stringResource(R.string.search_synapse_hint)) },
-                                leadingIcon = {
-                                    Icon(
-                                        Icons.Default.Search,
-                                        contentDescription = stringResource(R.string.search)
-                                    )
-                                },
-                                trailingIcon = {
-                                    Row(verticalAlignment = Alignment.CenterVertically) {
-                                        if (uiState.query.isNotEmpty()) {
-                                            IconButton(onClick = viewModel::clearSearch) {
-                                                Icon(
-                                                    Icons.Default.Close,
-                                                    contentDescription = stringResource(R.string.clear)
-                                                )
-                                            }
-                                        } else {
-                                            IconButton(onClick = {
-                                                Toast.makeText(
-                                                    context,
-                                                    context.getString(R.string.voice_search),
-                                                    Toast.LENGTH_SHORT
-                                                ).show()
-                                            }) {
-                                                Icon(
-                                                    Icons.Default.Mic,
-                                                    contentDescription = stringResource(R.string.voice_search)
-                                                )
-                                            }
+    Scaffold(
+        containerColor = MaterialTheme.colorScheme.background,
+        contentColor = MaterialTheme.colorScheme.onBackground,
+        snackbarHost = { SnackbarHost(snackbarHostState) },
+        topBar = {
+            AnimatedVisibility(
+                visible = true,
+                enter = fadeIn(animationSpec = tween(600)) + expandVertically(animationSpec = tween(600))
+            ) {
+                // M3 SearchBar/InputField are deprecated in favour of the state-driven redesign
+                // (SearchBarState + TextFieldState + Expanded*SearchBar). Adopting it is a UI rewrite
+                // with regression risk, not a warning fix — hence the documented suppression.
+                @Suppress("DEPRECATION")
+                SearchBar(
+                    inputField = {
+                        SearchBarDefaults.InputField(
+                            query = uiState.query,
+                            onQueryChange = viewModel::onQueryChange,
+                            onSearch = viewModel::onSearch,
+                            expanded = true,
+                            onExpandedChange = {},
+                            placeholder = { Text(stringResource(R.string.search_synapse_hint)) },
+                            leadingIcon = {
+                                Icon(
+                                    Icons.Default.Search,
+                                    contentDescription = stringResource(R.string.search)
+                                )
+                            },
+                            trailingIcon = {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    if (uiState.query.isNotEmpty()) {
+                                        IconButton(onClick = viewModel::clearSearch) {
+                                            Icon(
+                                                Icons.Default.Close,
+                                                contentDescription = stringResource(R.string.clear)
+                                            )
                                         }
                                     }
                                 }
+                            }
+                        )
+                    },
+                    expanded = true,
+                    onExpandedChange = {},
+                    colors = SearchBarDefaults.colors(
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                        dividerColor = MaterialTheme.colorScheme.outlineVariant
+                    ),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = Spacing.space16, vertical = Spacing.space8)
+                ) {
+                    if (uiState.trendingHashtags.isNotEmpty()) {
+                        Text(
+                            text = stringResource(R.string.trending),
+                            style = MaterialTheme.typography.labelMedium,
+                            modifier = Modifier.padding(
+                                horizontal = Spacing.space16,
+                                vertical = Spacing.space8
                             )
-                        },
-                        expanded = false,
-                        onExpandedChange = {},
-                        colors = SearchBarDefaults.colors(
-                            containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                            dividerColor = MaterialTheme.colorScheme.outlineVariant
-                        ),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = Spacing.space16, vertical = Spacing.space8)
-                    ) {
-                        if (uiState.trendingHashtags.isNotEmpty()) {
-                            Text(
-                                text = stringResource(R.string.trending),
-                                style = MaterialTheme.typography.labelMedium,
-                                modifier = Modifier.padding(
-                                    horizontal = Spacing.space16,
-                                    vertical = Spacing.space8
+                        )
+                        LazyRow(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(bottom = Spacing.space8),
+                            contentPadding = PaddingValues(horizontal = Spacing.space16),
+                            horizontalArrangement = Arrangement.spacedBy(Spacing.space8)
+                        ) {
+                            items(uiState.trendingHashtags, key = { it.id }) { hashtag ->
+                                FilterChip(
+                                    selected = false,
+                                    onClick = { viewModel.onSearch("#${hashtag.tag}") },
+                                    label = { Text(stringResource(R.string.common_hashtag_format, hashtag.tag)) },
+                                    shape = RoundedCornerShape(Sizes.CornerLarge),
+                                    colors = FilterChipDefaults.filterChipColors(
+                                        containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f),
+                                        labelColor = MaterialTheme.colorScheme.primary
+                                    ),
+                                    border = null
                                 )
-                            )
-                            LazyRow(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(bottom = Spacing.space8),
-                                contentPadding = PaddingValues(horizontal = Spacing.space16),
-                                horizontalArrangement = Arrangement.spacedBy(Spacing.space8)
-                            ) {
-                                items(uiState.trendingHashtags, key = { it.id }) { hashtag ->
-                                    FilterChip(
-                                        selected = false,
-                                        onClick = { viewModel.onSearch("#${hashtag.tag}") },
-                                        label = { Text(stringResource(R.string.common_hashtag_format, hashtag.tag)) },
-                                        shape = RoundedCornerShape(Sizes.CornerLarge),
-                                        colors = FilterChipDefaults.filterChipColors(
-                                            containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f),
-                                            labelColor = MaterialTheme.colorScheme.primary
-                                        ),
-                                        border = null
-                                    )
-                                }
                             }
                         }
+                    }
 
-                        val history = uiState.searchHistory
-                        if (history.isNotEmpty()) {
-                            Text(
-                                text = stringResource(R.string.recent_searches),
-                                style = MaterialTheme.typography.labelMedium,
-                                modifier = Modifier.padding(
-                                    horizontal = Spacing.space16,
-                                    vertical = Spacing.space8
-                                )
+                    val history = uiState.searchHistory
+                    if (history.isNotEmpty()) {
+                        Text(
+                            text = stringResource(R.string.recent_searches),
+                            style = MaterialTheme.typography.labelMedium,
+                            modifier = Modifier.padding(
+                                horizontal = Spacing.space16,
+                                vertical = Spacing.space8
                             )
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(horizontal = Spacing.space16),
-                                horizontalArrangement = Arrangement.spacedBy(Spacing.space8)
-                            ) {
-                                history.forEach { query ->
-                                    FilterChip(
-                                        selected = false,
-                                        onClick = { viewModel.onSearch(query) },
-                                        label = { Text(query) }
-                                    )
-                                }
+                        )
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = Spacing.space16),
+                            horizontalArrangement = Arrangement.spacedBy(Spacing.space8)
+                        ) {
+                            history.forEach { query ->
+                                FilterChip(
+                                    selected = false,
+                                    onClick = { viewModel.onSearch(query) },
+                                    label = { Text(query) }
+                                )
                             }
                         }
                     }
                 }
             }
-        ) { innerPadding ->
-            AnimatedVisibility(
-                visible = true,
-                enter = fadeIn(animationSpec = tween(800, delayMillis = 300)) + slideInVertically(
-                    initialOffsetY = { it / 8 },
-                    animationSpec = tween(800, delayMillis = 300)
-                )
+        }
+    ) { innerPadding ->
+        AnimatedVisibility(
+            visible = true,
+            enter = fadeIn(animationSpec = tween(800, delayMillis = 300)) + slideInVertically(
+                initialOffsetY = { it / 8 },
+                animationSpec = tween(800, delayMillis = 300)
+            )
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding)
             ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(innerPadding)
+
+                PrimaryScrollableTabRow(
+                    selectedTabIndex = pagerState.currentPage,
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    contentColor = MaterialTheme.colorScheme.primary,
+                    edgePadding = Spacing.space8,
+                    divider = { HorizontalDivider(color = MaterialTheme.colorScheme.surfaceVariant) }
                 ) {
-
-                    PrimaryScrollableTabRow(
-                        selectedTabIndex = pagerState.currentPage,
-                        containerColor = MaterialTheme.colorScheme.surface,
-                        contentColor = MaterialTheme.colorScheme.primary,
-                        edgePadding = Spacing.space8,
-                        divider = { HorizontalDivider(color = MaterialTheme.colorScheme.surfaceVariant) }
-                    ) {
-                        SearchTab.entries.forEach { tab ->
-                            Tab(
-                                selected = pagerState.currentPage == tab.ordinal,
-                                onClick = {
-                                    scope.launch {
-                                        pagerState.animateScrollToPage(tab.ordinal)
-                                    }
-                                },
-                                text = {
-                                    Text(
-                                        text = tab.title,
-                                        style = MaterialTheme.typography.labelLarge,
-                                        fontWeight = if (pagerState.currentPage == tab.ordinal) FontWeight.Bold else FontWeight.Normal
-                                    )
+                    SearchTab.entries.forEach { tab ->
+                        Tab(
+                            selected = pagerState.currentPage == tab.ordinal,
+                            onClick = {
+                                scope.launch {
+                                    pagerState.animateScrollToPage(tab.ordinal)
                                 }
-                            )
-                        }
+                            },
+                            text = {
+                                Text(
+                                    text = tab.title,
+                                    style = MaterialTheme.typography.labelLarge,
+                                    fontWeight = if (pagerState.currentPage == tab.ordinal) FontWeight.Bold else FontWeight.Normal
+                                )
+                            }
+                        )
                     }
+                }
 
-                    HorizontalPager(
-                        state = pagerState,
-                        modifier = Modifier.weight(1f)
-                    ) { page ->
-                        val tab = SearchTab.entries[page]
+                HorizontalPager(
+                    state = pagerState,
+                    modifier = Modifier.weight(1f)
+                ) { page ->
+                    val tab = SearchTab.entries[page]
 
-                        SkeletonMorphedContent(
-                            isLoading = uiState.isLoading,
-                            skeleton = { SearchLoadingShimmer() },
-                            modifier = Modifier.fillMaxSize()
-                        ) {
-                            when (tab) {
-                                SearchTab.FOR_YOU -> {
-                                    if (uiState.posts.isEmpty() && uiState.accounts.isEmpty() && uiState.hashtags.isEmpty()) {
-                                        EmptyState(
-                                            icon = Icons.Default.SearchOff,
-                                            title = stringResource(R.string.no_content_found),
-                                            message = stringResource(R.string.no_content_found)
-                                        )
-                                    } else {
-                                        LazyColumn(
-                                            modifier = Modifier.fillMaxSize()
-                                        ) {
-                                            items(uiState.hashtags) { hashtag ->
-                                                Card(
-                                                    modifier = Modifier.fillMaxWidth(),
-                                                    shape = RoundedCornerShape(Sizes.CornerLarge),
-                                                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
-                                                ) {
-                                                    HashtagCard(
-                                                        hashtag = hashtag,
-                                                        onClick = { viewModel.onSearch("#${hashtag.tag}") }
+                    SkeletonMorphedContent(
+                        isLoading = uiState.isLoading,
+                        skeleton = { SearchLoadingShimmer() },
+                        modifier = Modifier.fillMaxSize()
+                    ) {
+                        when (tab) {
+                            SearchTab.FOR_YOU -> {
+                                if (uiState.posts.isEmpty() && uiState.accounts.isEmpty() && uiState.hashtags.isEmpty()) {
+                                    EmptyState(
+                                        icon = Icons.Default.SearchOff,
+                                        title = stringResource(R.string.no_content_found),
+                                        message = stringResource(R.string.no_content_found)
+                                    )
+                                } else {
+                                    LazyColumn(
+                                        modifier = Modifier.fillMaxSize()
+                                    ) {
+                                        items(uiState.hashtags) { hashtag ->
+                                            Card(
+                                                modifier = Modifier.fillMaxWidth(),
+                                                shape = RoundedCornerShape(Sizes.CornerLarge),
+                                                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+                                            ) {
+                                                HashtagCard(
+                                                    hashtag = hashtag,
+                                                    onClick = { viewModel.onSearch("#${hashtag.tag}") }
+                                                )
+                                            }
+                                        }
+                                        items(uiState.accounts) { account ->
+                                            Card(
+                                                modifier = Modifier.fillMaxWidth(),
+                                                shape = RoundedCornerShape(Sizes.CornerLarge),
+                                                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+                                            ) {
+                                                AccountCard(
+                                                    account = account,
+                                                    onClick = { onNavigateToProfile(account.id) },
+                                                    onFollowClick = { viewModel.toggleFollow(account.id) }
+                                                )
+                                            }
+                                        }
+                                        items(uiState.posts) { post ->
+                                            val actions = remember(viewModel, context) {
+                                                PostActions(
+                                                    onLike = viewModel::likePost,
+                                                    onComment = { p -> onNavigateToPost(p.id) },
+                                                    onShare = { p -> PostShareUtils.sharePost(context, p.id) },
+                                                    onRepost = viewModel::resharePost,
+                                                    onQuote = { post -> onNavigateToQuotePost(post.id) },
+                                                    onBookmark = viewModel::bookmarkPost,
+                                                    onOptionClick = { p -> selectedPost = p },
+                                                    onPollVote = viewModel::votePoll,
+                                                    onUserClick = { userId -> onNavigateToProfile(userId) },
+                                                    onMediaClick = { post, index ->
+                                                        val urls = post.mediaItems?.mapNotNull { it.url } ?: emptyList()
+                                                        if (urls.isNotEmpty()) {
+                                                            selectedMediaIndex = index.coerceIn(0, urls.lastIndex)
+                                                            selectedMediaUrls = urls
+                                                            showMediaViewer = true
+                                                        }
+                                                    },
+                                                    onReactionSelected = { p, r -> viewModel.reactToPost(p, r) }
+                                                )
+                                            }
+                                            SharedPostItem(
+                                                post = post,
+                                                actions = actions
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                            else -> {
+                                LazyColumn(
+                                    modifier = Modifier.fillMaxSize(),
+                                ) {
+                                    when (tab) {
+                                        SearchTab.FOR_YOU -> {}
+                                        SearchTab.PEOPLE -> {
+                                            if (uiState.accounts.isEmpty()) {
+                                                item {
+                                                    EmptyState(
+                                                        icon = Icons.Default.SearchOff,
+                                                        title = stringResource(R.string.no_accounts_found),
+                                                        message = stringResource(R.string.no_accounts_found)
                                                     )
                                                 }
-                                            }
-                                            items(uiState.accounts) { account ->
-                                                Card(
-                                                    modifier = Modifier.fillMaxWidth(),
-                                                    shape = RoundedCornerShape(Sizes.CornerLarge),
-                                                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
-                                                ) {
+                                            } else {
+                                                itemsIndexed(uiState.accounts, key = { index, it -> "${it.id}_${index}" }) { index, account ->
                                                     AccountCard(
                                                         account = account,
                                                         onClick = { onNavigateToProfile(account.id) },
                                                         onFollowClick = { viewModel.toggleFollow(account.id) }
                                                     )
-                                                }
-                                            }
-                                            items(uiState.posts) { post ->
-                                                val actions = remember(viewModel, context) {
-                                                    PostActions(
-                                                        onLike = viewModel::likePost,
-                                                        onComment = { p -> onNavigateToPost(p.id) },
-                                                        onShare = { p -> PostShareUtils.sharePost(context, p.id) },
-                                                        onRepost = viewModel::resharePost,
-                                                        onQuote = { post -> onNavigateToQuotePost(post.id) },
-                                                        onBookmark = viewModel::bookmarkPost,
-                                                        onOptionClick = { p -> selectedPost = p },
-                                                        onPollVote = viewModel::votePoll,
-                                                                 onUserClick = { userId -> onNavigateToProfile(userId) },
-                                                                  onMediaClick = { post, index ->
-                                                                      val urls = post.mediaItems?.mapNotNull { it.url } ?: emptyList()
-                                                                      if (urls.isNotEmpty()) {
-                                                                         selectedMediaIndex = index.coerceIn(0, urls.lastIndex)
-                                                                         selectedMediaUrls = urls
-                                                                         showMediaViewer = true
-                                                                     }
-                                                                 },
-                                                                 onReactionSelected = { p, r -> viewModel.reactToPost(p, r) }
+                                                    HorizontalDivider(
+                                                        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
+                                                        thickness = Sizes.BorderHairline
                                                     )
                                                 }
-                                                SharedPostItem(
-                                                    post = post,
-                                                    actions = actions
-                                                )
                                             }
                                         }
-                                    }
-                                }
-                                else -> {
-                                    LazyColumn(
-                                        modifier = Modifier.fillMaxSize(),
-                                    ) {
-                                        when (tab) {
-                                            SearchTab.FOR_YOU -> {}
-                                            SearchTab.PEOPLE -> {
-                                                if (uiState.accounts.isEmpty()) {
-                                                    item {
-                                                        EmptyState(
-                                                            icon = Icons.Default.SearchOff,
-                                                            title = stringResource(R.string.no_accounts_found),
-                                                            message = stringResource(R.string.no_accounts_found)
-                                                        )
-                                                    }
-                                                } else {
-                                                    itemsIndexed(uiState.accounts, key = { index, it -> "${it.id}_${index}" }) { index, account ->
-                                                        AccountCard(
-                                                            account = account,
-                                                            onClick = { onNavigateToProfile(account.id) },
-                                                            onFollowClick = { viewModel.toggleFollow(account.id) }
-                                                        )
-                                                        HorizontalDivider(
-                                                            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
-                                                            thickness = Sizes.BorderHairline
-                                                        )
-                                                    }
+                                        SearchTab.TRENDING, SearchTab.LISTS -> {
+                                            if (uiState.hashtags.isEmpty()) {
+                                                item {
+                                                    EmptyState(
+                                                        icon = Icons.Default.SearchOff,
+                                                        title = stringResource(R.string.no_hashtags_found),
+                                                        message = stringResource(R.string.no_hashtags_found)
+                                                    )
+                                                }
+                                            } else {
+                                                itemsIndexed(uiState.hashtags, key = { index, it -> "${it.id}_${index}" }) { index, hashtag ->
+                                                    HashtagCard(
+                                                        hashtag = hashtag,
+                                                        onClick = { viewModel.onSearch("#${hashtag.tag}") }
+                                                    )
+                                                    HorizontalDivider(
+                                                        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
+                                                        thickness = Sizes.BorderHairline
+                                                    )
                                                 }
                                             }
-                                            SearchTab.TRENDING, SearchTab.LISTS -> {
-                                                if (uiState.hashtags.isEmpty()) {
-                                                    item {
-                                                        EmptyState(
-                                                            icon = Icons.Default.SearchOff,
-                                                            title = stringResource(R.string.no_hashtags_found),
-                                                            message = stringResource(R.string.no_hashtags_found)
-                                                        )
-                                                    }
-                                                } else {
-                                                    itemsIndexed(uiState.hashtags, key = { index, it -> "${it.id}_${index}" }) { index, hashtag ->
-                                                        HashtagCard(
-                                                            hashtag = hashtag,
-                                                            onClick = { viewModel.onSearch("#${hashtag.tag}") }
-                                                        )
-                                                        HorizontalDivider(
-                                                            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
-                                                            thickness = Sizes.BorderHairline
-                                                        )
-                                                    }
+                                        }
+                                        SearchTab.NEWS, SearchTab.SPORTS, SearchTab.ENTERTAINMENT -> {
+                                            if (uiState.news.isEmpty()) {
+                                                item {
+                                                    EmptyState(
+                                                        icon = Icons.Default.SearchOff,
+                                                        title = stringResource(R.string.no_news_found),
+                                                        message = stringResource(R.string.no_news_found)
+                                                    )
                                                 }
-                                            }
-                                            SearchTab.NEWS, SearchTab.SPORTS, SearchTab.ENTERTAINMENT -> {
-                                                if (uiState.news.isEmpty()) {
-                                                    item {
-                                                        EmptyState(
-                                                            icon = Icons.Default.SearchOff,
-                                                            title = stringResource(R.string.no_news_found),
-                                                            message = stringResource(R.string.no_news_found)
-                                                        )
-                                                    }
-                                                } else {
-                                                    itemsIndexed(uiState.news, key = { index, it -> "${it.id}_${index}" }) { index, news ->
-                                                        NewsCard(
-                                                            news = news,
-                                                            onClick = {
-                                                                news.url?.let { url ->
-                                                                    IntentUtils.openUrl(context, url)
-                                                                }
+                                            } else {
+                                                itemsIndexed(uiState.news, key = { index, it -> "${it.id}_${index}" }) { index, news ->
+                                                    NewsCard(
+                                                        news = news,
+                                                        onClick = {
+                                                            news.url?.let { url ->
+                                                                IntentUtils.openUrl(context, url)
                                                             }
-                                                        )
-                                                        HorizontalDivider(
-                                                            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
-                                                            thickness = Sizes.BorderHairline
-                                                        )
-                                                    }
-                                                }
-                                            }
-                                            SearchTab.TOP, SearchTab.LATEST, SearchTab.MEDIA -> {
-                                                if (uiState.posts.isEmpty()) {
-                                                    item {
-                                                        EmptyState(
-                                                            icon = Icons.Default.SearchOff,
-                                                            title = stringResource(R.string.empty_posts_title),
-                                                            message = stringResource(R.string.empty_posts_title)
-                                                        )
-                                                    }
-                                                } else {
-                                                    itemsIndexed(uiState.posts, key = { index, it -> "${it.id}_${index}" }) { index, post ->
-                                                        val actions = remember(viewModel, context) {
-                                                            PostActions(
-                                                                onLike = viewModel::likePost,
-                                                                onComment = { p -> onNavigateToPost(p.id) },
-                                                                onShare = { p -> PostShareUtils.sharePost(context, p.id) },
-                                                                onRepost = viewModel::resharePost,
-                                                                onQuote = { post -> onNavigateToQuotePost(post.id) },
-                                                                onBookmark = viewModel::bookmarkPost,
-                                                                onOptionClick = { p -> selectedPost = p },
-                                                                onPollVote = viewModel::votePoll,
-                                                                onUserClick = { userId -> onNavigateToProfile(userId) },
-onMediaClick = { post, index ->
-                                                            val urls = post.mediaItems?.mapNotNull { it.url } ?: emptyList()
-                                                            if (urls.isNotEmpty()) {
-                                                                selectedMediaIndex = index.coerceIn(0, urls.lastIndex)
-                                                                selectedMediaUrls = urls
-                                                                showMediaViewer = true
-                                                            }
-                                                        },
-                                                                onReactionSelected = { p, r -> viewModel.reactToPost(p, r) }
-                                                            )
                                                         }
-
-                                                        SharedPostItem(
-                                                            post = post,
-                                                            actions = actions
+                                                    )
+                                                    HorizontalDivider(
+                                                        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
+                                                        thickness = Sizes.BorderHairline
+                                                    )
+                                                }
+                                            }
+                                        }
+                                        SearchTab.TOP, SearchTab.LATEST, SearchTab.MEDIA -> {
+                                            if (uiState.posts.isEmpty()) {
+                                                item {
+                                                    EmptyState(
+                                                        icon = Icons.Default.SearchOff,
+                                                        title = stringResource(R.string.empty_posts_title),
+                                                        message = stringResource(R.string.empty_posts_title)
+                                                    )
+                                                }
+                                            } else {
+                                                itemsIndexed(uiState.posts, key = { index, it -> "${it.id}_${index}" }) { index, post ->
+                                                    val actions = remember(viewModel, context) {
+                                                        PostActions(
+                                                            onLike = viewModel::likePost,
+                                                            onComment = { p -> onNavigateToPost(p.id) },
+                                                            onShare = { p -> PostShareUtils.sharePost(context, p.id) },
+                                                            onRepost = viewModel::resharePost,
+                                                            onQuote = { post -> onNavigateToQuotePost(post.id) },
+                                                            onBookmark = viewModel::bookmarkPost,
+                                                            onOptionClick = { p -> selectedPost = p },
+                                                            onPollVote = viewModel::votePoll,
+                                                            onUserClick = { userId -> onNavigateToProfile(userId) },
+                                                            onMediaClick = { post, index ->
+                                                                val urls = post.mediaItems?.mapNotNull { it.url } ?: emptyList()
+                                                                if (urls.isNotEmpty()) {
+                                                                    selectedMediaIndex = index.coerceIn(0, urls.lastIndex)
+                                                                    selectedMediaUrls = urls
+                                                                    showMediaViewer = true
+                                                                }
+                                                            },
+                                                            onReactionSelected = { p, r -> viewModel.reactToPost(p, r) }
                                                         )
                                                     }
+
+                                                    SharedPostItem(
+                                                        post = post,
+                                                        actions = actions
+                                                    )
                                                 }
                                             }
                                         }
@@ -513,7 +527,6 @@ onMediaClick = { post, index ->
                 }
             }
         }
-
     }
 
     selectedPost?.let { post ->
@@ -591,34 +604,5 @@ onMediaClick = { post, index ->
             initialPage = selectedMediaIndex,
             onDismiss = { showMediaViewer = false }
         )
-    }
-}
-
-@Composable
-fun SearchLoadingShimmer() {
-    LazyColumn(
-        modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(Spacing.space16)
-    ) {
-        items(5) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = Spacing.space12),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                ShimmerCircle(size = Sizes.AvatarDefault)
-                Spacer(modifier = Modifier.width(Spacing.space16))
-                Column {
-                    ShimmerBox(modifier = Modifier.width(Sizes.ShimmerWidthLarge).height(Sizes.ShimmerLineHeight))
-                    Spacer(modifier = Modifier.height(Spacing.space8))
-                    ShimmerBox(modifier = Modifier.width(Sizes.WidthLarge).height(Sizes.ShimmerLineHeightSmall))
-                }
-            }
-            HorizontalDivider(
-                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
-                thickness = Sizes.BorderHairline
-            )
-        }
     }
 }
