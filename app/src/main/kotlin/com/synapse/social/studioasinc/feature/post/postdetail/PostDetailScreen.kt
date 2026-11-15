@@ -469,15 +469,15 @@ private fun PostDetailContent(
                                     onLikeClick = { onLikeClick(ancestor.id) },
                                     onCommentClick = { onReplyClick(ancestor) },
                                     onShareClick = { PostShareUtils.shareComment(context, ancestor.content) },
-                                    onRepostClick = { },
-                                    onBookmarkClick = { },
+                                    onRepostClick = { /* Not applicable for comments */ },
+                                    onBookmarkClick = { /* Not applicable for comments */ },
                                     onUserClick = { ancestor.userId?.let { onUserClick(it) } },
                                     onPostClick = { onCommentClick(ancestor.id) },
                                     onMediaClick = { _, _ -> },
                                     onOptionsClick = { onShowOptions(ancestor) },
-                                    onPollVote = { },
+                                    onPollVote = { /* No polls in comments */ },
                                     onReactionSelected = { onShowReactions(ancestor) },
-                                    onQuoteClick = { },
+                                    onQuoteClick = { /* Not applicable for comments */ },
                                     modifier = Modifier.fillMaxWidth()
                                 )
                             }
@@ -496,15 +496,15 @@ private fun PostDetailContent(
                                 onLikeClick = { onLikeClick(rootComment.id) },
                                 onCommentClick = { onReplyClick(rootComment) },
                                 onShareClick = { PostShareUtils.shareComment(context, rootComment.content) },
-                                onRepostClick = { },
-                                onBookmarkClick = { },
+                                onRepostClick = { /* Not applicable for comments */ },
+                                onBookmarkClick = { /* Not applicable for comments */ },
                                 onUserClick = { rootComment.userId?.let { onUserClick(it) } },
                                 onPostClick = { },
                                 onMediaClick = { _, _ -> },
                                 onOptionsClick = { onShowOptions(rootComment) },
-                                onPollVote = { },
+                                onPollVote = { /* No polls in comments */ },
                                 onReactionSelected = { onShowReactions(rootComment) },
-                                onQuoteClick = { },
+                                onQuoteClick = { /* Not applicable for comments */ },
                                 modifier = Modifier.fillMaxWidth()
                             )
                         } else {
