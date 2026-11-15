@@ -104,6 +104,10 @@ class NotificationSettingsViewModel @Inject constructor(
         viewModelScope.launch { soundSettingsRepository.setCallTonesEnabled(enabled) }
     }
 
+    fun toggleConversationTones(enabled: Boolean) {
+        viewModelScope.launch { soundSettingsRepository.setConversationTonesEnabled(enabled) }
+    }
+
     fun setQuietHours(start: String, end: String) {
         updatePreferences { it.copy(quietHoursStart = start, quietHoursEnd = end) }
     }

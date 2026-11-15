@@ -12,6 +12,7 @@ interface SoundStore {
     suspend fun setSoundMasterEnabled(enabled: Boolean)
     suspend fun setMessageTonesEnabled(enabled: Boolean)
     suspend fun setCallTonesEnabled(enabled: Boolean)
+    suspend fun setConversationTonesEnabled(enabled: Boolean)
 }
 
 class SoundStoreImpl(private val dataStore: DataStore<Preferences>) : SoundStore {
@@ -23,7 +24,9 @@ class SoundStoreImpl(private val dataStore: DataStore<Preferences>) : SoundStore
                 messageTonesEnabled = preferences[SettingsConstants.KEY_SOUND_MESSAGE_TONES]
                     ?: SettingsConstants.DEFAULT_SOUND_TONES_ENABLED,
                 callTonesEnabled = preferences[SettingsConstants.KEY_SOUND_CALL_TONES]
-                    ?: SettingsConstants.DEFAULT_SOUND_TONES_ENABLED
+                    ?: SettingsConstants.DEFAULT_SOUND_TONES_ENABLED,
+                conversationTonesEnabled = preferences[SettingsConstants.KEY_SOUND_CONVERSATION_TONES]
+                    ?: SettingsConstants.DEFAULT_CONVERSATION_TONES_ENABLED
             )
         }
 
@@ -42,6 +45,12 @@ class SoundStoreImpl(private val dataStore: DataStore<Preferences>) : SoundStore
     override suspend fun setCallTonesEnabled(enabled: Boolean) {
         dataStore.edit { preferences ->
             preferences[SettingsConstants.KEY_SOUND_CALL_TONES] = enabled
+        }
+    }
+
+    override suspend fun setConversationTonesEnabled(enabled: Boolean) {
+        dataStore.edit { preferences ->
+            preferences[SettingsConstants.KEY_SOUND_CONVERSATION_TONES] = enabled
         }
     }
 }
