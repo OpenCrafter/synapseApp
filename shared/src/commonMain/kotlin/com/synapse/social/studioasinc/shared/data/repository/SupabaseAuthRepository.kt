@@ -609,17 +609,21 @@ class SupabaseAuthRepository(
 
     /**
      * Retrieves a list of social providers currently linked to the user's account.
+     * Only identities bound to the current session user are returned so that the
+     * linked-accounts UI reflects the signed-in user, not every user in the table.
      */
     override suspend fun getLinkedIdentities(): Result<List<String>> {
         return try {
             withContext(AppDispatchers.IO) {
+                val userId = client.auth.currentUserOrNull()?.id
                 val identities = client.from("user_identities")
                     .select()
                     .decodeList<JsonObject>()
-
-                val providers = identities.mapNotNull {
-                    it["provider"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull
-                }
+                val providers = identities
+                    .filter { userId != null && it["user_id"]?.let { elem -> (elem as? kotlinx.serialization.json.JsonPrimitive)?.contentOrNull } == userId }
+                    .mapNotNull {
+                        it["provider"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull
+                    }
                 Result.success(providers)
             }
         } catch (e: Exception) {
