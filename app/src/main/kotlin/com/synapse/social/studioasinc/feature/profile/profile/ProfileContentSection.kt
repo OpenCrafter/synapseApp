@@ -492,7 +492,6 @@ internal fun ProfileContent(
                     onPollVote = { /* No polls in comments */ },
                     onReactionSelected = { reaction -> viewModel.reactToPost(postCardState.post, reaction) },
                     onQuoteClick = { currentOnNavigateToQuotePost(postCardState.post.id) },
-                    showOptions = false,
                     modifier = Modifier.padding(bottom = Spacing.space8)
                 )
             }
