@@ -107,32 +107,6 @@ fun FavouritesScreen(
             }
 
             item {
-                SettingsSection(title = stringResource(R.string.manage_favourites)) {
-                    SettingsNavigationItem(
-                        title = stringResource(R.string.add_to_favourites),
-                        subtitle = stringResource(R.string.select_contacts_favourites),
-                        imageVector = Icons.Filled.Add,
-                        position = SettingsItemPosition.Top,
-                        onClick = null
-                    )
-                    SettingsNavigationItem(
-                        title = stringResource(R.string.reorder_favourites),
-                        subtitle = stringResource(R.string.change_order_favourites),
-                        imageVector = Icons.Filled.Reorder,
-                        position = SettingsItemPosition.Middle,
-                        onClick = null
-                    )
-                    SettingsNavigationItem(
-                        title = stringResource(R.string.remove_from_favourites),
-                        subtitle = stringResource(R.string.remove_contacts_favourites),
-                        imageVector = Icons.Filled.Delete,
-                        position = SettingsItemPosition.Bottom,
-                        onClick = null
-                    )
-                }
-            }
-
-            item {
                 SettingsSection(title = stringResource(R.string.display_options)) {
                     SettingsToggleItem(
                         title = stringResource(R.string.show_favourites_chat_list),
