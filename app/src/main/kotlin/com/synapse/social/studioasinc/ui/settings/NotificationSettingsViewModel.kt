@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.onesignal.OneSignal
 import com.synapse.social.studioasinc.core.config.NotificationConfig
+import com.synapse.social.studioasinc.data.repository.SettingsRepository
 import com.synapse.social.studioasinc.shared.domain.model.sound.SoundPreferences
 import com.synapse.social.studioasinc.shared.domain.repository.AuthRepository
 import com.synapse.social.studioasinc.shared.domain.repository.NotificationRepository
@@ -28,7 +29,8 @@ import kotlinx.serialization.json.*
 class NotificationSettingsViewModel @Inject constructor(
     private val authRepository: AuthRepository,
     private val notificationRepository: NotificationRepository,
-    private val soundSettingsRepository: SoundSettingsRepository
+    private val soundSettingsRepository: SoundSettingsRepository,
+    private val settingsRepository: SettingsRepository
 ) : ViewModel() {
     private val _notificationPreferences = MutableStateFlow(NotificationPreferences())
     val notificationPreferences: StateFlow<NotificationPreferences> = _notificationPreferences.asStateFlow()
@@ -37,6 +39,9 @@ class NotificationSettingsViewModel @Inject constructor(
     // so they live in DataStore and never sync to the backend.
     val soundPreferences: StateFlow<SoundPreferences> = soundSettingsRepository.soundPreferences
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), SoundPreferences())
+
+    val conversationTonesEnabled: StateFlow<Boolean> = settingsRepository.conversationTonesEnabled
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), true)
 
     private val _isLoading = MutableStateFlow(true)
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
@@ -102,6 +107,10 @@ class NotificationSettingsViewModel @Inject constructor(
 
     fun toggleCallTones(enabled: Boolean) {
         viewModelScope.launch { soundSettingsRepository.setCallTonesEnabled(enabled) }
+    }
+
+    fun setConversationTonesEnabled(enabled: Boolean) {
+        viewModelScope.launch { settingsRepository.setConversationTonesEnabled(enabled) }
     }
 
     fun setQuietHours(start: String, end: String) {
