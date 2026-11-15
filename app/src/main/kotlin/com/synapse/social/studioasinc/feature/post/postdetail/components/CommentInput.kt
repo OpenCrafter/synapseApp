@@ -46,7 +46,7 @@ fun CommentInput(
     onReplyingToClick: (() -> Unit)? = null,
     focusRequester: FocusRequester = remember { FocusRequester() },
     selectedMediaUri: Uri? = null,
-    onMediaUriChange: (Uri?) -> Unit = {}
+    onMediaUriChange: (Uri?) -> Unit
 ) {
 
     val mediaPickerLauncher = rememberLauncherForActivityResult(
