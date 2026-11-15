@@ -2,7 +2,6 @@ package com.synapse.social.studioasinc.ui.search
 
 import android.content.Intent
 import android.net.Uri
-import android.widget.Toast
 import androidx.compose.animation.*
 import androidx.compose.animation.core.tween
 import com.synapse.social.studioasinc.R
@@ -179,24 +178,9 @@ fun SearchScreen(
                                                     contentDescription = stringResource(R.string.clear)
                                                 )
                                             }
-                                        } else {
-                                            IconButton(onClick = {
-                                                Toast.makeText(
-                                                    context,
-                                                    context.getString(R.string.voice_search),
-                                                    Toast.LENGTH_SHORT
-                                                ).show()
-                                            }) {
-                                                Icon(
-                                                    Icons.Default.Mic,
-                                                    contentDescription = stringResource(R.string.voice_search)
-                                                )
-                                            }
                                         }
                                     }
-                                }
-                            )
-                        },
+                                },
                         expanded = false,
                         onExpandedChange = {},
                         colors = SearchBarDefaults.colors(
