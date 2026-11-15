@@ -183,8 +183,7 @@ internal fun PostOptionsSection(
                 viewModel.toggleSave(post)
             },
             onToggleComments = {
-                Toast.makeText(context, context.getString(R.string.toast_toggle_comments_impl), Toast.LENGTH_SHORT).show()
-                Result.success(Unit)
+                viewModel.toggleComments(post.id)
             },
             onReport = {
                 viewModel.reportPost(post.id, context.getString(R.string.toast_reported_from_profile))
@@ -195,7 +194,7 @@ internal fun PostOptionsSection(
                 Result.success(Unit)
             },
             onRevokeVote = {
-                Toast.makeText(context, context.getString(R.string.toast_revoke_vote_impl), Toast.LENGTH_SHORT).show()
+                viewModel.revokeVote(post.id)
             }
         )
     }
