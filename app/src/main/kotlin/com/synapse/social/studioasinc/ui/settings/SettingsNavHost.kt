@@ -212,8 +212,10 @@ fun SettingsNavHost(
             )
         ) { backStackEntry ->
             val categoryId = backStackEntry.arguments?.getString("categoryId") ?: ""
+            val viewModel: PrivacyCheckupCategoryViewModel = hiltViewModel(backStackEntry)
             PrivacyCheckupCategoryScreen(
                 categoryId = categoryId,
+                viewModel = viewModel,
                 onNavigateToGroups = { navController.navigate(SettingsDestination.ROUTE_PRIVACY_GROUPS) },
                 onNavigateToBlockedContacts = { navController.navigate(SettingsDestination.ROUTE_BLOCKED_CONTACTS) },
                 onNavigateToProfilePhoto = { navController.navigate(SettingsDestination.ROUTE_PRIVACY_PROFILE_PHOTO) },

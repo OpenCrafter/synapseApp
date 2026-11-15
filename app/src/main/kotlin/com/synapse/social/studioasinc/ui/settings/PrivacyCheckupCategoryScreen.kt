@@ -43,7 +43,8 @@ fun PrivacyCheckupCategoryScreen(
     onNavigateToAppLock: () -> Unit,
     onNavigateToDisappearingMessages: () -> Unit,
     onNavigateToAccountInfo: () -> Unit,
-    onNavigateBack: () -> Unit
+    onNavigateBack: () -> Unit,
+    viewModel: PrivacyCheckupCategoryViewModel
 ) {
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
 
@@ -75,7 +76,7 @@ fun PrivacyCheckupCategoryScreen(
         )
     }
 
-    var silenceUnknownCallers by remember { mutableStateOf(false) }
+    val silenceUnknownCallers by viewModel.silenceUnknownCallers.collectAsState(initial = false)
 
     Scaffold(
         containerColor = AppColors.screenBackground,
@@ -178,7 +179,7 @@ fun PrivacyCheckupCategoryScreen(
                                 subtitle = "Calls from unknown numbers will be silenced automatically",
                                 imageVector = Icons.AutoMirrored.Filled.VolumeOff,
                                 checked = silenceUnknownCallers,
-                                onCheckedChange = { silenceUnknownCallers = it },
+                                onCheckedChange = { viewModel.setSilenceUnknownCallers(it) },
                                 position = SettingsItemPosition.Middle
                             )
                             SettingsNavigationItem(
