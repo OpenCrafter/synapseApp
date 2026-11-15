@@ -62,6 +62,8 @@ object SettingsConstants {
     val KEY_SOUND_EFFECTS_MASTER = booleanPreferencesKey("sound_effects_master")
     val KEY_SOUND_MESSAGE_TONES = booleanPreferencesKey("sound_message_tones")
     val KEY_SOUND_CALL_TONES = booleanPreferencesKey("sound_call_tones")
+    val KEY_SILENCE_UNKNOWN_CALLERS = booleanPreferencesKey("silence_unknown_callers")
+    val KEY_CONVERSATION_TONES_ENABLED = booleanPreferencesKey("conversation_tones_enabled")
 
     val KEY_READ_RECEIPTS_ENABLED = booleanPreferencesKey("read_receipts_enabled")
     val KEY_TYPING_INDICATORS_ENABLED = booleanPreferencesKey("typing_indicators_enabled")
@@ -119,9 +121,6 @@ object SettingsConstants {
     val KEY_SHOW_FAVOURITES_IN_CHAT_LIST = booleanPreferencesKey("show_favourites_in_chat_list")
     val KEY_SHOW_FAVOURITE_BADGE = booleanPreferencesKey("show_favourite_badge")
 
-    val KEY_SILENCE_UNKNOWN_CALLERS = booleanPreferencesKey("silence_unknown_callers")
-    val KEY_CONVERSATION_TONES_ENABLED = booleanPreferencesKey("conversation_tones_enabled")
-
     val DEFAULT_THEME_MODE = ThemeMode.SYSTEM
     val DEFAULT_DYNAMIC_COLOR_ENABLED = true
     val DEFAULT_FONT_SCALE = FontScale.MEDIUM
@@ -141,6 +140,8 @@ object SettingsConstants {
     val DEFAULT_NOTIFICATIONS_GLOBAL = true
     val DEFAULT_IN_APP_NOTIFICATIONS_ENABLED = true
     val DEFAULT_SOUND_TONES_ENABLED = true
+    val DEFAULT_SILENCE_UNKNOWN_CALLERS = false
+    val DEFAULT_CONVERSATION_TONES_ENABLED = true
     val DEFAULT_READ_RECEIPTS_ENABLED = true
     val DEFAULT_TYPING_INDICATORS_ENABLED = true
     val DEFAULT_MEDIA_AUTO_DOWNLOAD = MediaAutoDownload.WIFI_ONLY
@@ -171,9 +172,6 @@ object SettingsConstants {
 
     val DEFAULT_SHOW_FAVOURITES_IN_CHAT_LIST = true
     val DEFAULT_SHOW_FAVOURITE_BADGE = true
-
-    val DEFAULT_SILENCE_UNKNOWN_CALLERS = false
-    val DEFAULT_CONVERSATION_TONES_ENABLED = true
 
     val DEFAULT_AUTO_DOWNLOAD_WIFI_STRINGS = com.synapse.social.studioasinc.ui.settings.MediaType.values().map { it.name }.toSet()
     val DEFAULT_AUTO_DOWNLOAD_WIFI_TYPES = com.synapse.social.studioasinc.ui.settings.MediaType.values().toSet()
