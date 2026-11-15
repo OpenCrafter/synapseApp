@@ -49,6 +49,8 @@ fun NotificationSettingsScreen(
         notificationPreferences = notificationPreferences,
         soundPreferences = soundPreferences,
         error = error,
+        conversationTonesEnabled = conversationTonesEnabled,
+        onConversationTonesChange = viewModel::setConversationTonesEnabled,
         onBackClick = onBackClick,
         onClearError = viewModel::clearError,
         onToggleGlobal = viewModel::toggleGlobalNotifications,
@@ -95,9 +97,11 @@ fun NotificationSettingsContent(
     notificationPreferences: NotificationPreferences,
     soundPreferences: SoundPreferences,
     error: String?,
+    conversationTonesEnabled: Boolean,
     onBackClick: () -> Unit,
     onClearError: () -> Unit,
     onToggleGlobal: (Boolean) -> Unit,
+    onConversationTonesChange: (Boolean) -> Unit,
     onToggleCategory: (NotificationCategory, Boolean) -> Unit,
     onToggleQuietHours: (Boolean) -> Unit,
     onToggleDoNotDisturb: (Boolean) -> Unit,
@@ -156,7 +160,7 @@ fun NotificationSettingsContent(
                 GroupedNotificationSettingsSections(
                     notificationPreferences = notificationPreferences,
                     conversationTonesEnabled = conversationTonesEnabled,
-                    onConversationTonesChange = { viewModel.setConversationTonesEnabled(it) },
+                    onConversationTonesChange = onConversationTonesChange,
                     onToggleGlobal = onToggleGlobal
                 )
             }

@@ -75,7 +75,7 @@ internal fun GroupedNotificationSettingsSections(
     val popupOptions = listOf(defaultValue, popupAlwaysValue, popupNeverValue)
     val badgeOptions = listOf(enabledValue, disabledValue)
 
-    val remindersEnabled by rememberSaveable(notificationPreferences.remindersEnabled) {
+    var remindersEnabled by rememberSaveable(notificationPreferences.remindersEnabled) {
         mutableStateOf(notificationPreferences.remindersEnabled)
     }
     var messagesTone by rememberSaveable { mutableStateOf(defaultValue) }
