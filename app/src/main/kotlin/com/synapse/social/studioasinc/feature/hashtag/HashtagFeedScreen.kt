@@ -141,6 +141,7 @@ fun HashtagFeedScreen(
                     Result.success(Unit)
                 },
                 onReport = {
+                    viewModel.reportPost(post.id)
                     selectedPost = null
                 },
                 onBlock = {
@@ -148,6 +149,7 @@ fun HashtagFeedScreen(
                     Result.success(Unit)
                 },
                 onRevokeVote = {
+                    viewModel.revokeVote(post)
                     selectedPost = null
                 }
             )

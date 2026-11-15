@@ -16,6 +16,8 @@ import com.synapse.social.studioasinc.domain.usecase.post.PopulatePostPollsUseCa
 import com.synapse.social.studioasinc.domain.usecase.post.QuotePostUseCase
 import com.synapse.social.studioasinc.domain.usecase.reaction.PopulatePostReactionsUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.blocking.BlockUserUseCase
+import com.synapse.social.studioasinc.domain.usecase.post.ReportPostUseCase
+import com.synapse.social.studioasinc.domain.usecase.post.RevokeVoteUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.post.TogglePostCommentsUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -46,11 +48,16 @@ class HashtagFeedViewModel @Inject constructor(
     private val quotePostUseCase: QuotePostUseCase,
     private val authRepository: AuthRepository,
     private val togglePostCommentsUseCase: TogglePostCommentsUseCase,
-    private val blockUserUseCase: BlockUserUseCase
+    private val blockUserUseCase: BlockUserUseCase,
+    private val reportPostUseCase: ReportPostUseCase,
+    private val revokeVoteUseCase: RevokeVoteUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(HashtagFeedUiState())
     val uiState: StateFlow<HashtagFeedUiState> = _uiState.asStateFlow()
+
+    /** Default reason used when reporting a post from the hashtag feed (no reason picker is shown there). */
+    private val defaultReportReason = "Reported from hashtag feed"
 
     fun init(tag: String) {
         if (_uiState.value.tag == tag) return
@@ -220,6 +227,32 @@ class HashtagFeedViewModel @Inject constructor(
                 // Block succeeded server-side; the post remains visible until the feed refreshes.
             }.onFailure { e ->
                 _uiState.update { it.copy(error = e.message) }
+            }
+        }
+    }
+
+    fun reportPost(postId: String) {
+        viewModelScope.launch {
+            reportPostUseCase(postId, defaultReportReason, null).collect { result ->
+                result.onFailure { e ->
+                    _uiState.update { it.copy(error = e.message ?: "Failed to report post") }
+                }
+            }
+        }
+    }
+
+    fun revokeVote(post: Post) {
+        viewModelScope.launch {
+            revokeVoteUseCase(post).collect { result ->
+                result.onSuccess { updatedPost ->
+                    _uiState.update { state ->
+                        state.copy(posts = state.posts.map {
+                            if (it.id == post.id) updatedPost else it
+                        })
+                    }
+                }.onFailure { e ->
+                    _uiState.update { it.copy(error = e.message ?: "Failed to revoke vote") }
+                }
             }
         }
     }
