@@ -211,7 +211,6 @@ fun SettingsToggleItem(
         subtitle = subtitle,
         position = position,
         enabled = enabled,
-        onClick = { onCheckedChange(!checked) },
         leadingContent = imageVector?.let {
             {
                 SettingsIconBadge(imageVector = it)
