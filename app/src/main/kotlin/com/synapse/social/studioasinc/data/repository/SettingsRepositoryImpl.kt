@@ -554,4 +554,10 @@ class SettingsRepositoryImpl private constructor(
     override suspend fun setShowFavouriteBadge(enabled: Boolean) {
         settingsDataStore.setShowFavouriteBadge(enabled)
     }
+
+    override val silenceUnknownCallers: Flow<Boolean> = settingsDataStore.silenceUnknownCallers
+
+    override suspend fun setSilenceUnknownCallers(enabled: Boolean) {
+        settingsDataStore.setSilenceUnknownCallers(enabled)
+    }
 }
