@@ -46,19 +46,20 @@ fun CommentInput(
     userDisplayName: String? = null,
     replyToParticipants: List<String> = emptyList(),
     onReplyingToClick: (() -> Unit)? = null,
-    focusRequester: FocusRequester = remember { FocusRequester() }
+    focusRequester: FocusRequester = remember { FocusRequester() },
+    selectedMediaUri: Uri? = null,
+    onMediaUriChange: (Uri?) -> Unit = {}
 ) {
-    val selectedMediaUri = remember { mutableStateOf<Uri?>(null) }
 
     val mediaPickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickVisualMedia()
     ) { uri ->
         if (uri != null) {
-            selectedMediaUri.value = uri
+            onMediaUriChange(uri)
         }
     }
 
-    val canSend = (text.isNotBlank() || selectedMediaUri.value != null) && !isSending
+    val canSend = (text.isNotBlank() || selectedMediaUri != null) && !isSending
 
     Column(
         modifier = modifier
@@ -118,7 +119,7 @@ fun CommentInput(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Column {
-                        if (selectedMediaUri.value != null) {
+                        if (selectedMediaUri != null) {
                             Box(
                                 modifier = Modifier
                                     .padding(start = Spacing.space16, end = Spacing.space16, top = Spacing.space12)
@@ -127,7 +128,7 @@ fun CommentInput(
                                     .border(Sizes.BorderThin, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(Sizes.CornerDefault))
                             ) {
                                 AsyncImage(
-                                    model = selectedMediaUri.value,
+                                    model = selectedMediaUri,
                                     contentDescription = "Selected media",
                                     modifier = Modifier.fillMaxSize(),
                                     contentScale = ContentScale.Crop
@@ -139,7 +140,7 @@ fun CommentInput(
                                         .align(Alignment.TopEnd)
                                         .padding(Spacing.space8)
                                         .size(Sizes.IconLarge)
-                                        .clickable { selectedMediaUri.value = null }
+                                        .clickable { onMediaUriChange(null) }
                                 ) {
                                     Icon(
                                         imageVector = Icons.Default.Close,
@@ -202,8 +203,7 @@ fun CommentInput(
                                 onClick = {
                                     if (canSend) {
                                         onSendingChange(true)
-                                        onSend(text, selectedMediaUri.value)
-                                        selectedMediaUri.value = null
+                                        onSend(text, selectedMediaUri)
                                     }
                                 },
                                 enabled = canSend
