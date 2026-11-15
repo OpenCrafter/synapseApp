@@ -33,4 +33,7 @@ class SoundSettingsRepositoryImpl @Inject constructor(
 
     override suspend fun setCallTonesEnabled(enabled: Boolean) =
         settingsDataStore.setCallTonesEnabled(enabled)
+
+    override suspend fun setConversationTonesEnabled(enabled: Boolean) =
+        settingsDataStore.setConversationTonesEnabled(enabled)
 }

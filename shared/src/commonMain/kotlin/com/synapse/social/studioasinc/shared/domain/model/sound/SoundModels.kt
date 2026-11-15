@@ -59,7 +59,8 @@ data class SoundRequest(
 data class SoundPreferences(
     val masterEnabled: Boolean = true,
     val messageTonesEnabled: Boolean = true,
-    val callTonesEnabled: Boolean = true
+    val callTonesEnabled: Boolean = true,
+    val conversationTonesEnabled: Boolean = true
 ) {
     /** A category switch is only ever an exception carved out of the master switch. */
     fun isCategoryEnabled(category: SoundToneCategory): Boolean =

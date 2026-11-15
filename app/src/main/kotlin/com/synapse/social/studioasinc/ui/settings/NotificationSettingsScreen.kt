@@ -57,6 +57,7 @@ fun NotificationSettingsScreen(
         onToggleSoundEffects = viewModel::toggleSoundEffects,
         onToggleMessageTones = viewModel::toggleMessageTones,
         onToggleCallTones = viewModel::toggleCallTones,
+        onToggleConversationTones = viewModel::toggleConversationTones,
         onShowStartTimePicker = { showStartTimePicker = true }
     )
 
@@ -103,6 +104,7 @@ fun NotificationSettingsContent(
     onToggleSoundEffects: (Boolean) -> Unit,
     onToggleMessageTones: (Boolean) -> Unit,
     onToggleCallTones: (Boolean) -> Unit,
+    onToggleConversationTones: (Boolean) -> Unit,
     onShowStartTimePicker: () -> Unit
 ) {
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
@@ -154,6 +156,8 @@ fun NotificationSettingsContent(
             item {
                 GroupedNotificationSettingsSections(
                     notificationPreferences = notificationPreferences,
+                    conversationTonesEnabled = soundPreferences.conversationTonesEnabled,
+                    onConversationTonesChange = onToggleConversationTones,
                     onToggleGlobal = onToggleGlobal
                 )
             }
