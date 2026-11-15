@@ -211,6 +211,7 @@ fun SettingsToggleItem(
         subtitle = subtitle,
         position = position,
         enabled = enabled,
+        onClick = { onCheckedChange(!checked) },
         leadingContent = imageVector?.let {
             {
                 SettingsIconBadge(imageVector = it)
@@ -220,7 +221,7 @@ fun SettingsToggleItem(
             // ListItem merges this into the row, so the switch state is announced with the title.
             Switch(
                 checked = checked,
-                onCheckedChange = onCheckedChange,
+                onCheckedChange = null,
                 enabled = enabled,
                 colors = SwitchDefaults.colors(
                     checkedThumbColor = MaterialTheme.colorScheme.primary,
