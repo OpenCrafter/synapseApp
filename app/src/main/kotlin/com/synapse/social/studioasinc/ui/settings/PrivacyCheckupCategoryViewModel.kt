@@ -8,12 +8,11 @@ import javax.inject.Inject
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.launch
 
 /**
- * ViewModel for the Privacy Checkup category screens.
+ * ViewModel for the Privacy Checkup category screen.
  *
- * Wires the [silenceUnknownCallers] toggle to the persisted [SettingsRepository] so the user's
+ * Wires the "Silence unknown callers" toggle to the persisted [SettingsRepository] so the
  * preference survives navigation and process death instead of being reset to its initial value
  * on every composition.
  *
