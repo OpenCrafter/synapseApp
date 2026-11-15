@@ -34,6 +34,7 @@ private data class CheckupCategoryConfig(
 @Composable
 fun PrivacyCheckupCategoryScreen(
     categoryId: String,
+    viewModel: PrivacyCheckupViewModel,
     onNavigateToGroups: () -> Unit,
     onNavigateToBlockedContacts: () -> Unit,
     onNavigateToProfilePhoto: () -> Unit,
@@ -75,7 +76,7 @@ fun PrivacyCheckupCategoryScreen(
         )
     }
 
-    var silenceUnknownCallers by remember { mutableStateOf(false) }
+    val silenceUnknownCallers by viewModel.silenceUnknownCallers.collectAsState()
 
     Scaffold(
         containerColor = AppColors.screenBackground,
@@ -178,7 +179,7 @@ fun PrivacyCheckupCategoryScreen(
                                 subtitle = "Calls from unknown numbers will be silenced automatically",
                                 imageVector = Icons.AutoMirrored.Filled.VolumeOff,
                                 checked = silenceUnknownCallers,
-                                onCheckedChange = { silenceUnknownCallers = it },
+                                onCheckedChange = { viewModel.setSilenceUnknownCallers(it) },
                                 position = SettingsItemPosition.Middle
                             )
                             SettingsNavigationItem(

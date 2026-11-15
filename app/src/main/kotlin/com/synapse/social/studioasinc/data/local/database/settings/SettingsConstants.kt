@@ -61,6 +61,7 @@ object SettingsConstants {
     val KEY_IN_APP_NOTIFICATIONS = booleanPreferencesKey("in_app_notifications")
     val KEY_SHOW_FAVOURITES_IN_CHAT_LIST = booleanPreferencesKey("show_favourites_in_chat_list")
     val KEY_SHOW_FAVOURITE_BADGE = booleanPreferencesKey("show_favourite_badge")
+    val KEY_SILENCE_UNKNOWN_CALLERS = booleanPreferencesKey("silence_unknown_callers")
 
     val KEY_SOUND_EFFECTS_MASTER = booleanPreferencesKey("sound_effects_master")
     val KEY_SOUND_MESSAGE_TONES = booleanPreferencesKey("sound_message_tones")
@@ -140,6 +141,7 @@ object SettingsConstants {
     val DEFAULT_GLOBAL_NOTIFICATIONS_ENABLED = true
     val DEFAULT_SHOW_FAVOURITES_IN_CHAT_LIST = false
     val DEFAULT_SHOW_FAVOURITE_BADGE = false
+    val DEFAULT_SILENCE_UNKNOWN_CALLERS = false
     val DEFAULT_REPLIES_ENABLED = true
     val DEFAULT_NEW_POSTS_ENABLED = true
     val DEFAULT_SHARES_ENABLED = true
