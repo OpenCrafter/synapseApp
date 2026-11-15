@@ -113,7 +113,7 @@ fun CommentsList(
                     onOptionsClick = { onShowOptions(comment) },
                     onPollVote = { /* No polls in comments */ },
                     onReactionSelected = { reaction -> onShowReactions(comment) },
-                    onQuoteClick = { },
+                    onQuoteClick = { /* Not applicable for comments */ },
                     modifier = Modifier
                 )
             }
