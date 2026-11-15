@@ -145,6 +145,7 @@ fun PostDetailScreen(
         val editing = uiState.editingComment
         if (editing != null) {
             commentText = editing.content ?: ""
+            selectedMediaUri = null
             commentIsSending = false
         }
     }
@@ -589,8 +590,8 @@ private fun PostDetailBottomBar(
     commentIsSending: Boolean,
     onCommentSendingChange: (Boolean) -> Unit,
     onSendComment: (String, android.net.Uri?) -> Unit,
-    selectedMediaUri: android.net.Uri?,
-    onMediaUriChange: (android.net.Uri?) -> Unit
+    selectedMediaUri: Uri?,
+    onMediaUriChange: (Uri?) -> Unit
 ) {
     Column(
         modifier = Modifier
