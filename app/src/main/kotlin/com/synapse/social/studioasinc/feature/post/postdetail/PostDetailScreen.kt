@@ -5,6 +5,7 @@ import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
 import android.widget.Toast
+import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
@@ -84,6 +85,7 @@ fun PostDetailScreen(
 
     var commentText by remember { mutableStateOf("") }
     var commentIsSending by remember { mutableStateOf(false) }
+    var selectedMediaUri by remember { mutableStateOf<Uri?>(null) }
 
     var showCommentOptions by remember { mutableStateOf<CommentWithUser?>(null) }
     var showReactionPickerForComment by remember { mutableStateOf<CommentWithUser?>(null) }
@@ -131,6 +133,7 @@ fun PostDetailScreen(
             }
             if (uiState.commentError == null) {
                 commentText = ""
+                selectedMediaUri = null
             }
             commentIsSending = false
             viewModel.clearCommentSubmission()
@@ -142,6 +145,7 @@ fun PostDetailScreen(
         val editing = uiState.editingComment
         if (editing != null) {
             commentText = editing.content ?: ""
+            selectedMediaUri = null
             commentIsSending = false
         }
     }
@@ -318,6 +322,8 @@ fun PostDetailScreen(
                 onCommentTextChange = { commentText = it },
                 commentIsSending = commentIsSending,
                 onCommentSendingChange = { commentIsSending = it },
+                selectedMediaUri = selectedMediaUri,
+                onMediaUriChange = { selectedMediaUri = it },
                 onSendComment = { content, mediaUri ->
                     if (uiState.editingComment != null) {
                         commentIsSending = true
@@ -583,7 +589,9 @@ private fun PostDetailBottomBar(
     onCommentTextChange: (String) -> Unit,
     commentIsSending: Boolean,
     onCommentSendingChange: (Boolean) -> Unit,
-    onSendComment: (String, android.net.Uri?) -> Unit
+    onSendComment: (String, android.net.Uri?) -> Unit,
+    selectedMediaUri: Uri?,
+    onMediaUriChange: (Uri?) -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -610,6 +618,8 @@ private fun PostDetailBottomBar(
             isSending = commentIsSending,
             onSendingChange = onCommentSendingChange,
             onSend = onSendComment,
+            selectedMediaUri = selectedMediaUri,
+            onMediaUriChange = onMediaUriChange,
             userAvatarUrl = uiState.currentUserAvatarUrl,
             userDisplayName = uiState.currentUserDisplayName,
             replyToParticipants = uiState.replyToParticipants.map { it.username },
