@@ -476,8 +476,8 @@ internal fun ProfileContent(
                         PostDetailActivity.start(context, comment.postId, comment.userId)
                     },
                     onShareClick = { PostShareUtils.shareComment(context, comment.content) },
-                    onRepostClick = { },
-                    onBookmarkClick = { },
+                    onRepostClick = { viewModel.resharePost(postCardState.post) },
+                    onBookmarkClick = { viewModel.toggleSave(postCardState.post) },
                     onUserClick = { comment.userId.let { onNavigateToUserProfile(it) } },
                     onPostClick = {
                         PostDetailActivity.start(context, comment.postId, comment.userId)
@@ -488,10 +488,10 @@ internal fun ProfileContent(
                             onOpenMediaViewer(urls, idx)
                         }
                     },
-                    onOptionsClick = { /* Show options */ },
+                    onOptionsClick = { currentOnShowPostOptions(postCardState.post) },
                     onPollVote = { /* No polls in comments */ },
-                    onReactionSelected = { reaction -> /* Handle reaction */ },
-                    onQuoteClick = { },
+                    onReactionSelected = { reaction -> viewModel.reactToPost(postCardState.post, reaction) },
+                    onQuoteClick = { currentOnNavigateToQuotePost(postCardState.post.id) },
                     modifier = Modifier.padding(bottom = Spacing.space8)
                 )
             }
