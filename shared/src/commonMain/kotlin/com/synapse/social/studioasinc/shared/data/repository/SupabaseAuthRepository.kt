@@ -618,11 +618,11 @@ class SupabaseAuthRepository(
                 val userId = client.auth.currentUserOrNull()?.id
                 val identities = if (userId != null) {
                     client.from("user_identities")
-                        .select()
                         .eq("user_id", userId)
+                        .select()
                         .decodeList<JsonObject>()
                 } else {
-                    emptyList()
+                    emptyList<JsonObject>()
                 }
 
                 val providers = identities.mapNotNull {
