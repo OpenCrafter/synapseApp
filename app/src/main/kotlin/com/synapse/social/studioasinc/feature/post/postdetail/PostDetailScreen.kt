@@ -482,7 +482,7 @@ private fun PostDetailContent(
                                     onOptionsClick = { onShowOptions(ancestor) },
                                     onPollVote = { },
                                     onReactionSelected = { onShowReactions(ancestor) },
-                                    onQuoteClick = { },
+                                    onQuoteClick = { onNavigateToQuotePost(ancestor.id) },
                                     modifier = Modifier.fillMaxWidth()
                                 )
                             }
@@ -509,7 +509,7 @@ private fun PostDetailContent(
                                 onOptionsClick = { onShowOptions(rootComment) },
                                 onPollVote = { },
                                 onReactionSelected = { onShowReactions(rootComment) },
-                                onQuoteClick = { },
+                                onQuoteClick = { onNavigateToQuotePost(rootComment.id) },
                                 modifier = Modifier.fillMaxWidth()
                             )
                         } else {
