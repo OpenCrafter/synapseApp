@@ -161,6 +161,7 @@ fun CustomizationCategorySection(
                 subtitle = stringResource(R.string.nav_profile_layout_sub),
                 imageVector = Icons.AutoMirrored.Filled.ViewQuilt,
                 onClick = { onCategoryClick(ProfileCategoryType.PROFILE_LAYOUT) },
+                enabled = false,
                 position = SettingsItemPosition.Middle
             )
 
