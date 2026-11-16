@@ -60,11 +60,17 @@ class VideoPlayerManager @Inject constructor(
     private val activePlayers = mutableMapOf<String, ExoPlayer>()
     private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
 
-    fun getPlayer(url: String): ExoPlayer {
+    /**
+     * Returns a prepared player for [url].
+     *
+     * [playbackKey] identifies the surface that owns the player, so the same media can be shown by
+     * two different cards (for example a post and its reshare) without both fighting over a single
+     * player instance. [loop] is used by the reels viewer; feed videos play once and hold their last
+     * frame instead of restarting under the reader.
+     */
+    fun getPlayer(url: String, playbackKey: String = url, loop: Boolean = false): ExoPlayer {
 
-        if (activePlayers.containsKey(url)) {
-            return activePlayers[url] ?: throw IllegalStateException("Player not found for url: $url")
-        }
+        activePlayers[playbackKey]?.let { return it }
 
         val player = if (playerPool.isNotEmpty()) {
             playerPool.removeFirst()
@@ -72,8 +78,13 @@ class VideoPlayerManager @Inject constructor(
             createPlayer()
         }
 
-        activePlayers[url] = player
+        activePlayers[playbackKey] = player
 
+        // A pooled player keeps the state of its previous owner, so reset what would otherwise leak
+        // into the new surface: a pending play request, a muted volume and the previous repeat mode.
+        player.playWhenReady = false
+        player.volume = 1f
+        player.repeatMode = if (loop) ExoPlayer.REPEAT_MODE_ONE else ExoPlayer.REPEAT_MODE_OFF
 
         val mediaItem = MediaItem.fromUri(Uri.parse(url))
         val mediaSource = DefaultMediaSourceFactory(cacheDataSourceFactory)
@@ -81,13 +92,12 @@ class VideoPlayerManager @Inject constructor(
 
         player.setMediaSource(mediaSource)
         player.prepare()
-        player.repeatMode = ExoPlayer.REPEAT_MODE_ONE
 
         return player
     }
 
-    fun releasePlayer(url: String) {
-        val player = activePlayers.remove(url)
+    fun releasePlayer(playbackKey: String) {
+        val player = activePlayers.remove(playbackKey)
         if (player != null) {
             player.stop()
             player.clearMediaItems()
@@ -133,15 +143,17 @@ class VideoPlayerManager @Inject constructor(
         activePlayers.values.forEach { it.pause() }
     }
 
+    /**
+     * Releases every player currently in use.
+     *
+     * The shared [simpleCache] is deliberately kept alive: it is a process-wide singleton created
+     * through `lazy`, so releasing it here would leave every later playback with a dead cache. That
+     * is reachable now that both the feed and the reels viewer share this manager.
+     */
     fun releaseAll() {
         activePlayers.values.forEach { it.release() }
         activePlayers.clear()
         playerPool.forEach { it.release() }
         playerPool.clear()
-        try {
-            simpleCache.release()
-        } catch (e: Exception) {
-            Log.e(TAG, "Failed to release simpleCache", e)
-        }
     }
 }
