@@ -6,7 +6,6 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.widget.Toast
-import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
@@ -625,9 +624,6 @@ private fun PostDetailBottomBar(
             userDisplayName = uiState.currentUserDisplayName,
             replyToParticipants = uiState.replyToParticipants.map { it.username },
             onReplyingToClick = if (uiState.replyToParticipants.isNotEmpty()) onReplyingToClick else null,
-            focusRequester = focusRequester,
-            selectedMediaUri = selectedMediaUri,
-            onMediaUriChange = onMediaUriChange
         )
     }
 }
