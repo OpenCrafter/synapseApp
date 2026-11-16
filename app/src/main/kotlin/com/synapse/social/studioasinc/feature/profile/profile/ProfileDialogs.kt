@@ -176,6 +176,7 @@ internal fun PostOptionsSection(
             onShare = {
                 PostShareUtils.sharePost(context, post.id)
             },
+            onReshare = { viewModel.resharePost(post) },
             onCopyLink = {
                 PostShareUtils.copyPostLink(context, post.id)
             },

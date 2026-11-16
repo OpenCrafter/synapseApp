@@ -125,6 +125,7 @@ fun HashtagFeedScreen(
                     PostShareUtils.sharePost(context, post.id)
                     selectedPost = null
                 },
+                onReshare = { viewModel.resharePost(post) },
                 onCopyLink = {
                     val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
                     val clip = ClipData.newPlainText(postLinkLabel, DeepLink.post(post.id))

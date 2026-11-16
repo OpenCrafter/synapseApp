@@ -364,6 +364,7 @@ fun FeedScreen(
                 sharePostViewModel.start(post)
                 selectedPost = null
             },
+            onReshare = { viewModel.resharePost(post) },
             onCopyLink = { PostShareUtils.copyPostLink(context, post.id) },
             onBookmark = { viewModel.bookmarkPost(post) },
             onToggleComments = {
