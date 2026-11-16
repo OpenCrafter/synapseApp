@@ -375,6 +375,7 @@ fun PostDetailScreen(
             onPostReactionSelected = { _, reaction -> viewModel.toggleReaction(reaction) },
             postId = postId,
             rootCommentId = rootCommentId,
+            onNavigateToQuotePost = onNavigateToQuotePost,
             onRetry = { viewModel.loadPost(postId, rootCommentId) }
         )
     }
@@ -482,7 +483,7 @@ private fun PostDetailContent(
                                     onOptionsClick = { onShowOptions(ancestor) },
                                     onPollVote = { },
                                     onReactionSelected = { onShowReactions(ancestor) },
-                                    onQuoteClick = { },
+                                    onQuoteClick = { onNavigateToQuotePost(ancestor.id) },
                                     modifier = Modifier.fillMaxWidth()
                                 )
                             }
@@ -509,7 +510,7 @@ private fun PostDetailContent(
                                 onOptionsClick = { onShowOptions(rootComment) },
                                 onPollVote = { },
                                 onReactionSelected = { onShowReactions(rootComment) },
-                                onQuoteClick = { },
+                                onQuoteClick = { onNavigateToQuotePost(rootComment.id) },
                                 modifier = Modifier.fillMaxWidth()
                             )
                         } else {
