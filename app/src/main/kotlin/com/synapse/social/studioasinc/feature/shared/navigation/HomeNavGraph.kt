@@ -132,7 +132,7 @@ fun HomeNavGraph(
                      navController.navigate(AppDestination.CreatePost(replyToPostId = pid))
                  },
                  onNavigateToQuotePost = { pid ->
-                     navController.navigate(AppDestination.QuotePost(pid))
+                     onNavigateToQuotePost(pid)
                  },
                  onNavigateToCommentDetail = { postId, commentId ->
                      navController.navigate(HomeDestinations.PostDetail(postId, commentId))
