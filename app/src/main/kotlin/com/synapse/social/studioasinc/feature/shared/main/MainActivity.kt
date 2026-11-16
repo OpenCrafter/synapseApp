@@ -235,6 +235,11 @@ class MainActivity : AppCompatActivity() {
         super.onNewIntent(intent)
         if (::navController.isInitialized) {
             navController.handleDeepLink(intent)
+            val destination = intent.getStringExtra("destination")
+            val postId = intent.getStringExtra("post_id")
+            if (destination == "quote" && postId != null) {
+                navController.navigate(AppDestination.QuotePost(postId))
+            }
         }
     }
 
