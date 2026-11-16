@@ -103,6 +103,8 @@ class HomeActivity : AppCompatActivity() {
                             onNavigateToQuotePost = { postId ->
                                 val intent = Intent(this@HomeActivity, com.synapse.social.studioasinc.feature.shared.main.MainActivity::class.java).apply {
                                     putExtra("destination", "quote")
+                                    putExtra("post_id", postId)
+                                    addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
                                 }
                                 startActivity(intent)
                             },
