@@ -14,6 +14,7 @@ import com.synapse.social.studioasinc.shared.domain.usecase.post.DeletePostUseCa
 import com.synapse.social.studioasinc.domain.usecase.post.ReactToPostUseCase
 import com.synapse.social.studioasinc.domain.usecase.post.ReportPostUseCase
 import com.synapse.social.studioasinc.domain.usecase.post.VotePollUseCase
+import com.synapse.social.studioasinc.domain.usecase.post.RevokeVoteUseCase
 import com.synapse.social.studioasinc.domain.usecase.profile.ArchiveProfileUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.blocking.BlockUserUseCase
 import com.synapse.social.studioasinc.domain.usecase.profile.FollowUserUseCase
@@ -32,7 +33,6 @@ import com.synapse.social.studioasinc.domain.usecase.profile.ReportUserUseCase
 import com.synapse.social.studioasinc.domain.usecase.profile.UnfollowUserUseCase
 import com.synapse.social.studioasinc.domain.usecase.story.HasActiveStoryUseCase
 import com.synapse.social.studioasinc.data.repository.PostRepositoryImpl
-import com.synapse.social.studioasinc.data.repository.PollRepositoryImpl
 import com.synapse.social.studioasinc.feature.profile.profile.components.FollowingUser
 import com.synapse.social.studioasinc.feature.profile.profile.components.ViewAsMode
 import com.synapse.social.studioasinc.feature.shared.components.post.PostCardState
@@ -106,6 +106,7 @@ class ProfileViewModel @Inject constructor(
     private val unfollowUserUseCase: UnfollowUserUseCase,
     private val reactToPostUseCase: ReactToPostUseCase,
     private val votePollUseCase: VotePollUseCase,
+    private val revokeVoteUseCase: RevokeVoteUseCase,
     private val bookmarkPostUseCase: BookmarkPostUseCase,
     private val deletePostUseCase: DeletePostUseCase,
     private val reportPostUseCase: ReportPostUseCase,
@@ -117,7 +118,6 @@ class ProfileViewModel @Inject constructor(
     private val getProfileFollowStatusUseCase: GetProfileFollowStatusUseCase,
     private val hasActiveStoryUseCase: HasActiveStoryUseCase,
     private val postRepository: PostRepositoryImpl,
-    private val pollRepository: PollRepositoryImpl,
     private val summarizePostUseCase: SummarizePostUseCase
 ) : ViewModel() {
     private val _state = MutableStateFlow(ProfileScreenState())
@@ -510,6 +510,16 @@ class ProfileViewModel @Inject constructor(
         }
     }
 
+    fun revokeVote(post: Post) {
+        viewModelScope.launch {
+            revokeVoteUseCase(post).collect { result ->
+                result.onSuccess { updatedPost ->
+                    PostEventBus.emit(PostEvent.Updated(updatedPost))
+                }
+            }
+        }
+    }
+
     fun deletePost(postId: String) {
         viewModelScope.launch {
             deletePostUseCase(postId).collect { result ->
@@ -523,56 +533,6 @@ class ProfileViewModel @Inject constructor(
     fun reportPost(postId: String, reason: String) {
         viewModelScope.launch {
             reportPostUseCase(postId, reason, null).collect { }
-        }
-    }
-
-    /**
-     * Toggles commenting on/off for one of the current user's profile posts.
-     *
-     * Mirrors [PostDetailViewModel.toggleComments]: optimistically flips
-     * `postDisableReplies`, emits a [PostEventBus] update so the profile refreshes,
-     * persists via [PostRepositoryImpl.toggleComments], and reverts optimistically on failure.
-     */
-    suspend fun toggleComments(postId: String): Result<Unit> {
-        val post = _state.value.posts.firstOrNull { it is Post && (it as Post).id == postId } as? Post
-            ?: return Result.failure(IllegalStateException("Post not found: $postId"))
-
-        val newDisableValue = if (post.postDisableReplies == "true") "false" else "true"
-        val updatedPost = post.copy(postDisableReplies = newDisableValue)
-
-        // Optimistic update so the toggle reflects immediately.
-        _state.update { state ->
-            state.copy(posts = state.posts.map { item ->
-                if ((item as? Post)?.id == postId) updatedPost else item
-            })
-        }
-        PostEventBus.emit(PostEvent.Updated(updatedPost))
-
-        return postRepository.toggleComments(postId).onFailure { e ->
-            // Revert optimistic update on failure so the UI stays truthful.
-            _state.update { state ->
-                state.copy(posts = state.posts.map { item ->
-                    if ((item as? Post)?.id == postId) post else item
-                })
-            }
-            PostEventBus.emit(PostEvent.Updated(post))
-        }
-    }
-
-    /**
-     * Revokes the current user's poll vote on one of their profile posts.
-     *
-     * Persists via [PollRepositoryImpl.revokeVote] and emits a [PostEventBus] update so the
-     * profile refreshes the vote state.
-     */
-    fun revokeVote(postId: String) {
-        viewModelScope.launch {
-            pollRepository.revokeVote(postId).onSuccess {
-                val post = _state.value.posts.firstOrNull { it is Post && (it as Post).id == postId } as? Post
-                post?.let { PostEventBus.emit(PostEvent.Updated(it.copy(userPollVote = null))) }
-            }.onFailure { error ->
-                android.util.Log.e("ProfileViewModel", "revokeVote failed: $postId", error)
-            }
         }
     }
 
