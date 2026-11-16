@@ -711,7 +711,6 @@ fun NavGraphBuilder.profileGraph(
             }
             composable<AppDestination.BusinessPlatform> {
                 val viewModel: com.synapse.social.studioasinc.ui.settings.BusinessPlatformViewModel = hiltViewModel()
-                val currentContext = androidx.compose.ui.platform.LocalContext.current
                 com.synapse.social.studioasinc.ui.settings.BusinessPlatformScreen(
                     viewModel = viewModel,
                     onBackClick = {
@@ -719,12 +718,6 @@ fun NavGraphBuilder.profileGraph(
                     },
                     onNavigateToScheduledPosts = {
                         navController.navigate(AppDestination.ScheduledPosts)
-                    },
-                    onNavigateToContentCalendar = {
-                        android.widget.Toast.makeText(currentContext, "Content Calendar coming soon", android.widget.Toast.LENGTH_SHORT).show()
-                    },
-                    onNavigateToBrandPartnerships = {
-                        android.widget.Toast.makeText(currentContext, "Brand Partnerships coming soon", android.widget.Toast.LENGTH_SHORT).show()
                     },
                     onNavigateToPayoutSettings = {
                         navController.navigate(AppDestination.PayoutSettings)
