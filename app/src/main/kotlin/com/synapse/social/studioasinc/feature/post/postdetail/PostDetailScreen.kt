@@ -208,6 +208,7 @@ fun PostDetailScreen(
                 postToShare = postDetail.post
                 sharePostViewModel.start(postDetail.post)
             },
+            onReshare = { viewModel.toggleReshare() },
             onShareToChat = {
                 postToShare = postDetail.post
                 sharePostViewModel.start(postDetail.post)
