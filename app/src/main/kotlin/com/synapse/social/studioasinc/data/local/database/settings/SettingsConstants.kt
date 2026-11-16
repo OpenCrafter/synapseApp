@@ -65,6 +65,8 @@ object SettingsConstants {
     val KEY_SOUND_EFFECTS_MASTER = booleanPreferencesKey("sound_effects_master")
     val KEY_SOUND_MESSAGE_TONES = booleanPreferencesKey("sound_message_tones")
     val KEY_SOUND_CALL_TONES = booleanPreferencesKey("sound_call_tones")
+    val KEY_SILENCE_UNKNOWN_CALLERS = booleanPreferencesKey("silence_unknown_callers")
+    val KEY_CONVERSATION_TONES_ENABLED = booleanPreferencesKey("conversation_tones_enabled")
 
     val KEY_READ_RECEIPTS_ENABLED = booleanPreferencesKey("read_receipts_enabled")
     val KEY_TYPING_INDICATORS_ENABLED = booleanPreferencesKey("typing_indicators_enabled")
@@ -145,6 +147,8 @@ object SettingsConstants {
     val DEFAULT_SHARES_ENABLED = true
     val DEFAULT_UPDATES_ENABLED = true
     val DEFAULT_SOUND_TONES_ENABLED = true
+    val DEFAULT_SILENCE_UNKNOWN_CALLERS = false
+    val DEFAULT_CONVERSATION_TONES_ENABLED = true
     val DEFAULT_READ_RECEIPTS_ENABLED = true
     val DEFAULT_TYPING_INDICATORS_ENABLED = true
     val DEFAULT_MEDIA_AUTO_DOWNLOAD = MediaAutoDownload.WIFI_ONLY

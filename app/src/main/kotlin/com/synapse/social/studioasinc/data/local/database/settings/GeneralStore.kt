@@ -27,6 +27,9 @@ interface GeneralStore {
     val showFavouritesInChatList: Flow<Boolean>
     val showFavouriteBadge: Flow<Boolean>
 
+    val silenceUnknownCallers: Flow<Boolean>
+    val conversationTonesEnabled: Flow<Boolean>
+
     suspend fun setLanguage(languageCode: String)
     suspend fun setNavigationPlacement(placement: NavigationPlacement)
     suspend fun setMessageSuggestionEnabled(enabled: Boolean)
@@ -50,6 +53,9 @@ interface GeneralStore {
     suspend fun setTypingIndicatorsEnabled(enabled: Boolean)
     suspend fun setShowFavouritesInChatList(enabled: Boolean)
     suspend fun setShowFavouriteBadge(enabled: Boolean)
+
+    suspend fun setSilenceUnknownCallers(enabled: Boolean)
+    suspend fun setConversationTonesEnabled(enabled: Boolean)
 }
 
 class GeneralStoreImpl(private val dataStore: DataStore<Preferences>) : GeneralStore {
@@ -209,6 +215,14 @@ class GeneralStoreImpl(private val dataStore: DataStore<Preferences>) : GeneralS
         preferences[SettingsConstants.KEY_SHOW_FAVOURITE_BADGE] ?: SettingsConstants.DEFAULT_SHOW_FAVOURITE_BADGE
     }
 
+    override val silenceUnknownCallers: Flow<Boolean> = dataStore.safePreferencesFlow().map { preferences ->
+        preferences[SettingsConstants.KEY_SILENCE_UNKNOWN_CALLERS] ?: SettingsConstants.DEFAULT_SILENCE_UNKNOWN_CALLERS
+    }
+
+    override val conversationTonesEnabled: Flow<Boolean> = dataStore.safePreferencesFlow().map { preferences ->
+        preferences[SettingsConstants.KEY_CONVERSATION_TONES_ENABLED] ?: SettingsConstants.DEFAULT_CONVERSATION_TONES_ENABLED
+    }
+
     override suspend fun setIncreaseContrastEnabled(enabled: Boolean) {
         dataStore.edit { preferences ->
             preferences[SettingsConstants.KEY_INCREASE_CONTRAST_ENABLED] = enabled
@@ -248,6 +262,18 @@ class GeneralStoreImpl(private val dataStore: DataStore<Preferences>) : GeneralS
     override suspend fun setShowFavouriteBadge(enabled: Boolean) {
         dataStore.edit { preferences ->
             preferences[SettingsConstants.KEY_SHOW_FAVOURITE_BADGE] = enabled
+        }
+    }
+
+    override suspend fun setSilenceUnknownCallers(enabled: Boolean) {
+        dataStore.edit { preferences ->
+            preferences[SettingsConstants.KEY_SILENCE_UNKNOWN_CALLERS] = enabled
+        }
+    }
+
+    override suspend fun setConversationTonesEnabled(enabled: Boolean) {
+        dataStore.edit { preferences ->
+            preferences[SettingsConstants.KEY_CONVERSATION_TONES_ENABLED] = enabled
         }
     }
 }

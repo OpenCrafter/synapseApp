@@ -6,6 +6,7 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.widget.Toast
+import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
@@ -145,6 +146,7 @@ fun PostDetailScreen(
         val editing = uiState.editingComment
         if (editing != null) {
             commentText = editing.content ?: ""
+            selectedMediaUri = null
             commentIsSending = false
         }
     }
@@ -474,15 +476,15 @@ private fun PostDetailContent(
                                     onLikeClick = { onLikeClick(ancestor.id) },
                                     onCommentClick = { onReplyClick(ancestor) },
                                     onShareClick = { PostShareUtils.shareComment(context, ancestor.content) },
-                                    onRepostClick = { },
-                                    onBookmarkClick = { },
+                                    onRepostClick = { /* Not applicable for comments */ },
+                                    onBookmarkClick = { /* Not applicable for comments */ },
                                     onUserClick = { ancestor.userId?.let { onUserClick(it) } },
                                     onPostClick = { onCommentClick(ancestor.id) },
                                     onMediaClick = { _, _ -> },
                                     onOptionsClick = { onShowOptions(ancestor) },
-                                    onPollVote = { },
+                                    onPollVote = { /* No polls in comments */ },
                                     onReactionSelected = { onShowReactions(ancestor) },
-                                    onQuoteClick = { },
+                                    onQuoteClick = { /* Not applicable for comments */ },
                                     modifier = Modifier.fillMaxWidth()
                                 )
                             }
@@ -501,15 +503,15 @@ private fun PostDetailContent(
                                 onLikeClick = { onLikeClick(rootComment.id) },
                                 onCommentClick = { onReplyClick(rootComment) },
                                 onShareClick = { PostShareUtils.shareComment(context, rootComment.content) },
-                                onRepostClick = { },
-                                onBookmarkClick = { },
+                                onRepostClick = { /* Not applicable for comments */ },
+                                onBookmarkClick = { /* Not applicable for comments */ },
                                 onUserClick = { rootComment.userId?.let { onUserClick(it) } },
                                 onPostClick = { },
                                 onMediaClick = { _, _ -> },
                                 onOptionsClick = { onShowOptions(rootComment) },
-                                onPollVote = { },
+                                onPollVote = { /* No polls in comments */ },
                                 onReactionSelected = { onShowReactions(rootComment) },
-                                onQuoteClick = { },
+                                onQuoteClick = { /* Not applicable for comments */ },
                                 modifier = Modifier.fillMaxWidth()
                             )
                         } else {
@@ -617,6 +619,8 @@ private fun PostDetailBottomBar(
             isSending = commentIsSending,
             onSendingChange = onCommentSendingChange,
             onSend = onSendComment,
+            selectedMediaUri = selectedMediaUri,
+            onMediaUriChange = onMediaUriChange,
             userAvatarUrl = uiState.currentUserAvatarUrl,
             userDisplayName = uiState.currentUserDisplayName,
             replyToParticipants = uiState.replyToParticipants.map { it.username },

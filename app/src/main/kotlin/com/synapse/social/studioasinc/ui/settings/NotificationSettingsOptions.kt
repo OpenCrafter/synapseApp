@@ -45,6 +45,8 @@ private data class NotificationSettingsPickerConfig(
 @Composable
 internal fun GroupedNotificationSettingsSections(
     notificationPreferences: NotificationPreferences,
+    conversationTonesEnabled: Boolean,
+    onConversationTonesChange: (Boolean) -> Unit,
     onToggleGlobal: (Boolean) -> Unit
 ) {
     val defaultValue = stringResource(R.string.settings_notification_value_default)
@@ -73,7 +75,6 @@ internal fun GroupedNotificationSettingsSections(
     val popupOptions = listOf(defaultValue, popupAlwaysValue, popupNeverValue)
     val badgeOptions = listOf(enabledValue, disabledValue)
 
-    var conversationTonesEnabled by rememberSaveable { mutableStateOf(true) }
     var remindersEnabled by rememberSaveable(notificationPreferences.remindersEnabled) {
         mutableStateOf(notificationPreferences.remindersEnabled)
     }
@@ -118,7 +119,7 @@ internal fun GroupedNotificationSettingsSections(
         GeneralNotificationSettingsSection(
             notificationPreferences = notificationPreferences,
             conversationTonesEnabled = conversationTonesEnabled,
-            onConversationTonesChange = { conversationTonesEnabled = it },
+            onConversationTonesChange = onConversationTonesChange,
             remindersEnabled = remindersEnabled,
             onRemindersChange = { remindersEnabled = it },
             onToggle = onToggleGlobal

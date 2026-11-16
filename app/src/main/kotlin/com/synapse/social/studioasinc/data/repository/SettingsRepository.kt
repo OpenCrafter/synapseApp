@@ -316,4 +316,9 @@ interface SettingsRepository {
     suspend fun setShowFavouritesInChatList(enabled: Boolean)
     val showFavouriteBadge: Flow<Boolean>
     suspend fun setShowFavouriteBadge(enabled: Boolean)
+
+    val silenceUnknownCallers: Flow<Boolean>
+    suspend fun setSilenceUnknownCallers(enabled: Boolean)
+    val conversationTonesEnabled: Flow<Boolean>
+    suspend fun setConversationTonesEnabled(enabled: Boolean)
 }

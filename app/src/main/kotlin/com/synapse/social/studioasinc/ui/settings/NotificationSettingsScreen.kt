@@ -39,6 +39,7 @@ fun NotificationSettingsScreen(
 ) {
     val notificationPreferences by viewModel.notificationPreferences.collectAsState()
     val soundPreferences by viewModel.soundPreferences.collectAsState()
+    val conversationTonesEnabled by viewModel.conversationTonesEnabled.collectAsState()
     val error by viewModel.error.collectAsState()
 
     var showStartTimePicker by remember { mutableStateOf(false) }
@@ -48,6 +49,8 @@ fun NotificationSettingsScreen(
         notificationPreferences = notificationPreferences,
         soundPreferences = soundPreferences,
         error = error,
+        conversationTonesEnabled = conversationTonesEnabled,
+        onConversationTonesChange = viewModel::setConversationTonesEnabled,
         onBackClick = onBackClick,
         onClearError = viewModel::clearError,
         onToggleGlobal = viewModel::toggleGlobalNotifications,
@@ -94,9 +97,11 @@ fun NotificationSettingsContent(
     notificationPreferences: NotificationPreferences,
     soundPreferences: SoundPreferences,
     error: String?,
+    conversationTonesEnabled: Boolean,
     onBackClick: () -> Unit,
     onClearError: () -> Unit,
     onToggleGlobal: (Boolean) -> Unit,
+    onConversationTonesChange: (Boolean) -> Unit,
     onToggleCategory: (NotificationCategory, Boolean) -> Unit,
     onToggleQuietHours: (Boolean) -> Unit,
     onToggleDoNotDisturb: (Boolean) -> Unit,
@@ -154,6 +159,8 @@ fun NotificationSettingsContent(
             item {
                 GroupedNotificationSettingsSections(
                     notificationPreferences = notificationPreferences,
+                    conversationTonesEnabled = conversationTonesEnabled,
+                    onConversationTonesChange = onConversationTonesChange,
                     onToggleGlobal = onToggleGlobal
                 )
             }

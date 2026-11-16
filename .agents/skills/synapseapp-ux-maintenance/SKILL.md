@@ -38,14 +38,16 @@ changes, protection bypasses, fabricated verification, or destructive branch ope
 
 1. **Create the execution task first.** Use the available task system or the repository's established mechanism. If unavailable, disclose that; do not pretend tasks exist. Follow [task management](references/task-management.md).
 2. **Inspect the actual repository.** Record branch and commit; trace real user flows and implementation. Do not infer bugs from assumptions. Follow [investigation](references/investigation.md).
-3. **Qualify and deduplicate.** Search open/closed GitHub issues and PRs. Create no more than two new issues, and document each confirmed new bug before editing its code. Follow [issue management](references/issues.md).
-4. **Create/link a bug task.** Track each accepted bug independently. Do not create duplicate tasks.
-5. **Implement only safe fixes.** Fix no more than two bugs. Keep changes focused, inspect the complete diff, and run relevant available verification. Defer uncertain or risky work. Follow [implementation](references/implementation.md).
-6. **Prepare the daily branch.** Generate today's `dd-mm-yyyy` name using `Asia/Dhaka`. Reuse an existing remote branch without resetting it; otherwise create it from the latest `main`. Create one feature branch per bug from the daily branch.
-7. **Open dedicated PRs.** Open at most two PRs, each linked to its issue and targeting the daily branch. Never target `main`. Follow [branch and PR rules](references/branches-and-prs.md).
-8. **Manage the PR lifecycle.** Monitor required Actions/checks, approvals, and conversations. Repair understood failures and resolve only clearly understood conflicts. Never bypass protection. Squash-merge only when all conditions are satisfied. Follow [PR lifecycle](references/pr-lifecycle.md).
-9. **Verify, then clean up.** Confirm the PR is merged, record the merge SHA, and verify its changes are in the daily branch. Only then delete that PR's exact remote feature branch and verify deletion. Never delete `main` or the daily branch.
-10. **Synchronize tasks and report facts.** Mark work done only after the full required lifecycle is verified. Report pending, blocked, failed, and deferred work accurately. Follow [execution report](references/execution-report.md).
+3. **Prioritize existing open issues first.** Search open GitHub issues before creating any new issue. If an existing open issue matches or covers a confirmed bug, work that issue instead of creating a duplicate. Only create a new issue when no existing open issue covers the bug. Follow [issue management](references/issues.md).
+4. **Qualify and deduplicate.** Search open/closed GitHub issues and PRs. Create no more than two new issues, and document each confirmed new bug before editing its code. Follow [issue management](references/issues.md).
+5. **Create/link a bug task.** Track each accepted bug independently. Do not create duplicate tasks.
+6. **Implement only safe fixes.** Fix no more than two bugs. Keep changes focused, inspect the complete diff, and run relevant available verification. Defer uncertain or risky work. Follow [implementation](references/implementation.md).
+7. **Merge previous date branches into main.** If any previous `dd-mm-yyyy` integration branch exists, merge it into `main` and then delete the previous date branch. Only merge branches that are fully integrated and safe; defer any that have unmerged work or open PRs.
+8. **Prepare the daily branch.** Generate today's `dd-mm-yyyy` name using `Asia/Dhaka`. Reuse an existing remote branch without resetting it; otherwise create it from the latest `main`. Create one feature branch per bug from the daily branch.
+9. **Open dedicated PRs.** Open at most two PRs, each linked to its issue and targeting the daily branch. Never target `main`. Follow [branch and PR rules](references/branches-and-prs.md).
+10. **Manage the PR lifecycle.** Monitor required Actions/checks, approvals, and conversations. Repair understood failures and resolve only clearly understood conflicts. Never bypass protection. Squash-merge only when all conditions are satisfied. Follow [PR lifecycle](references/pr-lifecycle.md).
+11. **Verify, then clean up.** Confirm the PR is merged, record the merge SHA, and verify its changes are in the daily branch. Only then delete that PR's exact remote feature branch and verify deletion. Never delete `main` or the daily branch.
+12. **Synchronize tasks and report facts.** Mark work done only after the full required lifecycle is verified. Report pending, blocked, failed, and deferred work accurately. Follow [execution report](references/execution-report.md).
 
 ## Non-negotiable safeguards
 

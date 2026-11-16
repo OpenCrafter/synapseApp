@@ -241,4 +241,30 @@ class HashtagFeedViewModel @Inject constructor(
             }
         }
     }
+
+    fun reportPost(postId: String) {
+        viewModelScope.launch {
+            reportPostUseCase(postId, defaultReportReason, null).collect { result ->
+                result.onFailure { e ->
+                    _uiState.update { it.copy(error = e.message ?: "Failed to report post") }
+                }
+            }
+        }
+    }
+
+    fun revokeVote(post: Post) {
+        viewModelScope.launch {
+            revokeVoteUseCase(post).collect { result ->
+                result.onSuccess { updatedPost ->
+                    _uiState.update { state ->
+                        state.copy(posts = state.posts.map {
+                            if (it.id == post.id) updatedPost else it
+                        })
+                    }
+                }.onFailure { e ->
+                    _uiState.update { it.copy(error = e.message ?: "Failed to revoke vote") }
+                }
+            }
+        }
+    }
 }

@@ -221,7 +221,7 @@ fun SettingsToggleItem(
             // single toggle instead of a double toggle (row onClick + Switch onCheckedChange).
             Switch(
                 checked = checked,
-                onCheckedChange = onCheckedChange,
+                onCheckedChange = null,
                 enabled = enabled,
                 colors = SwitchDefaults.colors(
                     checkedThumbColor = MaterialTheme.colorScheme.primary,
