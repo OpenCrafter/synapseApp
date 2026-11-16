@@ -371,6 +371,7 @@ private fun ProfessionalToolsSection(
                 title = stringResource(R.string.business_tool_analytics),
                 subtitle = stringResource(R.string.business_tool_analytics_subtitle),
                 imageVector = Icons.Default.Analytics,
+                enabled = false,
                 onClick = onNavigateToAnalytics,
                 position = SettingsItemPosition.Bottom
             )
