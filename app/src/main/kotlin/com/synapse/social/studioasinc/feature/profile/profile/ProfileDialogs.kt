@@ -183,7 +183,7 @@ internal fun PostOptionsSection(
                 viewModel.toggleSave(post)
             },
             onToggleComments = {
-                Toast.makeText(context, context.getString(R.string.toast_toggle_comments_impl), Toast.LENGTH_SHORT).show()
+                viewModel.toggleComments(post)
                 Result.success(Unit)
             },
             onReport = {

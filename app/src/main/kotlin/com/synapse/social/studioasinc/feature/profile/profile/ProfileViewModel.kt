@@ -520,6 +520,17 @@ class ProfileViewModel @Inject constructor(
         }
     }
 
+    fun toggleComments(post: Post) {
+        viewModelScope.launch {
+            postRepository.toggleComments(post.id).onSuccess {
+                val toggled = post.copy(
+                    postDisableReplies = if (post.postDisableReplies == "true") "false" else "true"
+                )
+                PostEventBus.emit(PostEvent.Updated(toggled))
+            }
+        }
+    }
+
     fun deletePost(postId: String) {
         viewModelScope.launch {
             deletePostUseCase(postId).collect { result ->
