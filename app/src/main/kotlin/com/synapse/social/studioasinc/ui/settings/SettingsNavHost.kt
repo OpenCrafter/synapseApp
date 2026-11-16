@@ -22,7 +22,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -218,7 +217,7 @@ fun SettingsNavHost(
             )
         ) { backStackEntry ->
             val categoryId = backStackEntry.arguments?.getString("categoryId") ?: ""
-            val viewModel: PrivacyCheckupCategoryViewModel = hiltViewModel(backStackEntry)
+            val viewModel: PrivacyCheckupViewModel = hiltViewModel()
             PrivacyCheckupCategoryScreen(
                 categoryId = categoryId,
                 viewModel = viewModel,
@@ -520,7 +519,6 @@ fun SettingsNavHost(
 
         composable(route = SettingsDestination.ROUTE_BUSINESS_PLATFORM) {
             val viewModel: BusinessPlatformViewModel = hiltViewModel()
-            val currentContext = LocalContext.current
             BusinessPlatformScreen(
                 viewModel = viewModel,
                 onBackClick = {
@@ -528,15 +526,6 @@ fun SettingsNavHost(
                 },
                 onNavigateToScheduledPosts = {
                     navController.navigate(SettingsDestination.ROUTE_SCHEDULED_POSTS)
-                },
-                onNavigateToContentCalendar = {
-                    android.widget.Toast.makeText(currentContext, "Content Calendar coming soon", android.widget.Toast.LENGTH_SHORT).show()
-                },
-                onNavigateToBrandPartnerships = {
-                    android.widget.Toast.makeText(currentContext, "Brand Partnerships coming soon", android.widget.Toast.LENGTH_SHORT).show()
-                },
-                onNavigateToAnalytics = {
-                    android.widget.Toast.makeText(currentContext, "Analytics coming soon", android.widget.Toast.LENGTH_SHORT).show()
                 },
                 onNavigateToPayoutSettings = {
                     navController.navigate(SettingsDestination.ROUTE_PAYOUT_SETTINGS)

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- String resources for inline video playback in the feed and the reels viewer. -->
+<resources>
+    <string name="cd_mute_video">Mute video</string>
+    <string name="cd_unmute_video">Unmute video</string>
+</resources>

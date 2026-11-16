@@ -319,6 +319,4 @@ interface SettingsRepository {
 
     val silenceUnknownCallers: Flow<Boolean>
     suspend fun setSilenceUnknownCallers(enabled: Boolean)
-    val conversationTonesEnabled: Flow<Boolean>
-    suspend fun setConversationTonesEnabled(enabled: Boolean)
 }

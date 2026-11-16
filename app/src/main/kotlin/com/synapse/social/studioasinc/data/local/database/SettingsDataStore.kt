@@ -125,6 +125,7 @@ class SettingsDataStore private constructor(
             preferences.remove(SettingsConstants.KEY_HIGH_CONTRAST_TEXT_ENABLED)
             preferences.remove(SettingsConstants.KEY_REDUCE_ANIMATIONS_ENABLED)
             preferences.remove(SettingsConstants.KEY_AUTOPLAY_ANIMATIONS_ENABLED)
+            preferences.remove(SettingsConstants.KEY_SILENCE_UNKNOWN_CALLERS)
         }
     }
 

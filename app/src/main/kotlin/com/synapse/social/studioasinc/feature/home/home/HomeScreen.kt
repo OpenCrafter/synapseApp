@@ -76,6 +76,7 @@ fun HomeScreen(
     sharedTransitionScope: SharedTransitionScope,
     animatedVisibilityScope: AnimatedVisibilityScope,
     reelUploadManager: ReelUploadManager,
+    initialTab: Int = 0,
     onNavigateToSearch: () -> Unit,
     onNavigateToProfile: (String) -> Unit,
     onNavigateToInbox: () -> Unit,
@@ -87,6 +88,29 @@ fun HomeScreen(
     notificationsViewModel: NotificationsViewModel = hiltViewModel()
 ) {
     val navController = rememberNavController()
+
+    // Open a non-default tab (e.g. Reels) when requested from outside the home navigation graph,
+    // such as tapping a reels item on a profile. initialTab is stable after composition so this
+    // effect runs exactly once and does not interfere with the user-driven tab bar.
+    LaunchedEffect(initialTab) {
+        when (initialTab) {
+            1 -> navController.navigate(HomeDestinations.Reels) {
+                popUpTo(navController.graph.findStartDestination().id) {
+                    saveState = true
+                }
+                launchSingleTop = true
+                restoreState = true
+            }
+            2 -> navController.navigate(HomeDestinations.Notifications) {
+                popUpTo(navController.graph.findStartDestination().id) {
+                    saveState = true
+                }
+                launchSingleTop = true
+                restoreState = true
+            }
+        }
+    }
+
     val pendingNotificationNavigation by NotificationNavigationCoordinator.pendingHomeNavigation.collectAsStateWithLifecycle()
 
     LaunchedEffect(pendingNotificationNavigation) {

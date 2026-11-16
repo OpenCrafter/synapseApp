@@ -212,6 +212,11 @@ class MainActivity : AppCompatActivity() {
                             navController.handleDeepLink(launchIntent)
                         } else if (launchIntent.getStringExtra("destination") == "inbox") {
                             navController.navigate(AppDestination.Inbox)
+                        } else if (launchIntent.getStringExtra("destination") == "quote") {
+                            val postId = launchIntent.getStringExtra("post_id")
+                            if (postId != null) {
+                                navController.navigate(AppDestination.QuotePost(postId))
+                            }
                         }
                     }
                 }

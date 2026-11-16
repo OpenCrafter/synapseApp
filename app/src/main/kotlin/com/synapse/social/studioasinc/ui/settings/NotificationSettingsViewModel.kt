@@ -4,7 +4,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.onesignal.OneSignal
 import com.synapse.social.studioasinc.core.config.NotificationConfig
-import com.synapse.social.studioasinc.data.repository.SettingsRepository
 import com.synapse.social.studioasinc.shared.domain.model.sound.SoundPreferences
 import com.synapse.social.studioasinc.shared.domain.repository.AuthRepository
 import com.synapse.social.studioasinc.shared.domain.repository.NotificationRepository
@@ -29,8 +28,7 @@ import kotlinx.serialization.json.*
 class NotificationSettingsViewModel @Inject constructor(
     private val authRepository: AuthRepository,
     private val notificationRepository: NotificationRepository,
-    private val soundSettingsRepository: SoundSettingsRepository,
-    private val settingsRepository: SettingsRepository
+    private val soundSettingsRepository: SoundSettingsRepository
 ) : ViewModel() {
     private val _notificationPreferences = MutableStateFlow(NotificationPreferences())
     val notificationPreferences: StateFlow<NotificationPreferences> = _notificationPreferences.asStateFlow()
@@ -39,9 +37,6 @@ class NotificationSettingsViewModel @Inject constructor(
     // so they live in DataStore and never sync to the backend.
     val soundPreferences: StateFlow<SoundPreferences> = soundSettingsRepository.soundPreferences
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), SoundPreferences())
-
-    val conversationTonesEnabled: StateFlow<Boolean> = settingsRepository.conversationTonesEnabled
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), true)
 
     private val _isLoading = MutableStateFlow(true)
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
@@ -109,8 +104,20 @@ class NotificationSettingsViewModel @Inject constructor(
         viewModelScope.launch { soundSettingsRepository.setCallTonesEnabled(enabled) }
     }
 
-    fun setConversationTonesEnabled(enabled: Boolean) {
-        viewModelScope.launch { settingsRepository.setConversationTonesEnabled(enabled) }
+    fun toggleConversationTones(enabled: Boolean) {
+        viewModelScope.launch { soundSettingsRepository.setConversationTonesEnabled(enabled) }
+    }
+
+    fun toggleReminders(enabled: Boolean) {
+        updatePreferences { it.copy(remindersEnabled = enabled) }
+    }
+
+    fun toggleHighPriority(enabled: Boolean) {
+        updatePreferences { it.copy(highPriorityEnabled = enabled) }
+    }
+
+    fun toggleReactions(enabled: Boolean) {
+        updatePreferences { it.copy(reactionNotificationsEnabled = enabled) }
     }
 
     fun setQuietHours(start: String, end: String) {
@@ -177,6 +184,9 @@ class NotificationSettingsViewModel @Inject constructor(
             quietHoursEnabled = quietHours["enabled"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.booleanOrNull ?: NotificationPreferences.DEFAULT_QUIET_HOURS_ENABLED,
             quietHoursStart = quietHours["start"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull ?: NotificationPreferences.DEFAULT_QUIET_HOURS_START,
             quietHoursEnd = quietHours["end"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull ?: NotificationPreferences.DEFAULT_QUIET_HOURS_END,
+            remindersEnabled = settings["reminders"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.booleanOrNull ?: NotificationPreferences.DEFAULT_REMINDERS_ENABLED,
+            highPriorityEnabled = settings["highPriority"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.booleanOrNull ?: NotificationPreferences.DEFAULT_HIGH_PRIORITY_ENABLED,
+            reactionNotificationsEnabled = settings["reactions"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.booleanOrNull ?: NotificationPreferences.DEFAULT_REACTIONS_ENABLED,
             doNotDisturb = domainPrefs.doNotDisturb,
             dndUntil = domainPrefs.dndUntil
         )
@@ -203,6 +213,9 @@ class NotificationSettingsViewModel @Inject constructor(
                     put("security", prefs.securityEnabled)
                     put("updates", prefs.updatesEnabled)
                 })
+                put("reminders", prefs.remindersEnabled)
+                put("highPriority", prefs.highPriorityEnabled)
+                put("reactions", prefs.reactionNotificationsEnabled)
             },
             quietHours = buildJsonObject {
                 put("enabled", prefs.quietHoursEnabled)

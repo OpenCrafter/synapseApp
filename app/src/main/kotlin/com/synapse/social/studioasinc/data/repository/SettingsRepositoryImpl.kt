@@ -560,10 +560,4 @@ class SettingsRepositoryImpl private constructor(
     override suspend fun setSilenceUnknownCallers(enabled: Boolean) {
         settingsDataStore.setSilenceUnknownCallers(enabled)
     }
-
-    override val conversationTonesEnabled: Flow<Boolean> = settingsDataStore.conversationTonesEnabled
-
-    override suspend fun setConversationTonesEnabled(enabled: Boolean) {
-        settingsDataStore.setConversationTonesEnabled(enabled)
-    }
 }

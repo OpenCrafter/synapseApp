@@ -19,4 +19,6 @@ interface SoundSettingsRepository {
     suspend fun setMessageTonesEnabled(enabled: Boolean)
 
     suspend fun setCallTonesEnabled(enabled: Boolean)
+
+    suspend fun setConversationTonesEnabled(enabled: Boolean)
 }

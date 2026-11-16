@@ -288,18 +288,14 @@ fun AvatarScreen(
                         subtitle = stringResource(R.string.create_avatar_subtitle),
                         imageVector = Icons.Filled.Add,
                         position = SettingsItemPosition.Top,
-                        onClick = {
-                            Toast.makeText(context, context.getString(R.string.avatar_creator_soon), Toast.LENGTH_SHORT).show()
-                        }
+                        enabled = false
                     )
                     SettingsNavigationItem(
                         title = stringResource(R.string.edit_avatar),
                         subtitle = stringResource(R.string.edit_avatar_subtitle),
                         imageVector = Icons.Filled.Edit,
                         position = SettingsItemPosition.Bottom,
-                        onClick = {
-                            Toast.makeText(context, context.getString(R.string.avatar_editor_soon), Toast.LENGTH_SHORT).show()
-                        }
+                        enabled = false
                     )
                 }
             }

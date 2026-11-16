@@ -29,4 +29,7 @@ object DeepLink {
 
     /** `synapse://home` -> [AppDestination.Home] */
     fun home(): String = "$SCHEME://home"
+
+    /** `synapse://quote-post/{postId}` -> [AppDestination.QuotePost] */
+    fun quotePost(postId: String): String = "$SCHEME://quote-post/$postId"
 }

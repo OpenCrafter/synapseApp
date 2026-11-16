@@ -14,6 +14,7 @@ import com.synapse.social.studioasinc.shared.domain.usecase.post.DeletePostUseCa
 import com.synapse.social.studioasinc.domain.usecase.post.ReactToPostUseCase
 import com.synapse.social.studioasinc.domain.usecase.post.ReportPostUseCase
 import com.synapse.social.studioasinc.domain.usecase.post.VotePollUseCase
+import com.synapse.social.studioasinc.domain.usecase.post.RevokeVoteUseCase
 import com.synapse.social.studioasinc.domain.usecase.profile.ArchiveProfileUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.blocking.BlockUserUseCase
 import com.synapse.social.studioasinc.domain.usecase.profile.FollowUserUseCase
@@ -105,6 +106,7 @@ class ProfileViewModel @Inject constructor(
     private val unfollowUserUseCase: UnfollowUserUseCase,
     private val reactToPostUseCase: ReactToPostUseCase,
     private val votePollUseCase: VotePollUseCase,
+    private val revokeVoteUseCase: RevokeVoteUseCase,
     private val bookmarkPostUseCase: BookmarkPostUseCase,
     private val deletePostUseCase: DeletePostUseCase,
     private val reportPostUseCase: ReportPostUseCase,
@@ -504,6 +506,27 @@ class ProfileViewModel @Inject constructor(
                 result.onSuccess { updatedPost ->
                     PostEventBus.emit(PostEvent.Updated(updatedPost))
                 }
+            }
+        }
+    }
+
+    fun revokeVote(post: Post) {
+        viewModelScope.launch {
+            revokeVoteUseCase(post).collect { result ->
+                result.onSuccess { updatedPost ->
+                    PostEventBus.emit(PostEvent.Updated(updatedPost))
+                }
+            }
+        }
+    }
+
+    fun toggleComments(post: Post) {
+        viewModelScope.launch {
+            postRepository.toggleComments(post.id).onSuccess {
+                val toggled = post.copy(
+                    postDisableReplies = if (post.postDisableReplies == "true") "false" else "true"
+                )
+                PostEventBus.emit(PostEvent.Updated(toggled))
             }
         }
     }

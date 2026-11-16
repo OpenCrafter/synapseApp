@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.MaterialTheme
@@ -23,6 +24,7 @@ import com.synapse.social.studioasinc.R
 import androidx.compose.runtime.Composable
 import com.synapse.social.studioasinc.feature.home.home.components.QuickPostArea
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -84,6 +86,33 @@ fun FeedScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val atmosphereState = LocalUiAtmosphere.current
     val posts = viewModel.posts.collectAsLazyPagingItems()
+    val listState = rememberLazyListState()
+
+    // Facebook-style feed playback: only the video that owns most of the viewport is allowed to
+    // autoplay, so scrolling can never leave two videos running (or two audios overlapping). The key
+    // is the same one the LazyColumn uses for its items (FeedItem.uniqueKey).
+    val activeVideoKey by remember(listState) {
+        derivedStateOf {
+            val layoutInfo = listState.layoutInfo
+            val viewportStart = layoutInfo.viewportStartOffset
+            val viewportEnd = layoutInfo.viewportEndOffset
+            var bestKey: Any? = null
+            var bestFraction = 0f
+            layoutInfo.visibleItemsInfo.forEach { item ->
+                if (item.size > 0) {
+                    val visiblePixels = minOf(item.offset + item.size, viewportEnd) - maxOf(item.offset, viewportStart)
+                    if (visiblePixels > 0) {
+                        val fraction = visiblePixels.toFloat() / item.size.toFloat()
+                        if (fraction > bestFraction) {
+                            bestFraction = fraction
+                            bestKey = item.key
+                        }
+                    }
+                }
+            }
+            if (bestFraction >= MIN_VIDEO_AUTOPLAY_VISIBLE_FRACTION) bestKey else null
+        }
+    }
     var selectedPost by remember { mutableStateOf<Post?>(null) }
     var postToShare by remember { mutableStateOf<Post?>(null) }
     var postToReport by remember { mutableStateOf<Post?>(null) }
@@ -220,6 +249,7 @@ fun FeedScreen(
 
         androidx.compose.runtime.CompositionLocalProvider(com.synapse.social.studioasinc.feature.shared.components.LocalLinkMetadataUseCase provides linkViewModel.getLinkMetadataUseCase) {
             LazyColumn(
+                state = listState,
                 modifier = Modifier
                     .fillMaxSize()
                     .background(MaterialTheme.colorScheme.background),
@@ -277,7 +307,8 @@ fun FeedScreen(
                                     post = feedItem.post,
                                     postViewStyle = uiState.postViewStyle,
                                     actions = actions,
-                                    isReshareItem = feedItem.reshareId != null
+                                    isReshareItem = feedItem.reshareId != null,
+                                    isVideoActive = feedItem.uniqueKey == activeVideoKey
                                 )
                             }
                             is FeedItem.CommentItem -> {
@@ -476,3 +507,6 @@ private fun FeedCommentItem(
         onReactionSelected = onReactionSelected
     )
 }
+
+/** Share of a feed item that has to be on screen before its inline video may autoplay. */
+private const val MIN_VIDEO_AUTOPLAY_VISIBLE_FRACTION = 0.6f

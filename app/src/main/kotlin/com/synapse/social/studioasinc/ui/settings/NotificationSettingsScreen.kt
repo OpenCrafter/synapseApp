@@ -39,7 +39,6 @@ fun NotificationSettingsScreen(
 ) {
     val notificationPreferences by viewModel.notificationPreferences.collectAsState()
     val soundPreferences by viewModel.soundPreferences.collectAsState()
-    val conversationTonesEnabled by viewModel.conversationTonesEnabled.collectAsState()
     val error by viewModel.error.collectAsState()
 
     var showStartTimePicker by remember { mutableStateOf(false) }
@@ -49,8 +48,6 @@ fun NotificationSettingsScreen(
         notificationPreferences = notificationPreferences,
         soundPreferences = soundPreferences,
         error = error,
-        conversationTonesEnabled = conversationTonesEnabled,
-        onConversationTonesChange = viewModel::setConversationTonesEnabled,
         onBackClick = onBackClick,
         onClearError = viewModel::clearError,
         onToggleGlobal = viewModel::toggleGlobalNotifications,
@@ -60,6 +57,10 @@ fun NotificationSettingsScreen(
         onToggleSoundEffects = viewModel::toggleSoundEffects,
         onToggleMessageTones = viewModel::toggleMessageTones,
         onToggleCallTones = viewModel::toggleCallTones,
+        onToggleConversationTones = viewModel::toggleConversationTones,
+        onToggleReminders = viewModel::toggleReminders,
+        onToggleHighPriority = viewModel::toggleHighPriority,
+        onToggleReactions = viewModel::toggleReactions,
         onShowStartTimePicker = { showStartTimePicker = true }
     )
 
@@ -97,17 +98,19 @@ fun NotificationSettingsContent(
     notificationPreferences: NotificationPreferences,
     soundPreferences: SoundPreferences,
     error: String?,
-    conversationTonesEnabled: Boolean,
     onBackClick: () -> Unit,
     onClearError: () -> Unit,
     onToggleGlobal: (Boolean) -> Unit,
-    onConversationTonesChange: (Boolean) -> Unit,
     onToggleCategory: (NotificationCategory, Boolean) -> Unit,
     onToggleQuietHours: (Boolean) -> Unit,
     onToggleDoNotDisturb: (Boolean) -> Unit,
     onToggleSoundEffects: (Boolean) -> Unit,
     onToggleMessageTones: (Boolean) -> Unit,
     onToggleCallTones: (Boolean) -> Unit,
+    onToggleConversationTones: (Boolean) -> Unit,
+    onToggleReminders: (Boolean) -> Unit,
+    onToggleHighPriority: (Boolean) -> Unit,
+    onToggleReactions: (Boolean) -> Unit,
     onShowStartTimePicker: () -> Unit
 ) {
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
@@ -159,9 +162,12 @@ fun NotificationSettingsContent(
             item {
                 GroupedNotificationSettingsSections(
                     notificationPreferences = notificationPreferences,
-                    conversationTonesEnabled = conversationTonesEnabled,
-                    onConversationTonesChange = onConversationTonesChange,
-                    onToggleGlobal = onToggleGlobal
+                    conversationTonesEnabled = soundPreferences.conversationTonesEnabled,
+                    onConversationTonesChange = onToggleConversationTones,
+                    onToggleGlobal = onToggleGlobal,
+                    onToggleReminders = onToggleReminders,
+                    onToggleHighPriority = onToggleHighPriority,
+                    onToggleReactions = onToggleReactions
                 )
             }
 

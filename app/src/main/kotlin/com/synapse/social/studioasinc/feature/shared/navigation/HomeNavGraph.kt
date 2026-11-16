@@ -128,6 +128,9 @@ fun HomeNavGraph(
                  onNavigateBack = { navController.popBackStack() },
                  onNavigateToProfile = onNavigateToProfile,
                  onNavigateToEditPost = onNavigateToEditPost,
+                 onNavigateToQuotePost = { pid ->
+                     navController.navigate(AppDestination.QuotePost(pid))
+                 },
                  onNavigateToReplyToPost = { pid ->
                      navController.navigate(AppDestination.CreatePost(replyToPostId = pid))
                  },

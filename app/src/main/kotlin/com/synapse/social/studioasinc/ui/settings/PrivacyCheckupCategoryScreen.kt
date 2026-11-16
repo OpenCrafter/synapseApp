@@ -34,6 +34,7 @@ private data class CheckupCategoryConfig(
 @Composable
 fun PrivacyCheckupCategoryScreen(
     categoryId: String,
+    viewModel: PrivacyCheckupViewModel,
     onNavigateToGroups: () -> Unit,
     onNavigateToBlockedContacts: () -> Unit,
     onNavigateToProfilePhoto: () -> Unit,
@@ -43,8 +44,7 @@ fun PrivacyCheckupCategoryScreen(
     onNavigateToAppLock: () -> Unit,
     onNavigateToDisappearingMessages: () -> Unit,
     onNavigateToAccountInfo: () -> Unit,
-    onNavigateBack: () -> Unit,
-    viewModel: PrivacyCheckupCategoryViewModel
+    onNavigateBack: () -> Unit
 ) {
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
 
@@ -76,7 +76,7 @@ fun PrivacyCheckupCategoryScreen(
         )
     }
 
-    val silenceUnknownCallers by viewModel.silenceUnknownCallers.collectAsState(initial = false)
+    val silenceUnknownCallers by viewModel.silenceUnknownCallers.collectAsState()
 
     Scaffold(
         containerColor = AppColors.screenBackground,

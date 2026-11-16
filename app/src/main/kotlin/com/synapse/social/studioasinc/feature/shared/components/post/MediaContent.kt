@@ -11,9 +11,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.PlayCircle
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -29,6 +26,7 @@ import coil3.request.CachePolicy
 import com.synapse.social.studioasinc.core.ui.util.AmbientColorExtractor
 import com.synapse.social.studioasinc.domain.model.Post
 import com.synapse.social.studioasinc.feature.shared.theme.LocalUiAtmosphere
+import com.synapse.social.studioasinc.feature.shared.video.InlineVideoPlayer
 import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 
@@ -48,6 +46,7 @@ fun MediaContent(
     onMediaClick: (Post, Int) -> Unit,
     modifier: Modifier = Modifier,
     postViewStyle: PostViewStyle = PostViewStyle.SWIPE,
+    isVideoActive: Boolean = false,
     post: Post? = null
 ) {
     val safePost = post
@@ -58,7 +57,16 @@ fun MediaContent(
     val atmosphereState = LocalUiAtmosphere.current
     val extractedColors = remember { mutableStateMapOf<Int, UiAtmosphereColors>() }
 
-    if (mediaUrls.size == 1) {
+    if (mediaUrls.size == 1 && isVideo) {
+        // Video posts play inline inside their own card. The player owns its taps, so a tap toggles
+        // playback instead of opening the (image-only) media viewer or the post behind it.
+        InlineVideoPlayer(
+            videoUrl = mediaUrls.first(),
+            playbackKey = "post:" + (safePost?.id ?: mediaUrls.first()),
+            isActive = isVideoActive,
+            modifier = modifier
+        )
+    } else if (mediaUrls.size == 1) {
         val url = mediaUrls.first()
         Box(
             modifier = modifier
@@ -86,16 +94,6 @@ fun MediaContent(
                 },
                 onError = { state -> android.util.Log.e("MediaDebug", "Coil single fail url=$url err=${state.result.throwable}") }
             )
-            if (isVideo) {
-                Icon(
-                    imageVector = Icons.Default.PlayCircle,
-                    contentDescription = "Play Video",
-                    modifier = Modifier
-                        .align(Alignment.Center)
-                        .padding(Spacing.space16),
-                    tint = MaterialTheme.colorScheme.onPrimary
-                )
-            }
         }
     } else if (postViewStyle == PostViewStyle.GRID) {
         PostMediaGrid(mediaUrls, onMediaClick, modifier, safePost)

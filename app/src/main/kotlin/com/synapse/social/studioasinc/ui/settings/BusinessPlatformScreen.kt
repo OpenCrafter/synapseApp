@@ -27,9 +27,7 @@ import com.synapse.social.studioasinc.feature.shared.theme.AppSpacing
 fun BusinessPlatformScreen(
     viewModel: BusinessPlatformViewModel,
     onBackClick: () -> Unit,
-    onNavigateToBrandPartnerships: () -> Unit = {},
     onNavigateToScheduledPosts: () -> Unit = {},
-    onNavigateToContentCalendar: () -> Unit = {},
     onNavigateToAnalytics: () -> Unit = {},
     onNavigateToPayoutSettings: () -> Unit = {}
 ) {
@@ -96,9 +94,7 @@ fun BusinessPlatformScreen(
                     }
                     item {
                         ProfessionalToolsSection(
-                            onNavigateToBrandPartnerships = onNavigateToBrandPartnerships,
                             onNavigateToScheduledPosts = onNavigateToScheduledPosts,
-                            onNavigateToContentCalendar = onNavigateToContentCalendar,
                             onNavigateToAnalytics = onNavigateToAnalytics
                         )
                     }
@@ -334,9 +330,7 @@ private fun MonetizationSection(
 
 @Composable
 private fun ProfessionalToolsSection(
-    onNavigateToBrandPartnerships: () -> Unit,
     onNavigateToScheduledPosts: () -> Unit,
-    onNavigateToContentCalendar: () -> Unit,
     onNavigateToAnalytics: () -> Unit
 ) {
     SettingsSection(title = stringResource(R.string.business_section_tools)) {
@@ -353,7 +347,7 @@ private fun ProfessionalToolsSection(
                 title = stringResource(R.string.business_tool_content_calendar),
                 subtitle = stringResource(R.string.business_tool_content_calendar_subtitle),
                 imageVector = Icons.Default.CalendarToday,
-                onClick = onNavigateToContentCalendar,
+                enabled = false,
                 position = SettingsItemPosition.Middle
             )
             SettingsDivider()
@@ -361,7 +355,7 @@ private fun ProfessionalToolsSection(
                 title = stringResource(R.string.business_tool_brand_partnerships),
                 subtitle = stringResource(R.string.business_tool_brand_partnerships_subtitle),
                 imageVector = Icons.Default.Work,
-                onClick = onNavigateToBrandPartnerships,
+                enabled = false,
                 position = SettingsItemPosition.Middle
             )
             SettingsDivider()
@@ -369,6 +363,7 @@ private fun ProfessionalToolsSection(
                 title = stringResource(R.string.business_tool_analytics),
                 subtitle = stringResource(R.string.business_tool_analytics_subtitle),
                 imageVector = Icons.Default.Analytics,
+                enabled = false,
                 onClick = onNavigateToAnalytics,
                 position = SettingsItemPosition.Bottom
             )

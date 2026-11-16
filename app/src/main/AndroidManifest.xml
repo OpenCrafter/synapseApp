@@ -122,6 +122,7 @@
 				<data android:scheme="synapse" android:host="post" />
 				<data android:scheme="synapse" android:host="chat" />
 				<data android:scheme="synapse" android:host="home" />
+				<data android:scheme="synapse" android:host="quote-post" />
 			</intent-filter>
 			<!-- A shared Echo Room link: synapse://echo/<roomId> belongs to the app's own graph. -->
 			<intent-filter>

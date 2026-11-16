@@ -1,7 +1,6 @@
 package com.synapse.social.studioasinc.feature.profile.profile
 
 import android.content.Intent
-import android.widget.Toast
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
@@ -63,7 +62,8 @@ internal fun ProfileContent(
     onNavigateToChat: (String, String?, String?) -> Unit,
     onNavigateToStoryCreator: () -> Unit,
     onOpenMediaViewer: (List<String>, Int) -> Unit,
-    onShowPostOptions: (Post) -> Unit
+    onShowPostOptions: (Post) -> Unit,
+    onReelItemClick: () -> Unit = {}
 ) {
 
     var contentVisible by remember { mutableStateOf(false) }
@@ -395,9 +395,7 @@ internal fun ProfileContent(
                                 else -> {
                                     ReelsGrid(
                                         items = reels,
-                                        onItemClick = {
-                                            Toast.makeText(context, context.getString(R.string.toast_reels_viewer_soon), Toast.LENGTH_SHORT).show()
-                                        },
+                                        onItemClick = { _ -> onReelItemClick() },
                                         isLoading = state.isLoadingMore
                                     )
                                 }

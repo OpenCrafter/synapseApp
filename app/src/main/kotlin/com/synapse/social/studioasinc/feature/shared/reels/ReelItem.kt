@@ -42,11 +42,16 @@ import kotlinx.coroutines.launch
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.stringResource
+import com.synapse.social.studioasinc.R
 
 @Composable
 fun ReelItem(
     reel: Reel,
     isActive: Boolean,
+    isMuted: Boolean = false,
+    onToggleMute: () -> Unit = {},
     onLikeClick: () -> Unit,
     onOpposeClick: () -> Unit,
     onCommentClick: () -> Unit,
@@ -85,9 +90,15 @@ fun ReelItem(
         }
     }
 
+    // The viewer owns the mute preference so it survives moving between reels instead of being reset
+    // (or duplicated) per item.
+    LaunchedEffect(isMuted) {
+        videoViewModel.setMuted(isMuted)
+    }
+
     LaunchedEffect(isActive, isResumed) {
         if (isActive && isResumed) {
-            videoViewModel.initializePlayer(reel.videoUrl)
+            videoViewModel.initializePlayer(reel.videoUrl, isMuted)
             videoViewModel.play()
         } else {
             videoViewModel.pause()
@@ -120,7 +131,7 @@ fun ReelItem(
                         haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                     },
                     onTap = {
-                        videoViewModel.toggleMute()
+                        onToggleMute()
                         showControls = true
                     },
                     onPress = {
@@ -163,6 +174,46 @@ fun ReelItem(
 
         ReelMediaPlayer(player = player, isActive = isActive)
 
+        if (videoState.isBuffering && videoState.isPlaying) {
+            CircularProgressIndicator(
+                modifier = Modifier
+                    .align(Alignment.Center)
+                    .size(Sizes.IconMedium),
+                color = MaterialTheme.colorScheme.onPrimary,
+                strokeWidth = Sizes.BorderDefault
+            )
+        }
+
+        if (videoState.hasError) {
+            Column(
+                modifier = Modifier
+                    .align(Alignment.Center)
+                    .clip(MaterialTheme.shapes.medium)
+                    .background(MaterialTheme.colorScheme.scrim.copy(alpha = REEL_ERROR_SCRIM_ALPHA))
+                    .padding(Spacing.space16),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Icon(
+                    imageVector = Icons.Default.ErrorOutline,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onPrimary
+                )
+                Spacer(modifier = Modifier.size(Spacing.space4))
+                Text(
+                    text = stringResource(R.string.video_error),
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.onPrimary
+                )
+                Spacer(modifier = Modifier.size(Spacing.space4))
+                Text(
+                    text = stringResource(R.string.video_error_retry),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onPrimary,
+                    modifier = Modifier.clickable { videoViewModel.retry() }
+                )
+            }
+        }
+
         ReelCenterControls(
             showControls = showControls,
             isPlaying = videoState.isPlaying,
@@ -177,8 +228,8 @@ fun ReelItem(
         ReelMuteControl(
             showControls = showControls,
             isLongPressing = isLongPressing,
-            isMuted = videoState.isMuted,
-            onToggleMute = { videoViewModel.toggleMute() },
+            isMuted = isMuted,
+            onToggleMute = onToggleMute,
             modifier = Modifier
                 .align(Alignment.TopEnd)
                 .padding(top = Spacing.space48, end = Spacing.space16)
@@ -454,3 +505,6 @@ private fun ReelUserInfo(
         }
     }
 }
+
+/** Scrim alpha behind the reel playback-error message so it stays readable over the video. */
+private const val REEL_ERROR_SCRIM_ALPHA = 0.6f

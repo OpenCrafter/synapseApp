@@ -145,7 +145,6 @@ fun PostDetailScreen(
         val editing = uiState.editingComment
         if (editing != null) {
             commentText = editing.content ?: ""
-            selectedMediaUri = null
             commentIsSending = false
         }
     }
@@ -376,6 +375,7 @@ fun PostDetailScreen(
             onPostReactionSelected = { _, reaction -> viewModel.toggleReaction(reaction) },
             postId = postId,
             rootCommentId = rootCommentId,
+            onNavigateToQuotePost = onNavigateToQuotePost,
             onRetry = { viewModel.loadPost(postId, rootCommentId) }
         )
     }
@@ -475,15 +475,15 @@ private fun PostDetailContent(
                                     onLikeClick = { onLikeClick(ancestor.id) },
                                     onCommentClick = { onReplyClick(ancestor) },
                                     onShareClick = { PostShareUtils.shareComment(context, ancestor.content) },
-                                    onRepostClick = { /* Not applicable for comments */ },
-                                    onBookmarkClick = { /* Not applicable for comments */ },
+                                    onRepostClick = { },
+                                    onBookmarkClick = { },
                                     onUserClick = { ancestor.userId?.let { onUserClick(it) } },
                                     onPostClick = { onCommentClick(ancestor.id) },
                                     onMediaClick = { _, _ -> },
                                     onOptionsClick = { onShowOptions(ancestor) },
-                                    onPollVote = { /* No polls in comments */ },
+                                    onPollVote = { },
                                     onReactionSelected = { onShowReactions(ancestor) },
-                                    onQuoteClick = { /* Not applicable for comments */ },
+                                    onQuoteClick = { onNavigateToQuotePost(ancestor.id) },
                                     modifier = Modifier.fillMaxWidth()
                                 )
                             }
@@ -502,15 +502,15 @@ private fun PostDetailContent(
                                 onLikeClick = { onLikeClick(rootComment.id) },
                                 onCommentClick = { onReplyClick(rootComment) },
                                 onShareClick = { PostShareUtils.shareComment(context, rootComment.content) },
-                                onRepostClick = { /* Not applicable for comments */ },
-                                onBookmarkClick = { /* Not applicable for comments */ },
+                                onRepostClick = { },
+                                onBookmarkClick = { },
                                 onUserClick = { rootComment.userId?.let { onUserClick(it) } },
                                 onPostClick = { },
                                 onMediaClick = { _, _ -> },
                                 onOptionsClick = { onShowOptions(rootComment) },
-                                onPollVote = { /* No polls in comments */ },
+                                onPollVote = { },
                                 onReactionSelected = { onShowReactions(rootComment) },
-                                onQuoteClick = { /* Not applicable for comments */ },
+                                onQuoteClick = { onNavigateToQuotePost(rootComment.id) },
                                 modifier = Modifier.fillMaxWidth()
                             )
                         } else {
@@ -618,12 +618,13 @@ private fun PostDetailBottomBar(
             isSending = commentIsSending,
             onSendingChange = onCommentSendingChange,
             onSend = onSendComment,
-            selectedMediaUri = selectedMediaUri,
-            onMediaUriChange = onMediaUriChange,
             userAvatarUrl = uiState.currentUserAvatarUrl,
             userDisplayName = uiState.currentUserDisplayName,
             replyToParticipants = uiState.replyToParticipants.map { it.username },
             onReplyingToClick = if (uiState.replyToParticipants.isNotEmpty()) onReplyingToClick else null,
+            focusRequester = focusRequester,
+            selectedMediaUri = selectedMediaUri,
+            onMediaUriChange = onMediaUriChange
         )
     }
 }

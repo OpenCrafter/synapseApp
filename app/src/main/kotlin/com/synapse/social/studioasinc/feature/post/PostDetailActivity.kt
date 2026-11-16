@@ -46,6 +46,13 @@ class PostDetailActivity : BaseComposeActivity() {
                 onNavigateBack = { finish() },
                 onNavigateToProfile = { userId -> navigateToProfile(userId) },
                 onNavigateToEditPost = { editPostId -> navigateToEditPost(editPostId) },
+                onNavigateToQuotePost = { quotePostId ->
+                    val intent = Intent(this@PostDetailActivity, com.synapse.social.studioasinc.feature.shared.main.MainActivity::class.java).apply {
+                        putExtra("destination", "quote")
+                        putExtra("post_id", quotePostId)
+                    }
+                    startActivity(intent)
+                },
                 onNavigateToReplyToPost = { replyPostId -> navigateToReplyToPost(replyPostId) },
                 onNavigateToCommentDetail = { pId, cId ->
                     val intent = Intent(this, PostDetailActivity::class.java).apply {

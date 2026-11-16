@@ -1,6 +1,5 @@
 package com.synapse.social.studioasinc.presentation.editprofile.components
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -80,15 +79,13 @@ fun calculateProfileCompleteness(uiState: EditProfileUiState): ProfileCompletene
 @Composable
 fun ProfileCompletionCard(
     uiState: EditProfileUiState,
-    onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val completeness = calculateProfileCompleteness(uiState)
 
     Surface(
         modifier = modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick),
+            .fillMaxWidth(),
         shape = RoundedCornerShape(Sizes.CornerExtraLarge),
         color = AppColors.cardBackground,
         tonalElevation = Sizes.ElevationNone
