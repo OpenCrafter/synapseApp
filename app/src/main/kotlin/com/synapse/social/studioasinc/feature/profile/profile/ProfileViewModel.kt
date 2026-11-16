@@ -106,7 +106,7 @@ class ProfileViewModel @Inject constructor(
     private val unfollowUserUseCase: UnfollowUserUseCase,
     private val reactToPostUseCase: ReactToPostUseCase,
     private val votePollUseCase: VotePollUseCase,
-    private val revokeVoteUseCase: RevoteVoteUseCase,
+    private val revokeVoteUseCase: RevokeVoteUseCase,
     private val bookmarkPostUseCase: BookmarkPostUseCase,
     private val deletePostUseCase: DeletePostUseCase,
     private val reportPostUseCase: ReportPostUseCase,
