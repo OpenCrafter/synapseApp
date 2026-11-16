@@ -108,6 +108,18 @@ class NotificationSettingsViewModel @Inject constructor(
         viewModelScope.launch { soundSettingsRepository.setConversationTonesEnabled(enabled) }
     }
 
+    fun toggleReminders(enabled: Boolean) {
+        updatePreferences { it.copy(remindersEnabled = enabled) }
+    }
+
+    fun toggleHighPriority(enabled: Boolean) {
+        updatePreferences { it.copy(highPriorityEnabled = enabled) }
+    }
+
+    fun toggleReactions(enabled: Boolean) {
+        updatePreferences { it.copy(reactionNotificationsEnabled = enabled) }
+    }
+
     fun setQuietHours(start: String, end: String) {
         updatePreferences { it.copy(quietHoursStart = start, quietHoursEnd = end) }
     }
@@ -172,6 +184,9 @@ class NotificationSettingsViewModel @Inject constructor(
             quietHoursEnabled = quietHours["enabled"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.booleanOrNull ?: NotificationPreferences.DEFAULT_QUIET_HOURS_ENABLED,
             quietHoursStart = quietHours["start"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull ?: NotificationPreferences.DEFAULT_QUIET_HOURS_START,
             quietHoursEnd = quietHours["end"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull ?: NotificationPreferences.DEFAULT_QUIET_HOURS_END,
+            remindersEnabled = settings["reminders"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.booleanOrNull ?: NotificationPreferences.DEFAULT_REMINDERS_ENABLED,
+            highPriorityEnabled = settings["highPriority"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.booleanOrNull ?: NotificationPreferences.DEFAULT_HIGH_PRIORITY_ENABLED,
+            reactionNotificationsEnabled = settings["reactions"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.booleanOrNull ?: NotificationPreferences.DEFAULT_REACTIONS_ENABLED,
             doNotDisturb = domainPrefs.doNotDisturb,
             dndUntil = domainPrefs.dndUntil
         )
@@ -198,6 +213,9 @@ class NotificationSettingsViewModel @Inject constructor(
                     put("security", prefs.securityEnabled)
                     put("updates", prefs.updatesEnabled)
                 })
+                put("reminders", prefs.remindersEnabled)
+                put("highPriority", prefs.highPriorityEnabled)
+                put("reactions", prefs.reactionNotificationsEnabled)
             },
             quietHours = buildJsonObject {
                 put("enabled", prefs.quietHoursEnabled)
