@@ -354,6 +354,7 @@ private fun ProfessionalToolsSection(
                 subtitle = stringResource(R.string.business_tool_content_calendar_subtitle),
                 imageVector = Icons.Default.CalendarToday,
                 onClick = onNavigateToContentCalendar,
+                enabled = false,
                 position = SettingsItemPosition.Middle
             )
             SettingsDivider()
@@ -362,6 +363,7 @@ private fun ProfessionalToolsSection(
                 subtitle = stringResource(R.string.business_tool_brand_partnerships_subtitle),
                 imageVector = Icons.Default.Work,
                 onClick = onNavigateToBrandPartnerships,
+                enabled = false,
                 position = SettingsItemPosition.Middle
             )
             SettingsDivider()
