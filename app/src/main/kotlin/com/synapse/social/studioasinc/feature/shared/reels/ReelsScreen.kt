@@ -39,6 +39,9 @@ fun ReelsScreen(
 
     var showMoreActionsForReelId by remember { mutableStateOf<String?>(null) }
     var showShareSheetForReelUrl by remember { mutableStateOf<String?>(null) }
+    // Reel audio is a viewer-level preference: keeping it here means swiping to the next reel never
+    // silently changes whether the viewer is audible.
+    var isMuted by remember { mutableStateOf(false) }
 
     val pagerState = rememberPagerState(pageCount = {
         if (uiState.isEndReached) reels.size else reels.size + 1
@@ -105,6 +108,8 @@ fun ReelsScreen(
                     ReelItem(
                         reel = reel,
                         isActive = page == pagerState.currentPage,
+                        isMuted = isMuted,
+                        onToggleMute = { isMuted = !isMuted },
                         onLikeClick = { viewModel.likeReel(reel.id) },
                         onOpposeClick = { viewModel.opposeReel(reel.id) },
                         onCommentClick = { onCommentClick(reel.id) },
