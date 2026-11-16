@@ -590,7 +590,6 @@ private fun InboxScreenContent(
                         text = { Text(stringResource(R.string.inbox_fab_create_group)) }
                     )
                     FloatingActionButtonMenuItem(
-                        enabled = false,
                         onClick = {
                             showCreateMenu = false
                             scope.launch { snackbarHostState.showSnackbar(context.getString(R.string.inbox_fab_create_channel_coming_soon)) }
