@@ -4,7 +4,7 @@ sealed interface AppDestination {
     @Serializable
     data object Auth : AppDestination
     @Serializable
-    data object Home : AppDestination
+    data class Home(val initialTab: Int = 0) : AppDestination
     @Serializable
     data object PermissionOnboarding : AppDestination
     @Serializable

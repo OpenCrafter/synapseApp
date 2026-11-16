@@ -203,7 +203,7 @@ class MainActivity : AppCompatActivity() {
                         // this activity carrying it) opens the inbox. Only an app that already belongs
                         // in Home may act on either - auth or onboarding must not be skipped by a
                         // launch intent.
-                        if (launchIntentHandled || startDestination != AppDestination.Home) {
+                        if (launchIntentHandled || startDestination != AppDestination.Home()) {
                             return@LaunchedEffect
                         }
                         launchIntentHandled = true

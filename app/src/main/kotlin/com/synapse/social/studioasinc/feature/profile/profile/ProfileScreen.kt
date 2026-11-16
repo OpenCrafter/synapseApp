@@ -66,6 +66,7 @@ fun ProfileScreen(
     onNavigateToStoryCreator: () -> Unit = {},
     onNavigateToQuotePost: (String) -> Unit = {},
     onNavigateToLockProfile: () -> Unit = {},
+    onNavigateToReels: () -> Unit = {},
     viewModel: ProfileViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -185,7 +186,8 @@ fun ProfileScreen(
                         onShowPostOptions = { post ->
                             selectedPost = post
                             showPostOptions = true
-                        }
+                        },
+                        onReelItemClick = { _ -> onNavigateToReels() }
                     )
                 }
             }

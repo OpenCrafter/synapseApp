@@ -98,7 +98,7 @@ fun AppNavigation(
     navController: NavHostController,
     startDestination: Any = AppDestination.Auth,
     reelUploadManager: ReelUploadManager,
-    postAuthDestination: () -> Any = { AppDestination.Home },
+    postAuthDestination: () -> Any = { AppDestination.Home() },
     modifier: Modifier = Modifier
 ) {
     var pendingNotificationRequest by remember { mutableStateOf<NotificationNavigationRequest?>(null) }
@@ -168,7 +168,7 @@ fun AppNavigation(
                 else request.copy(target = "NOTIFICATIONS", postId = null, commentId = null)
             NotificationNavigationCoordinator.requestHomeNavigation(homeRequest)
             if (!currentEntry.destination.hasRoute<AppDestination.Home>()) {
-                navController.navigate(AppDestination.Home) { launchSingleTop = true }
+                navController.navigate(AppDestination.Home()) { launchSingleTop = true }
             }
         } else {
             NotificationNavigationCoordinator.clearHomeNavigation()
@@ -197,7 +197,7 @@ fun AppNavigation(
 fun NavGraphBuilder.authGraph(
     navController: NavHostController,
     sharedTransitionScope: SharedTransitionScope,
-    postAuthDestination: () -> Any = { AppDestination.Home }
+    postAuthDestination: () -> Any = { AppDestination.Home() }
 ) {
     composable<AppDestination.Auth> {
         val context = LocalContext.current
@@ -245,7 +245,7 @@ fun NavGraphBuilder.permissionGraph(navController: NavHostController) {
         PermissionOnboardingScreen(
             viewModel = viewModel,
             onFinished = {
-                navController.navigate(AppDestination.Home) {
+                navController.navigate(AppDestination.Home()) {
                     popUpTo(0) { inclusive = true }
                 }
             },
@@ -271,11 +271,13 @@ fun NavGraphBuilder.homeGraph(
 ) {
     composable<AppDestination.Home>(
         deepLinks = listOf(navDeepLink<AppDestination.Home>(basePath = "synapse://home"))
-    ) {
+    ) { backStackEntry ->
+        val args = backStackEntry.toRoute<AppDestination.Home>()
         HomeScreen(
             sharedTransitionScope = sharedTransitionScope,
             animatedVisibilityScope = this@composable,
             reelUploadManager = reelUploadManager,
+            initialTab = args.initialTab,
             onNavigateToSearch = {
                 navController.navigate(AppDestination.Search)
             },
@@ -652,6 +654,9 @@ fun NavGraphBuilder.profileGraph(
                     },
                     onNavigateToLockProfile = {
                         navController.navigate(AppDestination.LockProfile)
+                    },
+                    onNavigateToReels = {
+                        navController.navigate(AppDestination.Home(initialTab = 1)) { launchSingleTop = true }
                     },
                     viewModel = viewModel
                 )

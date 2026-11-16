@@ -88,7 +88,7 @@ class MainViewModel @Inject constructor(
         return if (userId != null && !permissionOnboardingStore.isCompleted(userId)) {
             AppDestination.PermissionOnboarding
         } else {
-            AppDestination.Home
+            AppDestination.Home()
         }
     }
 
