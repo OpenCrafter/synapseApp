@@ -544,7 +544,7 @@ fun SearchScreen(
                 PostShareUtils.sharePost(context, post.id)
                 selectedPost = null
             },
-            onReshare = { viewModel.resharePost(post) },
+            onReshare = { viewModel.resharePost(post); selectedPost = null },
             onCopyLink = {
                 PostShareUtils.copyPostLink(context, post.id)
                 selectedPost = null
