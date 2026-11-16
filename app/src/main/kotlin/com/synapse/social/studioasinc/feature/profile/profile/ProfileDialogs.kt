@@ -157,6 +157,7 @@ internal fun PostOptionsSection(
     viewModel: ProfileViewModel,
     context: Context,
     onNavigateToEditPost: (String) -> Unit,
+    onSummarize: () -> Unit,
     onDismiss: () -> Unit
 ) {
     if (showPostOptions && selectedPost != null) {
@@ -197,7 +198,8 @@ internal fun PostOptionsSection(
             },
             onRevokeVote = {
                 Toast.makeText(context, context.getString(R.string.toast_revoke_vote_impl), Toast.LENGTH_SHORT).show()
-            }
+            },
+            onSummarize = onSummarize
         )
     }
 }
