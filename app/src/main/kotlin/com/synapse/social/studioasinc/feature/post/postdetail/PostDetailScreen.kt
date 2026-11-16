@@ -375,6 +375,7 @@ fun PostDetailScreen(
             onPostReactionSelected = { _, reaction -> viewModel.toggleReaction(reaction) },
             postId = postId,
             rootCommentId = rootCommentId,
+            onNavigateToQuotePost = onNavigateToQuotePost,
             onRetry = { viewModel.loadPost(postId, rootCommentId) }
         )
     }
