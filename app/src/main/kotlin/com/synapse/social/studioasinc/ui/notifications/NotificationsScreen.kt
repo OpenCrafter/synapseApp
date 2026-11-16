@@ -119,9 +119,8 @@ fun NotificationsScreen(
                         contentPadding = contentPadding
                     ) {
                         groupedNotifications.forEach { (date, notifications) ->
-                            val dateLabel = date.asString()
-                            item(key = "header_$dateLabel") {
-                                SectionHeader(title = dateLabel)
+                            item(key = "header_$date") {
+                                SectionHeader(title = date.asString())
                             }
                             itemsIndexed(
                                 items = notifications,
@@ -139,7 +138,7 @@ fun NotificationsScreen(
                                     }
                                 )
                             }
-                            item(key = "gap_$dateLabel") {
+                            item(key = "gap_$date") {
                                 Spacer(modifier = Modifier.height(AppSpacing.sectionSpacing))
                             }
                         }
