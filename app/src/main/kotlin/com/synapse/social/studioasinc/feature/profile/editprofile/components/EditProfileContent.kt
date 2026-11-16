@@ -63,10 +63,7 @@ fun EditProfileContent(
         // 2. Compact Profile Completion Summary
         item {
             ProfileCompletionCard(
-                uiState = uiState,
-                onClick = {
-                    Toast.makeText(context, context.getString(R.string.complete_missing_details), Toast.LENGTH_SHORT).show()
-                }
+                uiState = uiState
             )
         }
 
