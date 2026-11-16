@@ -47,7 +47,10 @@ internal fun GroupedNotificationSettingsSections(
     notificationPreferences: NotificationPreferences,
     conversationTonesEnabled: Boolean,
     onConversationTonesChange: (Boolean) -> Unit,
-    onToggleGlobal: (Boolean) -> Unit
+    onToggleGlobal: (Boolean) -> Unit,
+    onToggleReminders: (Boolean) -> Unit,
+    onToggleHighPriority: (Boolean) -> Unit,
+    onToggleReactions: (Boolean) -> Unit
 ) {
     val defaultValue = stringResource(R.string.settings_notification_value_default)
     val chimeValue = stringResource(R.string.settings_notification_value_chime)
@@ -75,38 +78,17 @@ internal fun GroupedNotificationSettingsSections(
     val popupOptions = listOf(defaultValue, popupAlwaysValue, popupNeverValue)
     val badgeOptions = listOf(enabledValue, disabledValue)
 
-    var remindersEnabled by rememberSaveable(notificationPreferences.remindersEnabled) {
-        mutableStateOf(notificationPreferences.remindersEnabled)
-    }
     var messagesTone by rememberSaveable { mutableStateOf(defaultValue) }
     var messagesVibration by rememberSaveable { mutableStateOf(defaultValue) }
     var messagesPopup by rememberSaveable { mutableStateOf(defaultValue) }
     var messagesLight by rememberSaveable { mutableStateOf(whiteLightValue) }
-    var messagesHighPriority by rememberSaveable(notificationPreferences.highPriorityEnabled) {
-        mutableStateOf(notificationPreferences.highPriorityEnabled)
-    }
-    var messagesReactions by rememberSaveable(notificationPreferences.reactionNotificationsEnabled) {
-        mutableStateOf(notificationPreferences.reactionNotificationsEnabled)
-    }
     var groupsTone by rememberSaveable { mutableStateOf(defaultValue) }
     var groupsVibration by rememberSaveable { mutableStateOf(defaultValue) }
     var groupsLight by rememberSaveable { mutableStateOf(whiteLightValue) }
-    var groupsHighPriority by rememberSaveable(notificationPreferences.highPriorityEnabled) {
-        mutableStateOf(notificationPreferences.highPriorityEnabled)
-    }
-    var groupsReactions by rememberSaveable(notificationPreferences.reactionNotificationsEnabled) {
-        mutableStateOf(notificationPreferences.reactionNotificationsEnabled)
-    }
     var callsRingtone by rememberSaveable { mutableStateOf(defaultValue) }
     var callsVibration by rememberSaveable { mutableStateOf(defaultValue) }
     var statusTone by rememberSaveable { mutableStateOf(defaultValue) }
     var statusVibration by rememberSaveable { mutableStateOf(defaultValue) }
-    var statusHighPriority by rememberSaveable(notificationPreferences.highPriorityEnabled) {
-        mutableStateOf(notificationPreferences.highPriorityEnabled)
-    }
-    var statusReactions by rememberSaveable(notificationPreferences.reactionNotificationsEnabled) {
-        mutableStateOf(notificationPreferences.reactionNotificationsEnabled)
-    }
     var appIconBadge by rememberSaveable { mutableStateOf(enabledValue) }
     var activePickerKey by remember { mutableStateOf<String?>(null) }
 
@@ -120,8 +102,8 @@ internal fun GroupedNotificationSettingsSections(
             notificationPreferences = notificationPreferences,
             conversationTonesEnabled = conversationTonesEnabled,
             onConversationTonesChange = onConversationTonesChange,
-            remindersEnabled = remindersEnabled,
-            onRemindersChange = { remindersEnabled = it },
+            remindersEnabled = notificationPreferences.remindersEnabled,
+            onRemindersChange = onToggleReminders,
             onToggle = onToggleGlobal
         )
         MessagesNotificationSection(
@@ -130,26 +112,26 @@ internal fun GroupedNotificationSettingsSections(
             popup = messagesPopup,
             popupSupported = popupNotificationsSupported,
             light = messagesLight,
-            highPriority = messagesHighPriority,
-            reactions = messagesReactions,
+            highPriority = notificationPreferences.highPriorityEnabled,
+            reactions = notificationPreferences.reactionNotificationsEnabled,
             onToneClick = { activePickerKey = "messages-tone" },
             onVibrationClick = { activePickerKey = "messages-vibration" },
             onPopupClick = { activePickerKey = "messages-popup" },
             onLightClick = { activePickerKey = "messages-light" },
-            onHighPriorityChange = { messagesHighPriority = it },
-            onReactionsChange = { messagesReactions = it }
+            onHighPriorityChange = onToggleHighPriority,
+            onReactionsChange = onToggleReactions
         )
         GroupsNotificationSection(
             tone = groupsTone,
             vibration = groupsVibration,
             light = groupsLight,
-            highPriority = groupsHighPriority,
-            reactions = groupsReactions,
+            highPriority = notificationPreferences.highPriorityEnabled,
+            reactions = notificationPreferences.reactionNotificationsEnabled,
             onToneClick = { activePickerKey = "groups-tone" },
             onVibrationClick = { activePickerKey = "groups-vibration" },
             onLightClick = { activePickerKey = "groups-light" },
-            onHighPriorityChange = { groupsHighPriority = it },
-            onReactionsChange = { groupsReactions = it }
+            onHighPriorityChange = onToggleHighPriority,
+            onReactionsChange = onToggleReactions
         )
         CallsNotificationSection(
             ringtone = callsRingtone,
@@ -160,13 +142,13 @@ internal fun GroupedNotificationSettingsSections(
         StatusNotificationSection(
             tone = statusTone,
             vibration = statusVibration,
-            highPriority = statusHighPriority,
-            reactions = statusReactions,
+            highPriority = notificationPreferences.highPriorityEnabled,
+            reactions = notificationPreferences.reactionNotificationsEnabled,
             appIconBadge = appIconBadge,
             onToneClick = { activePickerKey = "status-tone" },
             onVibrationClick = { activePickerKey = "status-vibration" },
-            onHighPriorityChange = { statusHighPriority = it },
-            onReactionsChange = { statusReactions = it },
+            onHighPriorityChange = onToggleHighPriority,
+            onReactionsChange = onToggleReactions,
             onAppIconBadgeClick = { activePickerKey = "app-icon-badge" }
         )
     }
