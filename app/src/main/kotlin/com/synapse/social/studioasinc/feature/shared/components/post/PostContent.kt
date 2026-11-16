@@ -67,6 +67,7 @@ fun PostContent(
     isExpanded: Boolean = false,
     modifier: Modifier = Modifier,
     getLinkMetadataUseCase: com.synapse.social.studioasinc.shared.domain.usecase.GetLinkMetadataUseCase? = null,
+    isVideoActive: Boolean = false,
     post: Post? = null
 ) {
     Column(modifier = modifier) {
@@ -169,6 +170,7 @@ fun PostContent(
                 postViewStyle = postViewStyle,
                 onMediaClick = onMediaClick,
                 modifier = Modifier,
+                isVideoActive = isVideoActive,
                 post = post
             )
         }

@@ -19,6 +19,7 @@ fun SharedPostItem(
     actions: PostActions,
     isExpanded: Boolean = false,
     isReshareItem: Boolean = false,
+    isVideoActive: Boolean = false,
     modifier: Modifier = Modifier
 ) {
 
@@ -71,6 +72,7 @@ fun SharedPostItem(
         onPollVote = onPollVote,
 
         onReactionSelected = { reaction -> actions.onReactionSelected(post, reaction) },
+        isVideoActive = isVideoActive,
         modifier = modifier
     )
 }
