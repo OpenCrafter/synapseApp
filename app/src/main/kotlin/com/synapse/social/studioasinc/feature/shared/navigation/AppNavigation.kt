@@ -918,7 +918,9 @@ fun NavGraphBuilder.postGraph(
                     }
                 )
             }
-    composable<AppDestination.QuotePost> {
+    composable<AppDestination.QuotePost>(
+        deepLinks = listOf(navDeepLink<AppDestination.QuotePost>(basePath = "synapse://quote-post"))
+    ) {
                 val viewModel: com.synapse.social.studioasinc.feature.createpost.quote.QuotePostViewModel = hiltViewModel()
                 com.synapse.social.studioasinc.feature.createpost.quote.QuotePostScreen(
                     viewModel = viewModel,
