@@ -6,7 +6,6 @@ import android.os.Bundle
 import com.synapse.social.studioasinc.CreatePostActivity
 import com.synapse.social.studioasinc.core.ui.base.BaseComposeActivity
 import com.synapse.social.studioasinc.core.util.IntentUtils
-import com.synapse.social.studioasinc.ui.navigation.DeepLink
 import com.synapse.social.studioasinc.feature.post.postdetail.PostDetailScreen
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -47,10 +46,14 @@ class PostDetailActivity : BaseComposeActivity() {
                 onNavigateBack = { finish() },
                 onNavigateToProfile = { userId -> navigateToProfile(userId) },
                 onNavigateToEditPost = { editPostId -> navigateToEditPost(editPostId) },
-                onNavigateToReplyToPost = { replyPostId -> navigateToReplyToPost(replyPostId) },
-                onNavigateToQuotePost = { pid ->
-                    IntentUtils.openUrl(this, DeepLink.quotePost(pid))
+                onNavigateToQuotePost = { quotePostId ->
+                    val intent = Intent(this@PostDetailActivity, com.synapse.social.studioasinc.feature.shared.main.MainActivity::class.java).apply {
+                        putExtra("destination", "quote")
+                        putExtra("post_id", quotePostId)
+                    }
+                    startActivity(intent)
                 },
+                onNavigateToReplyToPost = { replyPostId -> navigateToReplyToPost(replyPostId) },
                 onNavigateToCommentDetail = { pId, cId ->
                     val intent = Intent(this, PostDetailActivity::class.java).apply {
                         putExtra(EXTRA_POST_ID, pId)
