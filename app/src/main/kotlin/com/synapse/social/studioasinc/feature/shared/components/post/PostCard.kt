@@ -101,7 +101,8 @@ fun PostCard(
     onUsernameSelected: (String) -> Unit = {},
     modifier: Modifier = Modifier,
     isLikeLoading: Boolean = false,
-    showOptions: Boolean = true
+    showOptions: Boolean = true,
+    isVideoActive: Boolean = false
 ) {
     var showReactionPicker by remember { mutableStateOf(false) }
 
@@ -242,6 +243,7 @@ fun PostCard(
                     quotedPost = state.post.quotedPost,
                     linkPreviews = state.post.linkPreviews,
                     isExpanded = state.isExpanded,
+                    isVideoActive = isVideoActive,
                     // The post travels with the media click: MediaContent hands it back through
                     // onMediaClick so the viewer knows what was opened. Omitting it left the
                     // callback without a post (no-op for one image, force-unwrap crash for many).
