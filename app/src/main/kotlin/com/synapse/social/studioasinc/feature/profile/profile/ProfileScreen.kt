@@ -106,6 +106,24 @@ fun ProfileScreen(
         }
     }
 
+    // Handle report user success/error messages
+    LaunchedEffect(state.reportUserSuccess, state.reportUserError) {
+        when {
+            state.reportUserSuccess -> {
+                snackbarHostState.showSnackbar(
+                    message = context.getString(R.string.report_submitted)
+                )
+                viewModel.clearReportStatus()
+            }
+            state.reportUserError != null -> {
+                snackbarHostState.showSnackbar(
+                    message = state.reportUserError ?: context.getString(R.string.chat_info_error_report_user)
+                )
+                viewModel.clearReportStatus()
+            }
+        }
+    }
+
     val density = androidx.compose.ui.platform.LocalDensity.current
     val coverHeightPx = with(density) { 200.dp.toPx() }
 

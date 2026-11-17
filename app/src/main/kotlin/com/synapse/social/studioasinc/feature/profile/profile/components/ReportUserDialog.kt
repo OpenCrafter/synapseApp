@@ -62,8 +62,11 @@ fun ReportUserDialog(
         confirmButton = {
             TextButton(
                 onClick = {
+                    // Do not dismiss the dialog here: reportUser is async. Keep the dialog open
+                    // until ProfileScreenState.reportUserSuccess is observed, which triggers
+                    // hideReportDialog() and closes the dialog only on success. On failure the
+                    // dialog stays open so the user can see the error and retry.
                     selectedReason?.let { onReport(it) }
-                    onDismiss()
                 },
                 enabled = selectedReason != null
             ) {
