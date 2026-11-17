@@ -122,8 +122,11 @@ fun BlockedContactsScreen(
     userToUnblock?.let { userId ->
         UnblockConfirmationDialog(
             onConfirm = {
+                // Do not dismiss the dialog here: unblockUser is async. Keep the dialog open
+                // until BlockingUiState.UnblockSuccess is observed below, which clears
+                // userToUnblock and closes the dialog only on success. On failure the dialog
+                // stays open so the user can see the error and retry.
                 viewModel.unblockUser(userId)
-                userToUnblock = null
             },
             onDismiss = {
                 userToUnblock = null
@@ -145,6 +148,8 @@ fun BlockedContactsScreen(
                 viewModel.resetState()
             }
             is BlockingUiState.UnblockSuccess -> {
+                // Dismiss the confirmation dialog only once the unblock succeeded.
+                userToUnblock = null
                 snackbarHostState.showSnackbar(
                     message = unblockSuccessMessage,
                     duration = SnackbarDuration.Short
