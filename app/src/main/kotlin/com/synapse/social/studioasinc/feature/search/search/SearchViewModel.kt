@@ -26,6 +26,7 @@ import com.synapse.social.studioasinc.feature.shared.components.post.PostEvent
 import com.synapse.social.studioasinc.feature.shared.components.post.PostEventBus
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -473,7 +474,7 @@ class SearchViewModel @Inject constructor(
     suspend fun blockUser(userId: String): Result<Unit> {
         updateState { it.copy(blockSuccess = false, blockError = null) }
         
-        return blockUserUseCase(userId).first().also { result ->
+        return blockUserUseCase(userId).also { result ->
             result.onSuccess {
                 updateState { it.copy(blockSuccess = true) }
                 performSearch(currentState.query)
