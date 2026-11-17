@@ -527,14 +527,16 @@ class ProfileViewModel @Inject constructor(
     }
 
     suspend fun toggleComments(post: Post): Result<Unit> {
-        return postRepository.toggleComments(post.id).also { result ->
-            result.onSuccess {
-                val toggled = post.copy(
-                    postDisableReplies = if (post.postDisableReplies == "true") "false" else "true"
-                )
-                PostEventBus.emit(PostEvent.Updated(toggled))
+        return viewModelScope.async {
+            postRepository.toggleComments(post.id).also { result ->
+                result.onSuccess {
+                    val toggled = post.copy(
+                        postDisableReplies = if (post.postDisableReplies == "true") "false" else "true"
+                    )
+                    PostEventBus.emit(PostEvent.Updated(toggled))
+                }
             }
-        }
+        }.await()
     }
 
     fun revokeVote(post: Post) {
