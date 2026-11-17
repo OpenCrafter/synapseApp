@@ -417,7 +417,10 @@ class InboxViewModel @Inject constructor(
         viewModelScope.launch {
             _isLoadingArchived.value = true
             chatRepository.getArchivedConversations()
-                .onSuccess { _archivedConversations.value = it.sortedByDescending { item -> item.lastMessageTime ?: "" } }
+                // Deduplicated by chat id, exactly like the active list: a repository that reports
+                // the same conversation twice would otherwise hand the archive's lazy list two items
+                // with the same key, which the framework rejects outright.
+                .onSuccess { _archivedConversations.value = it.sortedByDescending { item -> item.lastMessageTime ?: "" }.distinctBy { it.chatId } }
                 .onFailure { _error.value = "Failed to load archived conversations: ${it.message.orEmpty()}" }
             _isLoadingArchived.value = false
         }

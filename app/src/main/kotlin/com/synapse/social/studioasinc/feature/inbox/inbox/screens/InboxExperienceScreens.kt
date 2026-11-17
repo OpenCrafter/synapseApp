@@ -49,7 +49,6 @@ import androidx.compose.material.icons.rounded.Folder
 import androidx.compose.material.icons.rounded.Group
 import androidx.compose.material.icons.rounded.Link
 import androidx.compose.material.icons.rounded.Mic
-import androidx.compose.material.icons.rounded.MoreVert
 import androidx.compose.material.icons.rounded.Person
 import androidx.compose.material.icons.rounded.PushPin
 import androidx.compose.material.icons.rounded.RadioButtonUnchecked
@@ -103,12 +102,16 @@ fun InboxConversationRow(
     selected: Boolean = false,
     selectionMode: Boolean = false,
     onClick: () -> Unit,
-    onLongClick: () -> Unit = {},
+    // The row's selection entry, offered as an item of the long-press action menu rather than from
+    // the gesture itself: holding a row opens the row's actions, and this is the entry that hands
+    // the conversation to the selection flow. Null leaves selection out of the menu - previews, and
+    // the selection screen itself, where a tap already toggles the row.
+    onSelect: (() -> Unit)? = null,
     trailingContent: (@Composable () -> Unit)? = null,
-    // The row's in-context favourite action. The Boolean is the state the row moves to - the
-    // opposite of the one it is showing - so the caller owns the save and the row stays dumb. Null
-    // (selection mode, previews, the archive screen's own trailing action) leaves the trailing area
-    // exactly as it was.
+    // The row's in-context favourite action, offered as the other item of the long-press action
+    // menu. The Boolean is the state the row moves to - the opposite of the one it is showing - so
+    // the caller owns the save and the row stays dumb. Null leaves the action out of the menu
+    // entirely (previews, the archive screen's own trailing action, selection mode).
     onToggleFavourite: ((Boolean) -> Unit)? = null,
     position: GroupedItemPosition = GroupedItemPosition.Single,
     // The scopes the inbox is navigated with. With them, the row's picture and name carry the same
@@ -143,12 +146,28 @@ fun InboxConversationRow(
         label = "conversation-row-press"
     )
     val rowShape = position.shape
-    var showFavouriteMenu by remember { mutableStateOf(false) }
+    // The row's actions live in a menu the row opens by holding it, instead of behind a button that
+    // sat in every row all the time: the trailing area now carries only the state the conversation
+    // is in. The menu dismisses on an outside tap or back, and it is drawn over the row rather than
+    // inside its click path, so a normal tap still opens the conversation.
+    var showActionsMenu by remember { mutableStateOf(false) }
+    val selectAction = onSelect
+    val favouriteAction = onToggleFavourite
+    val hasActionsMenu = !selectionMode && (selectAction != null || favouriteAction != null)
+    // Selection mode keeps the old gesture: a hold toggles the row exactly as a tap does, because
+    // the row's only action there is the selection the tap already performs.
+    val openActionsMenu: () -> Unit = { showActionsMenu = true }
+    val holdAction: (() -> Unit)? = when {
+        selectionMode -> onClick
+        hasActionsMenu -> openActionsMenu
+        else -> null
+    }
+    Box(modifier = modifier.fillMaxWidth()) {
     Surface(
         color = if (selected) MaterialTheme.colorScheme.secondaryContainer else cardSurfaceColor(),
         contentColor = if (selected) MaterialTheme.colorScheme.onSecondaryContainer else MaterialTheme.colorScheme.onSurface,
         shape = rowShape,
-        modifier = modifier
+        modifier = Modifier
             .fillMaxWidth()
             .graphicsLayer { scaleX = scale; scaleY = scale }
             // Clip here, not only on the Surface: the ripple is drawn by this node's indication
@@ -157,7 +176,8 @@ fun InboxConversationRow(
             .combinedClickable(
                 interactionSource = interactionSource,
                 onClick = onClick,
-                onLongClick = onLongClick
+                onLongClickLabel = if (hasActionsMenu) stringResource(R.string.inbox_conversation_actions) else null,
+                onLongClick = holdAction
             )
             .animateContentSize(animationSpec = spring(dampingRatio = 0.8f, stiffness = 380f))
     ) {
@@ -235,32 +255,39 @@ fun InboxConversationRow(
                         }
                     }
                 }
-                if (onToggleFavourite != null) {
-                    Box {
-                        IconButton(
-                            onClick = { showFavouriteMenu = true },
-                            modifier = Modifier.size(InboxExpressiveDimens.IconTouchTarget)
-                        ) {
-                            Icon(Icons.Rounded.MoreVert, contentDescription = stringResource(R.string.inbox_menu_more), tint = MaterialTheme.colorScheme.onSurfaceVariant)
-                        }
-                        DropdownMenu(expanded = showFavouriteMenu, onDismissRequest = { showFavouriteMenu = false }) {
-                            // A favourite is the participant's own pin flag - the badge above and the
-                            // Favorites filter read the same state this item writes - and the label names
-                            // the state the row moves to, which is what makes the action reversible.
-                            val isFavourite = conversation.isPinned
-                            DropdownMenuItem(
-                                text = { Text(stringResource(if (isFavourite) R.string.remove_from_favourites else R.string.add_to_favourites)) },
-                                leadingIcon = { Icon(Icons.Rounded.PushPin, contentDescription = null) },
-                                onClick = {
-                                    showFavouriteMenu = false
-                                    onToggleFavourite(!isFavourite)
-                                }
-                            )
-                        }
-                    }
-                }
             }
         }
+    }
+    // Only the actions this row actually has are listed: a list row offers its favourite action
+    // and the way into the selection flow, and a row with neither opens no menu at all.
+    if (hasActionsMenu) {
+        DropdownMenu(expanded = showActionsMenu, onDismissRequest = { showActionsMenu = false }) {
+            if (favouriteAction != null) {
+                // A favourite is the participant's own pin flag - the badge above and the
+                // Favorites filter read the same state this item writes - and the label names
+                // the state the row moves to, which is what makes the action reversible.
+                val isFavourite = conversation.isPinned
+                DropdownMenuItem(
+                    text = { Text(stringResource(if (isFavourite) R.string.remove_from_favourites else R.string.add_to_favourites)) },
+                    leadingIcon = { Icon(Icons.Rounded.PushPin, contentDescription = null) },
+                    onClick = {
+                        showActionsMenu = false
+                        favouriteAction(!isFavourite)
+                    }
+                )
+            }
+            if (selectAction != null) {
+                DropdownMenuItem(
+                    text = { Text(stringResource(R.string.inbox_action_select)) },
+                    leadingIcon = { Icon(Icons.Rounded.CheckCircle, contentDescription = null) },
+                    onClick = {
+                        showActionsMenu = false
+                        selectAction()
+                    }
+                )
+            }
+        }
+    }
     }
 }
 
@@ -478,7 +505,7 @@ fun InboxArchivedScreen(
                     onClick = {
                         if (selectionMode) onToggleSelection(conversation.chatId) else onOpenConversation(conversation)
                     },
-                    onLongClick = { onToggleSelection(conversation.chatId) },
+                    onSelect = { onToggleSelection(conversation.chatId) },
                     trailingContent = if (selectionMode) null else {
                         {
                             TextButton(onClick = { onUnarchive(conversation.chatId) }) {

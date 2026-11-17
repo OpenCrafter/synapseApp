@@ -258,7 +258,10 @@ internal fun ChatMessageList(
             when (item) {
                  is ChatListItem.DateDivider -> "date_${item.label}"
                  is ChatListItem.UnreadDivider -> "unread_divider"
-                 is ChatListItem.MessageItem -> item.message.clientId
+                 // The stable local id is what keeps a row the same row across an optimistic send
+                 // and its echo. Falling back to the server id leaves the key unique even for a
+                 // message that somehow arrived without one, so no two rows can claim the same key.
+                 is ChatListItem.MessageItem -> item.message.clientId.ifBlank { "message_" + item.message.id }
                  is ChatListItem.SystemHistoryItem -> "system_${item.message.id}"
              }
          }, contentType = { _, item ->

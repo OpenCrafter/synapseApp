@@ -53,7 +53,19 @@ object ChatItemsMapper {
         val today = LocalDate.now(zone)
 
         // ChatMessagingDelegate maintains chronological ordering for every timeline mutation.
-        val sorted = messages
+        //
+        // One message, one row. The key a row is identified by is the message's stable local id, and
+        // a timeline that holds that id twice - the optimistic row an echo of it arrives for, an
+        // overlapping page of older history - hands the lazy list two items with the same key, which
+        // it rejects outright ("Key ... was already used"). Collapsing on the local id keeps the list
+        // a timeline: the position of the first copy is kept, which is the order the messages were
+        // sent in, and the value of the last copy wins, which is the copy that carries the newest
+        // delivery state. Messages that arrive without a local id fall back to their server id so a
+        // blank clientId cannot collapse unrelated messages into a single entry and silently drop
+        // earlier ones from the timeline.
+        val byLocalId = LinkedHashMap<String, Message>(messages.size)
+        messages.forEach { message -> byLocalId[message.clientId.ifBlank { message.id }] = message }
+        val sorted = byLocalId.values.toList()
         val result = mutableListOf<ChatListItem>()
         var lastDate: LocalDate? = null
 

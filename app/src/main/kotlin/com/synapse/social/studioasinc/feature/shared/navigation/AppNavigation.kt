@@ -336,8 +336,32 @@ fun NavGraphBuilder.inboxGraph(
                 // destination like any other: its leading control returns to the screen that opened
                 // it, which is what the system back gesture already does. Only a list with nothing
                 // below it in the back stack leads with the account instead.
-                val canNavigateBack = navController.previousBackStackEntry != null
-                val navigateBack: () -> Unit = { navController.popBackStack() }
+                //
+                // The answer is remembered instead of re-read on every recomposition. Popping this
+                // destination makes it the successor of the entry below immediately, while the screen
+                // is still drawn for the exit animation; reading the back stack again there reports
+                // that nothing is behind the list, and the header would flip from the pushed layout
+                // (back arrow leading, account trailing) to the root one (account leading) halfway
+                // through the pop - which is what dragged the account picture across the bar and into
+                // the back button's place as the user tapped back. Whether the list was pushed cannot
+                // change while it is on screen, so the first answer is kept for the whole visit.
+                val canNavigateBack = remember(navController) { navController.previousBackStackEntry != null }
+                // Never a no-op: a pushed list pops to the screen that opened it - the same screen the
+                // system back gesture returns to - and a list with nothing behind it lands on Home
+                // rather than appearing to ignore the tap.
+                val navigateBack: () -> Unit = {
+                    if (!navController.popBackStack()) {
+                        // Nothing to pop. Only reset to Home when the user is actually at the
+                        // inbox root: a stale `canNavigateBack` snapshot must not wipe a stack the
+                        // user has already left (for example after opening a conversation).
+                        val atInboxRoot = navController.currentBackStackEntry?.let { entry ->
+                            entry.destination.hasRoute<AppDestination.Inbox>()
+                        } == true
+                        if (atInboxRoot) {
+                            navController.navigate(AppDestination.Home) { popUpTo(0) { inclusive = true } }
+                        }
+                    }
+                }
                 InboxScreen(
                     onNavigateBack = if (canNavigateBack) navigateBack else null,
                     onNavigateToProfile = { userId ->
