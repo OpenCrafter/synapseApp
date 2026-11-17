@@ -369,12 +369,10 @@ fun FeedScreen(
             onBookmark = { viewModel.bookmarkPost(post) },
             onToggleComments = {
                 viewModel.toggleComments(post)
-                Result.success(Unit)
             },
             onReport = { postToReport = post; showReportDialog = true },
             onBlock = {
                 viewModel.blockUser(post.authorUid)
-                Result.success(Unit)
             },
             onRevokeVote = { viewModel.revokeVote(post) },
             onSummarize = {
