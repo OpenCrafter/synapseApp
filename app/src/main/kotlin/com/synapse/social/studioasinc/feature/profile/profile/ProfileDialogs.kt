@@ -199,6 +199,7 @@ internal fun PostOptionsSection(
             onRevokeVote = {
                 viewModel.revokeVote(post)
             },
+            onReshare = { viewModel.resharePost(post) },
             onSummarize = onSummarize
         )
     }
