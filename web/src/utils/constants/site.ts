@@ -7,7 +7,7 @@ export const APP_DOMAIN = process.env.NEXT_PUBLIC_APP_DOMAIN
 export const SUPPORT_EMAIL = "support@synapse.app";
 
 export const GITHUB_REPOSITORY = {
-    owner: "synapseSRC",
+    owner: "OpenCrafter",
     name: "synapseApp",
 } as const;
 

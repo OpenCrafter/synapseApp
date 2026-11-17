@@ -22,7 +22,7 @@ actual object SynapseConfig {
     actual val IMGBB_API_ENDPOINT: String = getEnvVar("IMGBB_API_ENDPOINT").ifBlank { "https://api.imgbb.com/1/upload" }
     actual val CLOUDINARY_API_BASE_URL: String = getEnvVar("CLOUDINARY_API_BASE_URL").ifBlank { "https://api.cloudinary.com/v1_1/" }
     actual val APP_WEBSITE_URL: String = getEnvVar("APP_WEBSITE_URL").ifBlank { "https://synapsesocial.vercel.app" }
-    actual val GITHUB_BUG_REPORT_URL: String = getEnvVar("GITHUB_BUG_REPORT_URL").ifBlank { "https://github.com/synapseSRC/synapseApp/issues/new?template=bug_report.md" }
+    actual val GITHUB_BUG_REPORT_URL: String = getEnvVar("GITHUB_BUG_REPORT_URL").ifBlank { "https://github.com/OpenCrafter/synapseApp/issues/new?template=bug_report.md" }
     actual val DEFAULT_QUIET_HOURS_START: String = getEnvVar("DEFAULT_QUIET_HOURS_START").ifBlank { "22:00" }
     actual val DEFAULT_QUIET_HOURS_END: String = getEnvVar("DEFAULT_QUIET_HOURS_END").ifBlank { "08:00" }
     actual val SUPABASE_REDIRECT_URL: String = getEnvVar("SUPABASE_REDIRECT_URL").ifBlank { "https://synapsesocial.vercel.app/home" }
