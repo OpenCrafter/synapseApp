@@ -148,12 +148,12 @@ fun BlockedContactsScreen(
                 viewModel.resetState()
             }
             is BlockingUiState.UnblockSuccess -> {
+                // Dismiss the confirmation dialog only once the unblock succeeded.
+                userToUnblock = null
                 snackbarHostState.showSnackbar(
                     message = unblockSuccessMessage,
                     duration = SnackbarDuration.Short
                 )
-                // Dismiss the confirmation dialog only once the unblock succeeded.
-                userToUnblock = null
                 viewModel.resetState()
             }
             is BlockingUiState.Error -> {
