@@ -56,8 +56,8 @@ class GitHubAppUpdateRepository @Inject constructor() : AppUpdateRepository {
     }
 
     companion object {
-        private const val UPDATE_ENDPOINT = "https://api.github.com/repos/synapseSRC/synapseApp/releases/latest"
-        private const val RELEASE_PATH_PREFIX = "/synapseSRC/synapseApp/releases/"
+        private const val UPDATE_ENDPOINT = "https://api.github.com/repos/OpenCrafter/synapseApp/releases/latest"
+        private const val RELEASE_PATH_PREFIX = "/OpenCrafter/synapseApp/releases/"
         private const val REQUEST_TIMEOUT_MILLIS = 8_000
     }
 }

@@ -52,7 +52,7 @@
     <string name="about_expanded">Expanded</string>
     <string name="about_collapsed">Collapsed</string>
     <string name="about_github_releases">GitHub Releases</string>
-    <string name="about_github_releases_url">https://github.com/synapseSRC/synapseApp/releases</string>
+    <string name="about_github_releases_url">https://github.com/OpenCrafter/synapseApp/releases</string>
 
     <string name="about_open_source_title">Open Source</string>
     <string name="about_license_search_placeholder">Search libraries or authors…</string>

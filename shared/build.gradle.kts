@@ -214,7 +214,7 @@ android {
         buildConfigField("String", "IMGBB_API_ENDPOINT", "\"${System.getenv("IMGBB_API_ENDPOINT") ?: project.findProperty("IMGBB_API_ENDPOINT") ?: "https://api.imgbb.com/1/upload"}\"")
         buildConfigField("String", "CLOUDINARY_API_BASE_URL", "\"${System.getenv("CLOUDINARY_API_BASE_URL") ?: project.findProperty("CLOUDINARY_API_BASE_URL") ?: "https://api.cloudinary.com/v1_1/"}\"")
         buildConfigField("String", "APP_WEBSITE_URL", "\"${System.getenv("APP_WEBSITE_URL") ?: project.findProperty("APP_WEBSITE_URL") ?: "https://synapsesocial.vercel.app"}\"")
-        buildConfigField("String", "GITHUB_BUG_REPORT_URL", "\"${System.getenv("GITHUB_BUG_REPORT_URL") ?: project.findProperty("GITHUB_BUG_REPORT_URL") ?: "https://github.com/synapseSRC/synapseApp/issues/new?template=bug_report.md"}\"")
+        buildConfigField("String", "GITHUB_BUG_REPORT_URL", "\"${System.getenv("GITHUB_BUG_REPORT_URL") ?: project.findProperty("GITHUB_BUG_REPORT_URL") ?: "https://github.com/OpenCrafter/synapseApp/issues/new?template=bug_report.md"}\"")
         buildConfigField("String", "DEFAULT_QUIET_HOURS_START", "\"${System.getenv("DEFAULT_QUIET_HOURS_START") ?: project.findProperty("DEFAULT_QUIET_HOURS_START") ?: "22:00"}\"")
         buildConfigField("String", "DEFAULT_QUIET_HOURS_END", "\"${System.getenv("DEFAULT_QUIET_HOURS_END") ?: project.findProperty("DEFAULT_QUIET_HOURS_END") ?: "08:00"}\"")
         buildConfigField("String", "SUPABASE_REDIRECT_URL", "\"${System.getenv("SUPABASE_REDIRECT_URL") ?: project.findProperty("SUPABASE_REDIRECT_URL") ?: "https://synapsesocial.vercel.app/home"}\"")
