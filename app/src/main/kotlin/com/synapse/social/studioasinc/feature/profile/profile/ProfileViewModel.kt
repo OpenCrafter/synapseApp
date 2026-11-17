@@ -86,6 +86,8 @@ data class ProfileScreenState(
     val isRefreshing: Boolean = false,
     val blockSuccess: Boolean = false,
     val blockError: String? = null,
+    val reportUserSuccess: Boolean = false,
+    val reportUserError: String? = null,
     val isSummarizing: Boolean = false,
     val postSummary: String? = null,
     val summaryError: String? = null,
@@ -520,12 +522,14 @@ class ProfileViewModel @Inject constructor(
         }
     }
 
-    suspend fun toggleComments(post: Post): Result<Unit> {
-        return postRepository.toggleComments(post.id).onSuccess {
-            val toggled = post.copy(
-                postDisableReplies = if (post.postDisableReplies == "true") "false" else "true"
-            )
-            PostEventBus.emit(PostEvent.Updated(toggled))
+    fun toggleComments(post: Post) {
+        viewModelScope.launch {
+            postRepository.toggleComments(post.id).onSuccess {
+                val toggled = post.copy(
+                    postDisableReplies = if (post.postDisableReplies == "true") "false" else "true"
+                )
+                PostEventBus.emit(PostEvent.Updated(toggled))
+            }
         }
     }
 
@@ -619,27 +623,43 @@ class ProfileViewModel @Inject constructor(
         }
     }
 
-    suspend fun blockUser(blockedUserId: String): Result<Unit> {
-        _state.update { it.copy(blockSuccess = false, blockError = null) }
-        
-        return blockUserUseCase(blockedUserId)
-            .onSuccess {
-                _state.update { it.copy(blockSuccess = true) }
-            }
-            .onFailure { error ->
-                _state.update { 
-                    it.copy(blockError = error.message ?: "Failed to block user")
+    fun blockUser(blockedUserId: String) {
+        viewModelScope.launch {
+            _state.update { it.copy(blockSuccess = false, blockError = null) }
+            
+            blockUserUseCase(blockedUserId)
+                .onSuccess {
+                    _state.update { it.copy(blockSuccess = true) }
                 }
-            }
+                .onFailure { error ->
+                    _state.update { 
+                        it.copy(blockError = error.message ?: "Failed to block user")
+                    }
+                }
+        }
     }
     
     fun clearBlockStatus() {
         _state.update { it.copy(blockSuccess = false, blockError = null) }
     }
 
+    fun clearReportStatus() {
+        _state.update { it.copy(reportUserSuccess = false, reportUserError = null) }
+    }
+
     fun reportUser(reportedUserId: String, reason: String) {
         viewModelScope.launch {
-            reportUserUseCase(_state.value.currentUserId, reportedUserId, reason).collect {}
+            _state.update { it.copy(reportUserSuccess = false, reportUserError = null) }
+
+            reportUserUseCase(_state.value.currentUserId, reportedUserId, reason).collect { result ->
+                result.onSuccess {
+                    _state.update { it.copy(reportUserSuccess = true) }
+                }.onFailure { error ->
+                    _state.update {
+                        it.copy(reportUserError = error.message ?: "Failed to report user")
+                    }
+                }
+            }
         }
     }
 

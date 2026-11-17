@@ -4,8 +4,7 @@ import android.content.Context
 import android.content.Intent
 import android.widget.Toast
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.rememberCoroutineScope
-import kotlinx.coroutines.launch
+import androidx.compose.runtime.LaunchedEffect
 import com.synapse.social.studioasinc.BuildConfig
 import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.domain.model.Post
@@ -23,7 +22,6 @@ internal fun ProfileMoreMenuSection(
     context: Context,
     onNavigateToSettings: () -> Unit
 ) {
-    val scope = rememberCoroutineScope()
     if (state.showMoreMenu) {
         ProfileMoreMenuBottomSheet(
             isOwnProfile = effectiveIsOwnProfile,
@@ -35,9 +33,7 @@ internal fun ProfileMoreMenuSection(
             },
             onSettings = onNavigateToSettings,
             onBlockUser = {
-                if (profile != null) {
-                    scope.launch { viewModel.blockUser(profile.id) }
-                }
+                profile?.let { viewModel.blockUser(it.id) }
             },
             onReportUser = { viewModel.showReportDialog() },
             onMuteUser = {
@@ -125,6 +121,16 @@ internal fun ReportSection(
     state: ProfileScreenState,
     viewModel: ProfileViewModel
 ) {
+    // Dismiss the report dialog only when reportUserSuccess is observed, mirroring
+    // the block-success dismissal convention. On failure reportUserError is set but
+    // reportUserSuccess stays false, so the dialog remains open for retry.
+    LaunchedEffect(state.reportUserSuccess) {
+        if (state.reportUserSuccess) {
+            viewModel.hideReportDialog()
+            viewModel.clearReportStatus()
+        }
+    }
+
     if (state.showReportDialog) {
         val profile = (state.profileState as? ProfileUiState.Success)?.profile
         profile?.let {
@@ -164,7 +170,6 @@ internal fun PostOptionsSection(
     onNavigateToEditPost: (String) -> Unit,
     onDismiss: () -> Unit
 ) {
-    val scope = rememberCoroutineScope()
     if (showPostOptions && selectedPost != null) {
         val post = selectedPost
         PostOptionsBottomSheet(
@@ -189,22 +194,16 @@ internal fun PostOptionsSection(
                 viewModel.toggleSave(post)
             },
             onToggleComments = {
-                val result = viewModel.toggleComments(post)
-                if (result.isSuccess) {
-                    onDismiss()
-                }
-                result
+                viewModel.toggleComments(post)
+                Result.success(Unit)
             },
             onReport = {
                 viewModel.reportPost(post.id, context.getString(R.string.toast_reported_from_profile))
                 Toast.makeText(context, context.getString(R.string.toast_report_submitted), Toast.LENGTH_SHORT).show()
             },
             onBlock = {
-                val result = viewModel.blockUser(post.authorUid)
-                if (result.isSuccess) {
-                    onDismiss()
-                }
-                result
+                viewModel.blockUser(post.authorUid)
+                Result.success(Unit)
             },
             onRevokeVote = {
                 viewModel.revokeVote(post)
