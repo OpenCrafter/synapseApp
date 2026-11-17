@@ -193,10 +193,7 @@ internal fun PostOptionsSection(
             onBookmark = {
                 viewModel.toggleSave(post)
             },
-            onToggleComments = {
-                viewModel.toggleComments(post)
-                Result.success(Unit)
-            },
+            onToggleComments = { viewModel.toggleComments(post) },
             onReport = {
                 viewModel.reportPost(post.id, context.getString(R.string.toast_reported_from_profile))
                 Toast.makeText(context, context.getString(R.string.toast_report_submitted), Toast.LENGTH_SHORT).show()
