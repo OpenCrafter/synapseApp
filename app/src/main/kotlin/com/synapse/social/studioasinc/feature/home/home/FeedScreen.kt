@@ -380,7 +380,6 @@ fun FeedScreen(
             onDismiss = { showMediaViewer = false }
         )
     }
-}
 
     selectedPost?.let { post ->
         PostOptionsBottomSheet(
