@@ -40,6 +40,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -311,7 +312,7 @@ class FeedViewModel @Inject constructor(
 
     suspend fun blockUser(userId: String): Result<Unit> {
         updateState { it.copy(blockSuccess = false, blockError = null) }
-        return blockUserUseCase(userId).first().also { result ->
+        return blockUserUseCase(userId).also { result ->
             result.onSuccess {
                 updateState { it.copy(blockSuccess = true) }
                 // Refresh feed to remove blocked user's posts
