@@ -186,7 +186,6 @@ internal fun PostOptionsSection(
             },
             onToggleComments = {
                 viewModel.toggleComments(post)
-                Result.success(Unit)
             },
             onReport = {
                 viewModel.reportPost(post.id, context.getString(R.string.toast_reported_from_profile))

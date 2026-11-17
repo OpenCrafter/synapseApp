@@ -42,6 +42,7 @@ import com.synapse.social.studioasinc.feature.shared.components.post.PostUiMappe
 import com.synapse.social.studioasinc.domain.usecase.ai.SummarizePostUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -526,15 +527,17 @@ class ProfileViewModel @Inject constructor(
         }
     }
 
-    fun toggleComments(post: Post) {
-        viewModelScope.launch {
-            postRepository.toggleComments(post.id).onSuccess {
-                val toggled = post.copy(
-                    postDisableReplies = if (post.postDisableReplies == "true") "false" else "true"
-                )
-                PostEventBus.emit(PostEvent.Updated(toggled))
+    suspend fun toggleComments(post: Post): Result<Unit> {
+        return viewModelScope.async {
+            postRepository.toggleComments(post.id).also { result ->
+                result.onSuccess {
+                    val toggled = post.copy(
+                        postDisableReplies = if (post.postDisableReplies == "true") "false" else "true"
+                    )
+                    PostEventBus.emit(PostEvent.Updated(toggled))
+                }
             }
-        }
+        }.await()
     }
 
     fun revokeVote(post: Post) {
