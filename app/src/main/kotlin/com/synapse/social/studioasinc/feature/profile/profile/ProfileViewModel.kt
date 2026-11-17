@@ -652,14 +652,11 @@ class ProfileViewModel @Inject constructor(
             _state.update { it.copy(reportUserSuccess = false, reportUserError = null) }
 
             reportUserUseCase(_state.value.currentUserId, reportedUserId, reason).collect { result ->
-                when (result) {
-                    is Result.Success -> {
-                        _state.update { it.copy(reportUserSuccess = true) }
-                    }
-                    is Result.Failure -> {
-                        _state.update {
-                            it.copy(reportUserError = result.exception.message ?: "Failed to report user")
-                        }
+                result.onSuccess {
+                    _state.update { it.copy(reportUserSuccess = true) }
+                }.onFailure { error ->
+                    _state.update {
+                        it.copy(reportUserError = error.message ?: "Failed to report user")
                     }
                 }
             }
