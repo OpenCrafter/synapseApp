@@ -40,6 +40,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -283,13 +284,11 @@ class FeedViewModel @Inject constructor(
         }
     }
 
-    fun toggleComments(post: Post) {
-        viewModelScope.launch {
-            togglePostCommentsUseCase(post.id).collect { result ->
-                result.onFailure { e ->
-                    e.printStackTrace()
-                    updateState { it.copy(error = e.message ?: "Failed to toggle comments") }
-                }
+    suspend fun toggleComments(post: Post): Result<Unit> {
+        return togglePostCommentsUseCase(post.id).first().also { result ->
+            result.onFailure { e ->
+                e.printStackTrace()
+                updateState { it.copy(error = e.message ?: "Failed to toggle comments") }
             }
         }
     }
@@ -311,20 +310,19 @@ class FeedViewModel @Inject constructor(
         updateState { it.copy(reportSubmitted = false) }
     }
 
-    fun blockUser(userId: String) {
-        viewModelScope.launch {
-            updateState { it.copy(blockSuccess = false, blockError = null) }
-            blockUserUseCase(userId)
-                .onSuccess {
-                    updateState { it.copy(blockSuccess = true) }
-                    // Refresh feed to remove blocked user's posts
-                    refresh()
+    suspend fun blockUser(userId: String): Result<Unit> {
+        updateState { it.copy(blockSuccess = false, blockError = null) }
+        return blockUserUseCase(userId).also { result ->
+            result.onSuccess {
+                updateState { it.copy(blockSuccess = true) }
+                // Refresh feed to remove blocked user's posts
+                refresh()
+            }
+            result.onFailure { error ->
+                updateState {
+                    it.copy(blockError = error.message ?: "Failed to block user")
                 }
-                .onFailure { error ->
-                    updateState {
-                        it.copy(blockError = error.message ?: "Failed to block user")
-                    }
-                }
+            }
         }
     }
     fun clearBlockStatus() {
