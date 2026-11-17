@@ -624,12 +624,12 @@ class ProfileViewModel @Inject constructor(
         }
     }
 
-    fun blockUser(blockedUserId: String) {
-        viewModelScope.launch {
+    suspend fun blockUser(blockedUserId: String): Result<Unit> {
+        return viewModelScope.async {
             _state.update { it.copy(blockSuccess = false, blockError = null) }
             
-            blockUserUseCase(blockedUserId)
-                .onSuccess {
+            blockUserUseCase(blockedUserId).also { result ->
+                result.onSuccess {
                     _state.update { it.copy(blockSuccess = true) }
                 }
                 .onFailure { error ->
@@ -637,7 +637,8 @@ class ProfileViewModel @Inject constructor(
                         it.copy(blockError = error.message ?: "Failed to block user")
                     }
                 }
-        }
+            }
+        }.await()
     }
     
     fun clearBlockStatus() {
