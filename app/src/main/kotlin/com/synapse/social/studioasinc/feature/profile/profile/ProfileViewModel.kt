@@ -526,9 +526,9 @@ class ProfileViewModel @Inject constructor(
         }
     }
 
-    fun toggleComments(post: Post) {
-        viewModelScope.launch {
-            postRepository.toggleComments(post.id).onSuccess {
+    suspend fun toggleComments(post: Post): Result<Unit> {
+        return postRepository.toggleComments(post.id).also { result ->
+            result.onSuccess {
                 val toggled = post.copy(
                     postDisableReplies = if (post.postDisableReplies == "true") "false" else "true"
                 )
