@@ -158,12 +158,15 @@ fun FeedScreen(
         }
     }
 
-    // Show a success snackbar only after the repository confirms the report was submitted.
+    // Show a success snackbar only after the repository confirms the report was submitted,
+    // and dismiss the report confirmation dialog once the result is known.
     LaunchedEffect(uiState.reportSubmitted) {
         if (uiState.reportSubmitted) {
             snackbarHostState.showSnackbar(
                 message = context.getString(R.string.report_submitted)
             )
+            showReportDialog = false
+            postToReport = null
             viewModel.clearReportSubmitted()
         }
     }
@@ -433,8 +436,6 @@ fun FeedScreen(
                 },
                 onConfirm = { reason ->
                     viewModel.reportPost(reportTarget.id, reason)
-                    showReportDialog = false
-                    postToReport = null
                 }
             )
         }
