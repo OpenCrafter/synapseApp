@@ -189,24 +189,22 @@ internal fun PostOptionsSection(
                 viewModel.toggleSave(post)
             },
             onToggleComments = {
-                scope.launch {
-                    val result = viewModel.toggleComments(post)
-                    if (result.isSuccess) {
-                        onDismiss()
-                    }
+                val result = viewModel.toggleComments(post)
+                if (result.isSuccess) {
+                    onDismiss()
                 }
+                result
             },
             onReport = {
                 viewModel.reportPost(post.id, context.getString(R.string.toast_reported_from_profile))
                 Toast.makeText(context, context.getString(R.string.toast_report_submitted), Toast.LENGTH_SHORT).show()
             },
             onBlock = {
-                scope.launch {
-                    val result = viewModel.blockUser(post.authorUid)
-                    if (result.isSuccess) {
-                        onDismiss()
-                    }
+                val result = viewModel.blockUser(post.authorUid)
+                if (result.isSuccess) {
+                    onDismiss()
                 }
+                result
             },
             onRevokeVote = {
                 viewModel.revokeVote(post)
