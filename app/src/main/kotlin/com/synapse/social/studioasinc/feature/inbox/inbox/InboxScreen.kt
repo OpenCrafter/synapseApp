@@ -592,14 +592,6 @@ private fun InboxScreenContent(
                     FloatingActionButtonMenuItem(
                         onClick = {
                             showCreateMenu = false
-                            scope.launch { snackbarHostState.showSnackbar(context.getString(R.string.inbox_fab_create_channel_coming_soon)) }
-                        },
-                        icon = { Icon(Icons.Rounded.Campaign, contentDescription = null) },
-                        text = { Text(stringResource(R.string.inbox_fab_create_channel)) }
-                    )
-                    FloatingActionButtonMenuItem(
-                        onClick = {
-                            showCreateMenu = false
                             onOpenEchoRooms()
                         },
                         icon = { Icon(Icons.Rounded.Mic, contentDescription = null) },
