@@ -555,7 +555,6 @@ fun SearchScreen(
             },
             onToggleComments = {
                 viewModel.toggleComments(post)
-                Result.success(Unit)
             },
             onReport = {
                 viewModel.reportPost(post)
@@ -563,7 +562,6 @@ fun SearchScreen(
             },
             onBlock = {
                 viewModel.blockUser(post.authorUid)
-                Result.success(Unit)
             },
             onRevokeVote = {
                 viewModel.revokeVote(post)
