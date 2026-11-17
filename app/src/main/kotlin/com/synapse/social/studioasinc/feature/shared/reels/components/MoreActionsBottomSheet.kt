@@ -7,7 +7,11 @@ import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Flag
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -25,6 +29,7 @@ fun MoreActionsBottomSheet(
     onDownload: () -> Unit
 ) {
     val scope = rememberCoroutineScope()
+    var isProcessing by remember { mutableStateOf(false) }
 
     ModalBottomSheet(onDismissRequest = onDismiss) {
         Column(
@@ -36,10 +41,17 @@ fun MoreActionsBottomSheet(
                 icon = Icons.Default.Flag,
                 title = "Report",
                 onClick = {
-                    scope.launch {
-                        val result = onReport()
-                        if (result.isSuccess) {
-                            onDismiss()
+                    if (!isProcessing) {
+                        scope.launch {
+                            isProcessing = true
+                            try {
+                                val result = onReport()
+                                if (result.isSuccess) {
+                                    onDismiss()
+                                }
+                            } finally {
+                                isProcessing = false
+                            }
                         }
                     }
                     Unit
@@ -49,10 +61,17 @@ fun MoreActionsBottomSheet(
                 icon = Icons.Default.Block,
                 title = "Block",
                 onClick = {
-                    scope.launch {
-                        val result = onBlock()
-                        if (result.isSuccess) {
-                            onDismiss()
+                    if (!isProcessing) {
+                        scope.launch {
+                            isProcessing = true
+                            try {
+                                val result = onBlock()
+                                if (result.isSuccess) {
+                                    onDismiss()
+                                }
+                            } finally {
+                                isProcessing = false
+                            }
                         }
                     }
                     Unit
