@@ -160,23 +160,21 @@ class ReelsViewModel @Inject constructor(
         }
     }
 
-    fun reportReel(reelId: String, reason: String) {
-        viewModelScope.launch {
-            reelRepository.reportReel(reelId, reason).onFailure { e ->
+    suspend fun reportReel(reelId: String, reason: String): Result<Unit> {
+        return reelRepository.reportReel(reelId, reason)
+            .onFailure { e ->
                 _uiState.update { it.copy(error = "Failed to report: ${e.message}") }
             }
-        }
     }
 
-    fun blockCreator(creatorId: String) {
-        viewModelScope.launch {
-            reelRepository.blockCreator(creatorId).onSuccess {
+    suspend fun blockCreator(creatorId: String): Result<Unit> {
+        return reelRepository.blockCreator(creatorId)
+            .onSuccess {
 
                 loadReels()
             }.onFailure { e ->
                 _uiState.update { it.copy(error = "Failed to block: ${e.message}") }
             }
-        }
     }
 
     fun downloadReel(videoUrl: String) {

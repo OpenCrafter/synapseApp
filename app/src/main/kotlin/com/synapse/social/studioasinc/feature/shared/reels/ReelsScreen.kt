@@ -131,8 +131,11 @@ fun ReelsScreen(
         MoreActionsBottomSheet(
             onDismiss = { showMoreActionsForReelId = null },
             onReport = { viewModel.reportReel(reelId, "Inappropriate content") },
-            onBlock = { reel?.let { viewModel.blockCreator(it.creatorId) } },
-            onDownload = { reel?.let { viewModel.downloadReel(it.videoUrl) } }
+            onBlock = {
+                if (reel == null) Result.failure(IllegalStateException("Reel not found"))
+                else viewModel.blockCreator(reel.creatorId)
+            },
+            onDownload = { reel?.let { viewModel.downloadReel(it.videoUrl) } ?: Unit }
         )
     }
 
