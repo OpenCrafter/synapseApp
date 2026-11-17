@@ -366,14 +366,6 @@ fun StoryViewerScreen(
                         onDelete = {
                             viewModel.hideOptionsSheet()
                             viewModel.showDeleteConfirmation()
-                        },
-                        onReport = {
-                            viewModel.hideOptionsSheet()
-                            Toast.makeText(context, context.getString(R.string.story_report), Toast.LENGTH_SHORT).show()
-                        },
-                        onMute = {
-                            viewModel.hideOptionsSheet()
-                            Toast.makeText(context, context.getString(R.string.story_mute), Toast.LENGTH_SHORT).show()
                         }
                     )
                 }

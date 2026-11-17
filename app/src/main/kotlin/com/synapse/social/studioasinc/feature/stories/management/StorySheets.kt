@@ -9,9 +9,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.VolumeOff
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Flag
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.*
@@ -210,8 +208,6 @@ fun StoryOptionsSheet(
     isOwnStory: Boolean,
     onDismiss: () -> Unit,
     onDelete: () -> Unit,
-    onReport: () -> Unit,
-    onMute: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val sheetState = rememberBottomSheetState(initialValue = SheetValue.Hidden)
@@ -244,42 +240,6 @@ fun StoryOptionsSheet(
                         )
                     },
                     modifier = Modifier.clickable { onDelete() }
-                )
-            } else {
-
-                ListItem(
-                    content = {
-                        Text(
-                            stringResource(R.string.story_mute),
-                            style = MaterialTheme.typography.bodyLarge
-                        )
-                    },
-                    leadingContent = {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.VolumeOff,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onSurface
-                        )
-                    },
-                    modifier = Modifier.clickable { onMute() }
-                )
-
-                ListItem(
-                    content = {
-                        Text(
-                            stringResource(R.string.story_report),
-                            color = MaterialTheme.colorScheme.error,
-                            fontWeight = FontWeight.Medium
-                        )
-                    },
-                    leadingContent = {
-                        Icon(
-                            imageVector = Icons.Default.Flag,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.error
-                        )
-                    },
-                    modifier = Modifier.clickable { onReport() }
                 )
             }
         }
