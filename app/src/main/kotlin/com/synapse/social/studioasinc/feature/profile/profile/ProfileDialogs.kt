@@ -164,6 +164,7 @@ internal fun PostOptionsSection(
     onNavigateToEditPost: (String) -> Unit,
     onDismiss: () -> Unit
 ) {
+    val scope = rememberCoroutineScope()
     if (showPostOptions && selectedPost != null) {
         val post = selectedPost
         PostOptionsBottomSheet(
@@ -187,12 +188,24 @@ internal fun PostOptionsSection(
             onBookmark = {
                 viewModel.toggleSave(post)
             },
-            onToggleComments = { viewModel.toggleComments(post) },
+            onToggleComments = {
+                val result = viewModel.toggleComments(post)
+                if (result.isSuccess) {
+                    onDismiss()
+                }
+                result
+            },
             onReport = {
                 viewModel.reportPost(post.id, context.getString(R.string.toast_reported_from_profile))
                 Toast.makeText(context, context.getString(R.string.toast_report_submitted), Toast.LENGTH_SHORT).show()
             },
-            onBlock = { viewModel.blockUser(post.authorUid) },
+            onBlock = {
+                val result = viewModel.blockUser(post.authorUid)
+                if (result.isSuccess) {
+                    onDismiss()
+                }
+                result
+            },
             onRevokeVote = {
                 viewModel.revokeVote(post)
             }

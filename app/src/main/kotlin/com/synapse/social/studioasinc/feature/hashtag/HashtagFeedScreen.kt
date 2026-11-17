@@ -137,16 +137,22 @@ fun HashtagFeedScreen(
                     selectedPost = null
                 },
                 onToggleComments = {
-                    selectedPost = null
-                    viewModel.toggleComments(post)
+                    val result = viewModel.toggleComments(post)
+                    if (result.isSuccess) {
+                        selectedPost = null
+                    }
+                    result
                 },
                 onReport = {
                     viewModel.reportPost(post.id)
                     selectedPost = null
                 },
                 onBlock = {
-                    selectedPost = null
-                    viewModel.blockUser(post.authorUid)
+                    val result = viewModel.blockUser(post.authorUid)
+                    if (result.isSuccess) {
+                        selectedPost = null
+                    }
+                    result
                 },
                 onRevokeVote = {
                     viewModel.revokeVote(post)
