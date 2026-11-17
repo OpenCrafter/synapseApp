@@ -219,7 +219,6 @@ fun PostDetailScreen(
             onReport = { showReportDialog = true },
             onBlock = { viewModel.blockUser(postDetail.post.authorUid) },
             onRevokeVote = { viewModel.revokeVote() },
-            onReshare = { viewModel.toggleReshare() },
             onSummarize = {
                 showSummarySheet = true
                 viewModel.summarizePost()

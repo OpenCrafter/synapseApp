@@ -569,7 +569,6 @@ fun SearchScreen(
                 viewModel.revokeVote(post)
                 selectedPost = null
             },
-            onReshare = { viewModel.resharePost(post) },
             onSummarize = {
                 showSummarySheet = true
                 viewModel.summarizePost(post)
