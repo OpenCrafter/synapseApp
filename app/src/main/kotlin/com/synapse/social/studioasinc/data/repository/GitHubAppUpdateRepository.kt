@@ -44,7 +44,7 @@ class GitHubAppUpdateRepository @Inject constructor() : AppUpdateRepository {
                 !releaseHost.equals("github.com", ignoreCase = true) ||
                 (releaseUri.port != -1 && releaseUri.port != 443) ||
                 releaseUri.rawUserInfo != null ||
-                !releasePath.startsWith(RELEASE_PATH_PREFIX)
+                !releasePath.lowercase().startsWith(RELEASE_PATH_PREFIX)
             ) throw IOException("Unexpected release URL host")
             return AppReleaseInfo(
                 version = tag.removePrefix("v").removePrefix("V"),
@@ -57,7 +57,7 @@ class GitHubAppUpdateRepository @Inject constructor() : AppUpdateRepository {
 
     companion object {
         private const val UPDATE_ENDPOINT = "https://api.github.com/repos/OpenCrafter/synapseApp/releases/latest"
-        private const val RELEASE_PATH_PREFIX = "/OpenCrafter/synapseApp/releases/"
+        private const val RELEASE_PATH_PREFIX = "/opencrafter/synapseapp/releases/"
         private const val REQUEST_TIMEOUT_MILLIS = 8_000
     }
 }
