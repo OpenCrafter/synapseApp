@@ -690,3 +690,122 @@ class ProfileViewModel @Inject constructor(
                             id = user.uid,
                             username = user.username,
                             name = user.displayName ?: user.username,
+                            avatarUrl = user.avatar,
+                            isMutual = false
+                        )
+                    }
+                    _state.update { it.copy(followingList = followingUsers) }
+                }
+            }
+
+            when (filter) {
+                ProfileContentFilter.POSTS -> {
+                    getProfilePostsUseCase(userId).onSuccess { posts ->
+                        _state.update { it.copy(posts = posts, postsOffset = posts.size) }
+                    }
+                }
+                ProfileContentFilter.PHOTOS -> {
+                    getProfilePhotosUseCase(userId).onSuccess { photos ->
+                        _state.update { it.copy(photos = photos, photosOffset = photos.size) }
+                    }
+                }
+                ProfileContentFilter.REELS -> {
+                    getProfileReelsUseCase(userId).onSuccess { reels ->
+                        _state.update { it.copy(reels = reels, reelsOffset = reels.size) }
+                    }
+                }
+                ProfileContentFilter.REPLIES -> {
+                    getProfileRepliesUseCase(userId).onSuccess { replies ->
+                        _state.update { it.copy(replies = replies, repliesOffset = replies.size) }
+                    }
+                }
+            }
+        }
+    }
+
+    fun summarizePost(post: Post) {
+        val content = post.postText.orEmpty().trim()
+        if (content.isBlank()) {
+            _state.update { it.copy(summaryError = "No text content to summarize.") }
+            return
+        }
+        viewModelScope.launch {
+            _state.update { it.copy(isSummarizing = true, postSummary = null, summaryError = null) }
+            summarizePostUseCase(content, emptyList())
+                .onSuccess { summary -> _state.update { it.copy(isSummarizing = false, postSummary = summary) } }
+                .onFailure { e -> _state.update { it.copy(isSummarizing = false, summaryError = e.message ?: "Failed to summarize post.") } }
+        }
+    }
+
+    fun clearPostSummary() {
+        _state.update { it.copy(postSummary = null, summaryError = null) }
+    }
+
+    /**
+     * Removes the signed-in user's profile picture and reloads the profile so the default
+     * avatar replaces it everywhere on the screen.
+     */
+    fun removeProfilePhoto() {
+        removePhoto(ProfilePhotoKind.PROFILE_PHOTO)
+    }
+
+    /** Removes the signed-in user's cover photo and reloads the profile. */
+    fun removeCoverPhoto() {
+        removePhoto(ProfilePhotoKind.COVER_PHOTO)
+    }
+
+    fun clearPhotoRemovalStatus() {
+        _state.update {
+            it.copy(
+                profilePhotoRemoved = false,
+                coverPhotoRemoved = false,
+                photoRemovalError = null
+            )
+        }
+    }
+
+    private fun removePhoto(kind: ProfilePhotoKind) {
+        val userId = _state.value.currentUserId
+        if (userId.isBlank()) return
+        viewModelScope.launch {
+            _state.update {
+                it.copy(
+                    isRemovingPhoto = true,
+                    profilePhotoRemoved = false,
+                    coverPhotoRemoved = false,
+                    photoRemovalError = null
+                )
+            }
+
+            val result = when (kind) {
+                ProfilePhotoKind.PROFILE_PHOTO -> removeProfilePhotoUseCase(userId)
+                ProfilePhotoKind.COVER_PHOTO -> removeCoverPhotoUseCase(userId)
+            }
+
+            result
+                .onSuccess {
+                    _state.update {
+                        it.copy(
+                            isRemovingPhoto = false,
+                            profilePhotoRemoved = kind == ProfilePhotoKind.PROFILE_PHOTO,
+                            coverPhotoRemoved = kind == ProfilePhotoKind.COVER_PHOTO
+                        )
+                    }
+                    refreshProfile(userId)
+                }
+                .onFailure { error ->
+                    _state.update {
+                        it.copy(
+                            isRemovingPhoto = false,
+                            photoRemovalError = error.message ?: when (kind) {
+                                ProfilePhotoKind.PROFILE_PHOTO -> "Failed to remove profile photo"
+                                ProfilePhotoKind.COVER_PHOTO -> "Failed to remove cover photo"
+                            }
+                        )
+                    }
+                }
+        }
+    }
+
+    private enum class ProfilePhotoKind { PROFILE_PHOTO, COVER_PHOTO }
+}
