@@ -125,6 +125,23 @@ fun PostDetailScreen(
         }
     }
 
+    // Handle delete post completion: navigate back only on success, show error and stay on screen on failure
+    LaunchedEffect(uiState.deleteSuccess, uiState.deleteError) {
+        when {
+            uiState.deleteSuccess -> {
+                snackbarHostState.showSnackbar(message = context.getString(R.string.post_deleted_toast))
+                onNavigateBack()
+                viewModel.clearDeleteStatus()
+            }
+            uiState.deleteError != null -> {
+                snackbarHostState.showSnackbar(
+                    message = uiState.deleteError ?: context.getString(R.string.error_delete_generic)
+                )
+                viewModel.clearDeleteStatus()
+            }
+        }
+    }
+
     // Handle comment submission completion: clear input, show errors, reset sending state
     LaunchedEffect(uiState.commentSubmitted) {
         if (uiState.commentSubmitted) {
@@ -202,7 +219,6 @@ fun PostDetailScreen(
             onAddToThread = { onNavigateToReplyToPost(postId) },
             onDelete = {
                 viewModel.deletePost(postId)
-                onNavigateBack()
             },
             onShare = {
                 postToShare = postDetail.post
