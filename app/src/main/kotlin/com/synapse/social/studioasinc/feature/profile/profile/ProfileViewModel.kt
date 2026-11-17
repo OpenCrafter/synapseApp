@@ -29,6 +29,8 @@ import com.synapse.social.studioasinc.domain.usecase.profile.GetProfileFollowSta
 import com.synapse.social.studioasinc.domain.model.ProfileFollowStatus
 import com.synapse.social.studioasinc.domain.usecase.profile.LockProfileUseCase
 import com.synapse.social.studioasinc.domain.usecase.profile.MuteUserUseCase
+import com.synapse.social.studioasinc.domain.usecase.profile.RemoveCoverPhotoUseCase
+import com.synapse.social.studioasinc.domain.usecase.profile.RemoveProfilePhotoUseCase
 import com.synapse.social.studioasinc.domain.usecase.profile.ReportUserUseCase
 import com.synapse.social.studioasinc.domain.usecase.profile.UnfollowUserUseCase
 import com.synapse.social.studioasinc.domain.usecase.story.HasActiveStoryUseCase
@@ -89,7 +91,11 @@ data class ProfileScreenState(
     val isSummarizing: Boolean = false,
     val postSummary: String? = null,
     val summaryError: String? = null,
-    val navigateToLockProfile: Boolean = false
+    val navigateToLockProfile: Boolean = false,
+    val isRemovingPhoto: Boolean = false,
+    val profilePhotoRemoved: Boolean = false,
+    val coverPhotoRemoved: Boolean = false,
+    val photoRemovalError: String? = null
 )
 
 @HiltViewModel
@@ -115,6 +121,8 @@ class ProfileViewModel @Inject constructor(
     private val blockUserUseCase: BlockUserUseCase,
     private val reportUserUseCase: ReportUserUseCase,
     private val muteUserUseCase: MuteUserUseCase,
+    private val removeProfilePhotoUseCase: RemoveProfilePhotoUseCase,
+    private val removeCoverPhotoUseCase: RemoveCoverPhotoUseCase,
     private val getProfileFollowStatusUseCase: GetProfileFollowStatusUseCase,
     private val hasActiveStoryUseCase: HasActiveStoryUseCase,
     private val postRepository: PostRepositoryImpl,
@@ -682,54 +690,3 @@ class ProfileViewModel @Inject constructor(
                             id = user.uid,
                             username = user.username,
                             name = user.displayName ?: user.username,
-                            avatarUrl = user.avatar,
-                            isMutual = false
-                        )
-                    }
-                    _state.update { it.copy(followingList = followingUsers) }
-                }
-            }
-
-            when (filter) {
-                ProfileContentFilter.POSTS -> {
-                    getProfilePostsUseCase(userId).onSuccess { posts ->
-                        _state.update { it.copy(posts = posts, postsOffset = posts.size) }
-                    }
-                }
-                ProfileContentFilter.PHOTOS -> {
-                    getProfilePhotosUseCase(userId).onSuccess { photos ->
-                        _state.update { it.copy(photos = photos, photosOffset = photos.size) }
-                    }
-                }
-                ProfileContentFilter.REELS -> {
-                    getProfileReelsUseCase(userId).onSuccess { reels ->
-                        _state.update { it.copy(reels = reels, reelsOffset = reels.size) }
-                    }
-                }
-                ProfileContentFilter.REPLIES -> {
-                    getProfileRepliesUseCase(userId).onSuccess { replies ->
-                        _state.update { it.copy(replies = replies, repliesOffset = replies.size) }
-                    }
-                }
-            }
-        }
-    }
-
-    fun summarizePost(post: Post) {
-        val content = post.postText.orEmpty().trim()
-        if (content.isBlank()) {
-            _state.update { it.copy(summaryError = "No text content to summarize.") }
-            return
-        }
-        viewModelScope.launch {
-            _state.update { it.copy(isSummarizing = true, postSummary = null, summaryError = null) }
-            summarizePostUseCase(content, emptyList())
-                .onSuccess { summary -> _state.update { it.copy(isSummarizing = false, postSummary = summary) } }
-                .onFailure { e -> _state.update { it.copy(isSummarizing = false, summaryError = e.message ?: "Failed to summarize post.") } }
-        }
-    }
-
-    fun clearPostSummary() {
-        _state.update { it.copy(postSummary = null, summaryError = null) }
-    }
-}
