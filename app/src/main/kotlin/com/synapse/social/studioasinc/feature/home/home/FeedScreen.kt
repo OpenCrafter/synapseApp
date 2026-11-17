@@ -397,15 +397,9 @@ fun FeedScreen(
             },
             onCopyLink = { PostShareUtils.copyPostLink(context, post.id) },
             onBookmark = { viewModel.bookmarkPost(post) },
-            onToggleComments = {
-                viewModel.toggleComments(post)
-                Result.success(Unit)
-            },
+            onToggleComments = { viewModel.toggleComments(post) },
             onReport = { postToReport = post; showReportDialog = true },
-            onBlock = {
-                viewModel.blockUser(post.authorUid)
-                Result.success(Unit)
-            },
+            onBlock = { viewModel.blockUser(post.authorUid) },
             onRevokeVote = { viewModel.revokeVote(post) },
             onSummarize = {
                 showSummarySheet = true

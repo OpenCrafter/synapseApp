@@ -19,6 +19,7 @@ import com.synapse.social.studioasinc.shared.domain.usecase.blocking.BlockUserUs
 import com.synapse.social.studioasinc.domain.usecase.post.ReportPostUseCase
 import com.synapse.social.studioasinc.domain.usecase.post.RevokeVoteUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -188,32 +189,29 @@ class HashtagFeedViewModel @Inject constructor(
         return authRepository.getCurrentUserId() == post.authorUid
     }
 
-    fun toggleComments(post: Post) {
-        viewModelScope.launch {
-            togglePostCommentsUseCase(post.id).collect { result ->
-                result.onSuccess {
-                    val toggled = if (post.postDisableReplies == "true") "false" else "true"
-                    _uiState.update { state ->
-                        state.copy(posts = state.posts.map {
-                            if (it.id == post.id) it.copy(postDisableReplies = toggled) else it
-                        })
-                    }
-                }.onFailure { e ->
-                    _uiState.update { it.copy(error = e.message ?: "Failed to toggle comments") }
+    suspend fun toggleComments(post: Post): Result<Unit> {
+        return togglePostCommentsUseCase(post.id)
+            .first()
+            .onSuccess {
+                val toggled = if (post.postDisableReplies == "true") "false" else "true"
+                _uiState.update { state ->
+                    state.copy(posts = state.posts.map {
+                        if (it.id == post.id) it.copy(postDisableReplies = toggled) else it
+                    })
                 }
+            }.onFailure { e ->
+                _uiState.update { it.copy(error = e.message ?: "Failed to toggle comments") }
             }
-        }
     }
 
-    fun blockUser(userId: String) {
-        viewModelScope.launch {
-            blockUserUseCase(userId).onSuccess {
+    suspend fun blockUser(userId: String): Result<Unit> {
+        return blockUserUseCase(userId)
+            .onSuccess {
                 _uiState.update { it.copy(error = null) }
                 loadPosts(_uiState.value.tag)
             }.onFailure { error ->
                 _uiState.update { it.copy(error = error.message ?: "Failed to block user") }
             }
-        }
     }
 
     fun reportPost(postId: String) {
