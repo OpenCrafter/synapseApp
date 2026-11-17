@@ -157,7 +157,7 @@ internal fun PostOptionsSection(
     viewModel: ProfileViewModel,
     context: Context,
     onNavigateToEditPost: (String) -> Unit,
-    onSummarize: () -> Unit,
+    onSummarize: () -> Unit = {},
     onDismiss: () -> Unit
 ) {
     if (showPostOptions && selectedPost != null) {

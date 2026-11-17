@@ -377,6 +377,7 @@ fun FeedScreen(
                 Result.success(Unit)
             },
             onRevokeVote = { viewModel.revokeVote(post) },
+            onReshare = { viewModel.resharePost(post) },
             onSummarize = {
                 showSummarySheet = true
                 viewModel.summarizePost(post)
