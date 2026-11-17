@@ -130,8 +130,8 @@ fun PostDetailScreen(
         when {
             uiState.deleteSuccess -> {
                 snackbarHostState.showSnackbar(message = context.getString(R.string.post_deleted_toast))
-                viewModel.clearDeleteStatus()
                 onNavigateBack()
+                viewModel.clearDeleteStatus()
             }
             uiState.deleteError != null -> {
                 snackbarHostState.showSnackbar(
@@ -218,9 +218,7 @@ fun PostDetailScreen(
             onEdit = { onNavigateToEditPost(postId) },
             onAddToThread = { onNavigateToReplyToPost(postId) },
             onDelete = {
-                scope.launch {
-                    viewModel.deletePost(postId)
-                }
+                viewModel.deletePost(postId)
             },
             onShare = {
                 postToShare = postDetail.post
