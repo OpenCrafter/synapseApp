@@ -7,20 +7,25 @@ import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Flag
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MoreActionsBottomSheet(
     onDismiss: () -> Unit,
-    onReport: () -> Unit,
-    onBlock: () -> Unit,
+    onReport: suspend () -> Result<Unit>,
+    onBlock: suspend () -> Result<Unit>,
     onDownload: () -> Unit
 ) {
+    val scope = rememberCoroutineScope()
+
     ModalBottomSheet(onDismissRequest = onDismiss) {
         Column(
             modifier = Modifier
@@ -31,16 +36,26 @@ fun MoreActionsBottomSheet(
                 icon = Icons.Default.Flag,
                 title = "Report",
                 onClick = {
-                    onReport()
-                    onDismiss()
+                    scope.launch {
+                        val result = onReport()
+                        if (result.isSuccess) {
+                            onDismiss()
+                        }
+                    }
+                    Unit
                 }
             )
             ActionItem(
                 icon = Icons.Default.Block,
                 title = "Block",
                 onClick = {
-                    onBlock()
-                    onDismiss()
+                    scope.launch {
+                        val result = onBlock()
+                        if (result.isSuccess) {
+                            onDismiss()
+                        }
+                    }
+                    Unit
                 }
             )
             ActionItem(
