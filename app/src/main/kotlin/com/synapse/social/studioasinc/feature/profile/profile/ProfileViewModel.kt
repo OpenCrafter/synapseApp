@@ -520,14 +520,12 @@ class ProfileViewModel @Inject constructor(
         }
     }
 
-    fun toggleComments(post: Post) {
-        viewModelScope.launch {
-            postRepository.toggleComments(post.id).onSuccess {
-                val toggled = post.copy(
-                    postDisableReplies = if (post.postDisableReplies == "true") "false" else "true"
-                )
-                PostEventBus.emit(PostEvent.Updated(toggled))
-            }
+    suspend fun toggleComments(post: Post): Result<Unit> {
+        return postRepository.toggleComments(post.id).onSuccess {
+            val toggled = post.copy(
+                postDisableReplies = if (post.postDisableReplies == "true") "false" else "true"
+            )
+            PostEventBus.emit(PostEvent.Updated(toggled))
         }
     }
 
@@ -621,20 +619,18 @@ class ProfileViewModel @Inject constructor(
         }
     }
 
-    fun blockUser(blockedUserId: String) {
-        viewModelScope.launch {
-            _state.update { it.copy(blockSuccess = false, blockError = null) }
-            
-            blockUserUseCase(blockedUserId)
-                .onSuccess {
-                    _state.update { it.copy(blockSuccess = true) }
+    suspend fun blockUser(blockedUserId: String): Result<Unit> {
+        _state.update { it.copy(blockSuccess = false, blockError = null) }
+        
+        return blockUserUseCase(blockedUserId)
+            .onSuccess {
+                _state.update { it.copy(blockSuccess = true) }
+            }
+            .onFailure { error ->
+                _state.update { 
+                    it.copy(blockError = error.message ?: "Failed to block user")
                 }
-                .onFailure { error ->
-                    _state.update { 
-                        it.copy(blockError = error.message ?: "Failed to block user")
-                    }
-                }
-        }
+            }
     }
     
     fun clearBlockStatus() {

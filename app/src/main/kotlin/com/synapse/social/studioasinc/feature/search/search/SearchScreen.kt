@@ -525,18 +525,12 @@ onMediaClick = { post, index ->
                 viewModel.bookmarkPost(post)
                 selectedPost = null
             },
-            onToggleComments = {
-                viewModel.toggleComments(post)
-                Result.success(Unit)
-            },
+            onToggleComments = { viewModel.toggleComments(post) },
             onReport = {
                 viewModel.reportPost(post)
                 selectedPost = null
             },
-            onBlock = {
-                viewModel.blockUser(post.authorUid)
-                Result.success(Unit)
-            },
+            onBlock = { viewModel.blockUser(post.authorUid) },
             onRevokeVote = {
                 viewModel.revokeVote(post)
                 selectedPost = null

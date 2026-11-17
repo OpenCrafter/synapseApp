@@ -34,6 +34,7 @@ import com.synapse.social.studioasinc.ui.settings.PostViewStyle
 import com.synapse.social.studioasinc.core.util.ScrollPositionState
 import com.synapse.social.studioasinc.domain.usecase.ai.SummarizePostUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -283,15 +284,13 @@ class FeedViewModel @Inject constructor(
         }
     }
 
-    fun toggleComments(post: Post) {
-        viewModelScope.launch {
-            togglePostCommentsUseCase(post.id).collect { result ->
-                result.onFailure { e ->
-                    e.printStackTrace()
-                    updateState { it.copy(error = e.message ?: "Failed to toggle comments") }
-                }
+    suspend fun toggleComments(post: Post): Result<Unit> {
+        return togglePostCommentsUseCase(post.id)
+            .first()
+            .onFailure { e ->
+                e.printStackTrace()
+                updateState { it.copy(error = e.message ?: "Failed to toggle comments") }
             }
-        }
     }
 
     fun reportPost(postId: String, reason: String) {
@@ -311,21 +310,20 @@ class FeedViewModel @Inject constructor(
         updateState { it.copy(reportSubmitted = false) }
     }
 
-    fun blockUser(userId: String) {
-        viewModelScope.launch {
-            updateState { it.copy(blockSuccess = false, blockError = null) }
-            blockUserUseCase(userId)
-                .onSuccess {
-                    updateState { it.copy(blockSuccess = true) }
-                    // Refresh feed to remove blocked user's posts
-                    refresh()
+    suspend fun blockUser(userId: String): Result<Unit> {
+        updateState { it.copy(blockSuccess = false, blockError = null) }
+        
+        return blockUserUseCase(userId)
+            .onSuccess {
+                updateState { it.copy(blockSuccess = true) }
+                // Refresh feed to remove blocked user's posts
+                refresh()
+            }
+            .onFailure { error ->
+                updateState {
+                    it.copy(blockError = error.message ?: "Failed to block user")
                 }
-                .onFailure { error ->
-                    updateState {
-                        it.copy(blockError = error.message ?: "Failed to block user")
-                    }
-                }
-        }
+            }
     }
     fun clearBlockStatus() {
         updateState { it.copy(blockSuccess = false, blockError = null) }

@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import android.widget.Toast
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.rememberCoroutineScope
 import com.synapse.social.studioasinc.BuildConfig
 import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.domain.model.Post
@@ -21,6 +22,7 @@ internal fun ProfileMoreMenuSection(
     context: Context,
     onNavigateToSettings: () -> Unit
 ) {
+    val scope = rememberCoroutineScope()
     if (state.showMoreMenu) {
         ProfileMoreMenuBottomSheet(
             isOwnProfile = effectiveIsOwnProfile,
@@ -32,7 +34,9 @@ internal fun ProfileMoreMenuSection(
             },
             onSettings = onNavigateToSettings,
             onBlockUser = {
-                profile?.let { viewModel.blockUser(it.id) }
+                if (profile != null) {
+                    scope.launch { viewModel.blockUser(profile.id) }
+                }
             },
             onReportUser = { viewModel.showReportDialog() },
             onMuteUser = {
@@ -182,18 +186,12 @@ internal fun PostOptionsSection(
             onBookmark = {
                 viewModel.toggleSave(post)
             },
-            onToggleComments = {
-                viewModel.toggleComments(post)
-                Result.success(Unit)
-            },
+            onToggleComments = { viewModel.toggleComments(post) },
             onReport = {
                 viewModel.reportPost(post.id, context.getString(R.string.toast_reported_from_profile))
                 Toast.makeText(context, context.getString(R.string.toast_report_submitted), Toast.LENGTH_SHORT).show()
             },
-            onBlock = {
-                viewModel.blockUser(post.authorUid)
-                Result.success(Unit)
-            },
+            onBlock = { viewModel.blockUser(post.authorUid) },
             onRevokeVote = {
                 viewModel.revokeVote(post)
             }
