@@ -60,9 +60,11 @@ object ChatItemsMapper {
         // it rejects outright ("Key ... was already used"). Collapsing on the local id keeps the list
         // a timeline: the position of the first copy is kept, which is the order the messages were
         // sent in, and the value of the last copy wins, which is the copy that carries the newest
-        // delivery state.
+        // delivery state. Messages that arrive without a local id fall back to their server id so a
+        // blank clientId cannot collapse unrelated messages into a single entry and silently drop
+        // earlier ones from the timeline.
         val byLocalId = LinkedHashMap<String, Message>(messages.size)
-        messages.forEach { message -> byLocalId[message.clientId] = message }
+        messages.forEach { message -> byLocalId[message.clientId.ifBlank { message.id }] = message }
         val sorted = byLocalId.values.toList()
         val result = mutableListOf<ChatListItem>()
         var lastDate: LocalDate? = null

@@ -349,7 +349,15 @@ fun NavGraphBuilder.inboxGraph(
                 // rather than appearing to ignore the tap.
                 val navigateBack: () -> Unit = {
                     if (!navController.popBackStack()) {
-                        navController.navigate(AppDestination.Home) { popUpTo(0) { inclusive = true } }
+                        // Nothing to pop. Only reset to Home when the user is actually at the
+                        // inbox root: a stale `canNavigateBack` snapshot must not wipe a stack the
+                        // user has already left (for example after opening a conversation).
+                        val atInboxRoot = navController.currentBackStackEntry?.let { entry ->
+                            entry.destination.hasRoute<AppDestination.Inbox>()
+                        } == true
+                        if (atInboxRoot) {
+                            navController.navigate(AppDestination.Home) { popUpTo(0) { inclusive = true } }
+                        }
                     }
                 }
                 InboxScreen(
