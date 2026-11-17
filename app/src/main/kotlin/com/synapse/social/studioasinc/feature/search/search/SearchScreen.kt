@@ -525,12 +525,12 @@ onMediaClick = { post, index ->
                 viewModel.bookmarkPost(post)
                 selectedPost = null
             },
-            onToggleComments = { viewModel.toggleComments(post) },
+            onToggleComments = { scope.launch { val result = viewModel.toggleComments(post); if (result.isSuccess) { selectedPost = null } } },
             onReport = {
                 viewModel.reportPost(post)
                 selectedPost = null
             },
-            onBlock = { viewModel.blockUser(post.authorUid) },
+            onBlock = { scope.launch { val result = viewModel.blockUser(post.authorUid); if (result.isSuccess) { selectedPost = null } } },
             onRevokeVote = {
                 viewModel.revokeVote(post)
                 selectedPost = null
