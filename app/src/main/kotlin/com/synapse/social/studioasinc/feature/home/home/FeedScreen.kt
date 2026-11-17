@@ -110,7 +110,7 @@ fun FeedScreen(
                     }
                 }
             }
-            if (bestFraction >= MIN_VIDEO_AUTOPLAY_VISIBLE_FRACTION) bestKey else null
+            if (bestFraction >= 0.6f) bestKey else null
         }
     }
     var selectedPost by remember { mutableStateOf<Post?>(null) }
@@ -450,6 +450,8 @@ fun FeedScreen(
     }
 }
 
+}
+
 @Composable
 private fun FeedCommentItem(
     feedItem: FeedItem.CommentItem,
@@ -502,5 +504,3 @@ private fun FeedCommentItem(
     )
 }
 
-/** Share of a feed item that has to be on screen before its inline video may autoplay. */
-private const val MIN_VIDEO_AUTOPLAY_VISIBLE_FRACTION = 0.6f
