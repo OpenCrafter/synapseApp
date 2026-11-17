@@ -154,10 +154,6 @@ fun HashtagFeedScreen(
                 onRevokeVote = {
                     viewModel.revokeVote(post)
                     selectedPost = null
-                },
-                onReshare = {
-                    viewModel.resharePost(post)
-                    selectedPost = null
                 }
             )
         }
