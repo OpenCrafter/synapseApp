@@ -63,7 +63,8 @@ internal fun ProfileContent(
     onNavigateToChat: (String, String?, String?) -> Unit,
     onNavigateToStoryCreator: () -> Unit,
     onOpenMediaViewer: (List<String>, Int) -> Unit,
-    onShowPostOptions: (Post) -> Unit
+    onShowPostOptions: (Post) -> Unit,
+    onOpenPhotoOptions: (ProfilePhotoType) -> Unit = {}
 ) {
 
     var contentVisible by remember { mutableStateOf(false) }
@@ -178,14 +179,14 @@ internal fun ProfileContent(
                             onToggleBio = { bioExpanded = !bioExpanded },
                             onProfileImageClick = {
                                 if (state.isOwnProfile) {
-                                    onNavigateToEditProfile()
+                                    onOpenPhotoOptions(ProfilePhotoType.AVATAR)
                                 } else if (!profile.avatar.isNullOrBlank()) {
                                     onOpenMediaViewer(listOf(profile.avatar), 0)
                                 }
                             },
                             onCoverPhotoClick = {
                                 if (state.isOwnProfile) {
-                                    onNavigateToEditProfile()
+                                    onOpenPhotoOptions(ProfilePhotoType.COVER)
                                 } else if (!profile.coverImageUrl.isNullOrBlank()) {
                                     onOpenMediaViewer(listOf(profile.coverImageUrl), 0)
                                 }
