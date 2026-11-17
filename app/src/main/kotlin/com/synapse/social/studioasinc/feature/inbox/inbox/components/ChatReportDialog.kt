@@ -96,8 +96,11 @@ fun ChatReportDialog(
         confirmButton = {
             TextButton(
                 onClick = {
+                    // Do not dismiss the dialog here: reportCurrentChat is async. Keep the dialog
+                    // open until ChatScreen sets showReportDialog = false on success (via the
+                    // onResult callback below). On failure the dialog stays open so the user can
+                    // retry.
                     selectedReasonRes?.let { onReport(context.getString(it)) }
-                    onDismiss()
                 },
                 enabled = selectedReasonRes != null
             ) {

@@ -998,6 +998,9 @@ val currentUserId = currentUserIdState ?: ""
                         participantUserId = participantId,
                         reason = reason,
                         onResult = { result ->
+                            if (result.isSuccess) {
+                                showReportDialog = false
+                            }
                             Toast.makeText(
                                 context,
                                 if (result.isSuccess) R.string.chat_info_msg_reported else R.string.chat_report_error,
