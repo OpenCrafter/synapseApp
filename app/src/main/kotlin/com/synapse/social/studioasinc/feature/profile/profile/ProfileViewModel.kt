@@ -42,6 +42,7 @@ import com.synapse.social.studioasinc.feature.shared.components.post.PostUiMappe
 import com.synapse.social.studioasinc.domain.usecase.ai.SummarizePostUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
