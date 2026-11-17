@@ -271,11 +271,13 @@ fun NavGraphBuilder.homeGraph(
 ) {
     composable<AppDestination.Home>(
         deepLinks = listOf(navDeepLink<AppDestination.Home>(basePath = "synapse://home"))
-    ) {
+    ) { backStackEntry ->
+        val args = backStackEntry.toRoute<AppDestination.Home>()
         HomeScreen(
             sharedTransitionScope = sharedTransitionScope,
             animatedVisibilityScope = this@composable,
             reelUploadManager = reelUploadManager,
+            initialTab = args.initialTab,
             onNavigateToSearch = {
                 navController.navigate(AppDestination.Search)
             },
@@ -652,6 +654,9 @@ fun NavGraphBuilder.profileGraph(
                     },
                     onNavigateToLockProfile = {
                         navController.navigate(AppDestination.LockProfile)
+                    },
+                    onNavigateToReels = {
+                        navController.navigate(AppDestination.Home(initialTab = 1)) { launchSingleTop = true }
                     },
                     viewModel = viewModel
                 )
