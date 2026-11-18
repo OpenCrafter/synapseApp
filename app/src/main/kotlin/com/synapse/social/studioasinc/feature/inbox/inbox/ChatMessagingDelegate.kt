@@ -318,7 +318,11 @@ class ChatMessagingDelegate(
         }
     }
 
-    fun deleteMessage(messageId: String) {
+    fun deleteMessage(
+        messageId: String,
+        onError: (String?) -> Unit = {},
+        onSuccess: () -> Unit = {}
+    ) {
         viewModelScope.launch {
             val original = _messages.value.firstOrNull { it.id == messageId } ?: return@launch
             if (original.senderId != currentUserIdProvider()) return@launch
@@ -337,9 +341,11 @@ class ChatMessagingDelegate(
                     _messages.update { current ->
                         current.updateById(messageId) { it.redactedForDeletion() }
                     }
+                    onSuccess()
                 }
-                .onFailure {
+                .onFailure { e ->
                     _messages.update { current -> current.replaceById(messageId, original) }
+                    onError(e.message ?: "Failed to delete message")
                 }
         }
     }
@@ -362,10 +368,18 @@ class ChatMessagingDelegate(
         }
     }
 
-    fun deleteMessageForMe(messageId: String) {
+    fun deleteMessageForMe(
+        messageId: String,
+        onError: (String?) -> Unit = {},
+        onSuccess: () -> Unit = {}
+    ) {
         viewModelScope.launch {
-            deleteMessageForMeUseCase(messageId)
-            removeMessages(setOf(messageId))
+            deleteMessageForMeUseCase(messageId).onSuccess {
+                removeMessages(setOf(messageId))
+                onSuccess()
+            }.onFailure { e ->
+                onError(e.message ?: "Failed to delete message")
+            }
         }
     }
 
