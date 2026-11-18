@@ -91,19 +91,19 @@ class NotificationSettingsViewModel @Inject constructor(
         }
     }
     fun toggleGlobalNotifications(enabled: Boolean) {
-        updatePreferences { it.copy(globalEnabled = enabled) }
+        updatePreferences(updateBlock = { it.copy(globalEnabled = enabled) })
     }
 
     fun toggleNotificationCategory(category: NotificationCategory, enabled: Boolean) {
-        updatePreferences { it.withCategory(category, enabled) }
+        updatePreferences(updateBlock = { it.withCategory(category, enabled) })
     }
 
     fun toggleDoNotDisturb(enabled: Boolean) {
-        updatePreferences { it.copy(doNotDisturb = enabled) }
+        updatePreferences(updateBlock = { it.copy(doNotDisturb = enabled) })
     }
 
     fun toggleQuietHours(enabled: Boolean) {
-        updatePreferences { it.copy(quietHoursEnabled = enabled) }
+        updatePreferences(updateBlock = { it.copy(quietHoursEnabled = enabled) })
     }
 
     fun toggleSoundEffects(enabled: Boolean) {
@@ -123,15 +123,15 @@ class NotificationSettingsViewModel @Inject constructor(
     }
 
     fun toggleReminders(enabled: Boolean) {
-        updatePreferences { it.copy(remindersEnabled = enabled) }
+        updatePreferences(updateBlock = { it.copy(remindersEnabled = enabled) })
     }
 
     fun toggleHighPriority(enabled: Boolean) {
-        updatePreferences { it.copy(highPriorityEnabled = enabled) }
+        updatePreferences(updateBlock = { it.copy(highPriorityEnabled = enabled) })
     }
 
     fun toggleReactions(enabled: Boolean) {
-        updatePreferences { it.copy(reactionNotificationsEnabled = enabled) }
+        updatePreferences(updateBlock = { it.copy(reactionNotificationsEnabled = enabled) })
     }
 
     fun setQuietHours(start: String, end: String) {
