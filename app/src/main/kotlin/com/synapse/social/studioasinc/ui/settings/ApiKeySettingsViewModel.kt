@@ -79,6 +79,12 @@ class ApiKeySettingsViewModel @Inject constructor(
     }
 
     fun deleteApiKey(keyId: String, onResult: (Boolean) -> Unit) {
+        // Guard against concurrent invocations (e.g. rapid double-tap): multiple in-flight
+        // deletes would each refresh _apiKeys and could leave it in an inconsistent state.
+        if (_isLoading.value) {
+            onResult(false)
+            return
+        }
         viewModelScope.launch {
             _isLoading.value = true
             try {
