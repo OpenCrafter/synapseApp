@@ -1085,8 +1085,10 @@ onSuccess = {
                 confirmButton = {
                     TextButton(
                         onClick = {
-                            showBlockDialog = false
                             viewModel.blockCurrentChatParticipant(participantId.orEmpty()) { result ->
+                                if (result.isSuccess) {
+                                    showBlockDialog = false
+                                }
                                 Toast.makeText(
                                     context,
                                     if (result.isSuccess) R.string.chat_info_msg_blocked else R.string.chat_info_error_block,
