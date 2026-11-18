@@ -37,14 +37,11 @@ fun SharedPostItem(
     val onBookmarkClick = remember(post.id, post.isBookmarked, actions) { { actions.onBookmark(post) } }
     val onUserClick = remember(post.authorUid, actions) { { actions.onUserClick(post.authorUid) } }
     val onPostClick = remember(post.id, actions) { { actions.onComment(post) } }
-    val onMediaClick = remember(post.id, actions, postViewStyle) {
-        { post: Post, index: Int ->
-            if (postViewStyle == PostViewStyle.GRID) {
-                actions.onComment(post)
-            } else {
-                actions.onMediaClick(post, index)
-            }
-        }
+    // A media tap always opens the post media at the tapped index, in every media layout. The grid
+    // already reports the exact item that was tapped, so routing those taps to the comment screen
+    // hid the full-screen viewer whenever the grid media layout was selected.
+    val onMediaClick = remember(post.id, actions) {
+        { post: Post, index: Int -> actions.onMediaClick(post, index) }
     }
     val onOptionsClick = remember(post.id, actions) { { actions.onOptionClick(post) } }
     val onPollVote = remember(post.id, actions) {

@@ -224,7 +224,7 @@ fun ProfileScreen(
                             selectedPost = post
                             showPostOptions = true
                         },
-                        onReelItemClick = { onNavigateToReels() }
+                        onReelItemClick = onNavigateToReels
                     )
                 }
             }

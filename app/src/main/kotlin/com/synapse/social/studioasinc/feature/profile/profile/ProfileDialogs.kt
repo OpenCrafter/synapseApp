@@ -8,7 +8,9 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.res.stringResource
+import kotlinx.coroutines.launch
 import com.synapse.social.studioasinc.BuildConfig
 import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.domain.model.Post
@@ -26,6 +28,7 @@ internal fun ProfileMoreMenuSection(
     context: Context,
     onNavigateToSettings: () -> Unit
 ) {
+    val scope = rememberCoroutineScope()
     if (state.showMoreMenu) {
         ProfileMoreMenuBottomSheet(
             isOwnProfile = effectiveIsOwnProfile,
@@ -37,7 +40,12 @@ internal fun ProfileMoreMenuSection(
             },
             onSettings = onNavigateToSettings,
             onBlockUser = {
-                profile?.let { viewModel.blockUser(it.id) }
+                val target = profile
+                scope.launch {
+                    target?.let { viewModel.blockUser(it.id) }
+                    Unit
+                }
+                Unit
             },
             onReportUser = { viewModel.showReportDialog() },
             onMuteUser = {
@@ -267,7 +275,6 @@ internal fun PostOptionsSection(
             },
             onBlock = {
                 viewModel.blockUser(post.authorUid)
-                Result.success(Unit)
             },
             onRevokeVote = {
                 viewModel.revokeVote(post)

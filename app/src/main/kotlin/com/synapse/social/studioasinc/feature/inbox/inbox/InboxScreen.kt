@@ -642,7 +642,7 @@ private fun InboxScreenContent(
                             onOpenArchive = { destination = InboxDestination.ARCHIVED },
                             onRetry = viewModel::loadConversations,
                             onOpenConversation = ::openConversation,
-                            onLongPressConversation = { chatId -> selectedChatIds = setOf(chatId); destination = InboxDestination.SELECTION },
+                            onSelectConversation = { chatId -> selectedChatIds = setOf(chatId); destination = InboxDestination.SELECTION },
                             onToggleFavourite = viewModel::setConversationFavourite
                         )
                         InboxTab.CALLS -> CallsTabScreen(
@@ -793,8 +793,10 @@ private fun HomeMessages(
     onOpenArchive: () -> Unit,
     onRetry: () -> Unit,
     onOpenConversation: (Conversation) -> Unit,
-    onLongPressConversation: (String) -> Unit,
-    // The row menu's favourite action. The Boolean is the state the row moves to.
+    // The way into the selection flow now that a row carries no button of its own: the row offers it
+    // as an item of the actions menu a hold opens, and a tap keeps opening the conversation.
+    onSelectConversation: (String) -> Unit,
+    // The row actions menu's favourite action. The Boolean is the state the row moves to.
     onToggleFavourite: (chatId: String, isFavourite: Boolean) -> Unit
 ) {
     val sections = remember(conversations) { groupConversations(conversations) }
@@ -879,7 +881,7 @@ private fun HomeMessages(
                             animatedVisibilityScope = animatedVisibilityScope,
                             position = GroupedItemPosition.at(index, sectionConversations.size),
                             onClick = { onOpenConversation(conversation) },
-                            onLongClick = { onLongPressConversation(conversation.chatId) },
+                            onSelect = { onSelectConversation(conversation.chatId) },
                             onToggleFavourite = { isFavourite -> onToggleFavourite(conversation.chatId, isFavourite) },
                             // The chat id is still the row's key after the pin flip, so the list knows this
                             // is the same row changing slot rather than a row leaving and another arriving:
@@ -1019,8 +1021,7 @@ private fun SelectionContent(
                     conversation = conversation,
                     selected = conversation.chatId in selectedChatIds,
                     selectionMode = true,
-                    onClick = { onToggleSelection(conversation.chatId) },
-                    onLongClick = { onToggleSelection(conversation.chatId) }
+                    onClick = { onToggleSelection(conversation.chatId) }
                 )
             }
             item(key = "folder-assignment") {

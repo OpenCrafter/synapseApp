@@ -15,7 +15,6 @@ import com.synapse.social.studioasinc.domain.usecase.post.ReactToPostUseCase
 import com.synapse.social.studioasinc.domain.usecase.post.ReportPostUseCase
 import com.synapse.social.studioasinc.domain.usecase.post.RevokeVoteUseCase
 import com.synapse.social.studioasinc.domain.usecase.post.VotePollUseCase
-import com.synapse.social.studioasinc.domain.usecase.post.RevokeVoteUseCase
 import com.synapse.social.studioasinc.domain.usecase.profile.ArchiveProfileUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.blocking.BlockUserUseCase
 import com.synapse.social.studioasinc.domain.usecase.profile.FollowUserUseCase
@@ -45,6 +44,7 @@ import com.synapse.social.studioasinc.feature.shared.components.post.PostUiMappe
 import com.synapse.social.studioasinc.domain.usecase.ai.SummarizePostUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -119,7 +119,6 @@ class ProfileViewModel @Inject constructor(
     private val bookmarkPostUseCase: BookmarkPostUseCase,
     private val deletePostUseCase: DeletePostUseCase,
     private val reportPostUseCase: ReportPostUseCase,
-    private val revokeVoteUseCase: RevokeVoteUseCase,
     private val lockProfileUseCase: LockProfileUseCase,
     private val archiveProfileUseCase: ArchiveProfileUseCase,
     private val blockUserUseCase: BlockUserUseCase,
@@ -559,27 +558,6 @@ class ProfileViewModel @Inject constructor(
         }
     }
 
-    fun toggleComments(post: Post) {
-        viewModelScope.launch {
-            postRepository.toggleComments(post.id).onSuccess {
-                val toggled = post.copy(
-                    postDisableReplies = if (post.postDisableReplies == "true") "false" else "true"
-                )
-                PostEventBus.emit(PostEvent.Updated(toggled))
-            }
-        }
-    }
-
-    fun revokeVote(post: Post) {
-        viewModelScope.launch {
-            revokeVoteUseCase(post).collect { result ->
-                result.onSuccess { updatedPost ->
-                    PostEventBus.emit(PostEvent.Updated(updatedPost))
-                }
-            }
-        }
-    }
-
     // UI Helpers
     fun showViewAsSheet() { _state.update { it.copy(showViewAsSheet = true) } }
     fun hideViewAsSheet() { _state.update { it.copy(showViewAsSheet = false) } }
@@ -654,12 +632,12 @@ class ProfileViewModel @Inject constructor(
         }
     }
 
-    fun blockUser(blockedUserId: String) {
-        viewModelScope.launch {
+    suspend fun blockUser(blockedUserId: String): Result<Unit> {
+        return viewModelScope.async {
             _state.update { it.copy(blockSuccess = false, blockError = null) }
             
-            blockUserUseCase(blockedUserId)
-                .onSuccess {
+            blockUserUseCase(blockedUserId).also { result ->
+                result.onSuccess {
                     _state.update { it.copy(blockSuccess = true) }
                 }
                 .onFailure { error ->
@@ -667,7 +645,8 @@ class ProfileViewModel @Inject constructor(
                         it.copy(blockError = error.message ?: "Failed to block user")
                     }
                 }
-        }
+            }
+        }.await()
     }
     
     fun clearBlockStatus() {

@@ -60,5 +60,5 @@ object AppReleaseMapper {
         }
     }
 
-    private const val RELEASE_PATH_PREFIX = "/synapsesrc/synapseapp/releases/"
+    private const val RELEASE_PATH_PREFIX = "/opencrafter/synapseapp/releases/"
 }

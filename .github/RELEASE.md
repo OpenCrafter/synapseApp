@@ -120,7 +120,7 @@ and the web changelog (`release-notes.ts`). Use this structure for every release
 
 ## Full Changelog
 
-https://github.com/synapseSRC/synapseApp/compare/v<prev>...v<new>
+https://github.com/OpenCrafter/synapseApp/compare/v<prev>...v<new>
 ```
 
 ### Grouping guide
