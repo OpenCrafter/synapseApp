@@ -45,7 +45,8 @@ data class StoryViewerState(
     val replyText: String = "",
     val isReplying: Boolean = false,
     val showOptionsSheet: Boolean = false,
-    val showDeleteConfirmation: Boolean = false
+    val showDeleteConfirmation: Boolean = false,
+    val isDeleting: Boolean = false
 )
 
 @HiltViewModel
@@ -373,11 +374,22 @@ class StoryViewerViewModel @Inject constructor(
     }
 
     fun confirmDeleteStory(storyId: String) {
+        // Guard against duplicate rapid requests while a delete is already in flight.
+        if (_uiState.value.isDeleting) return
         viewModelScope.launch {
+            _uiState.update { it.copy(isDeleting = true, error = null) }
             val result = storyRepository.deleteStory(storyId)
+            _uiState.update { it.copy(isDeleting = false) }
             if (result.isSuccess) {
                 _uiState.update { it.copy(showDeleteConfirmation = false) }
                 nextStory()
+            } else {
+                val exception = result.exceptionOrNull()
+                _uiState.update { it.copy(
+                    error = "Failed to delete story: ${exception?.message ?: "unknown error"}"
+                )}
+                // Keep the confirmation dialog open (showDeleteConfirmation stays true) so the
+                // user can see the failure and retry. nextStory() is not advanced on failure.
             }
         }
     }

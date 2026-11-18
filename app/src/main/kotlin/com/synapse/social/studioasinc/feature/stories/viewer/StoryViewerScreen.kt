@@ -371,10 +371,22 @@ fun StoryViewerScreen(
                     AlertDialog(
                         onDismissRequest = { viewModel.hideDeleteConfirmation() },
                         title = { Text(stringResource(R.string.story_delete_title)) },
-                        text = { Text(stringResource(R.string.story_delete_body)) },
+                        text = {
+                            Column(modifier = Modifier.fillMaxWidth()) {
+                                if (uiState.error != null) {
+                                    Text(
+                                        text = uiState.error ?: stringResource(R.string.error_unknown_short),
+                                        color = MaterialTheme.colorScheme.error
+                                    )
+                                } else {
+                                    Text(stringResource(R.string.story_delete_body))
+                                }
+                            }
+                        },
                         confirmButton = {
                             TextButton(
                                 onClick = { currentStory.id?.let { viewModel.confirmDeleteStory(it) } },
+                                enabled = !uiState.isDeleting,
                                 colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
                             ) {
                                 Text(stringResource(R.string.m_delete))
