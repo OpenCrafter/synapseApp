@@ -41,12 +41,15 @@ class SettingsViewModel @Inject constructor(
     fun resetE2EE() {
         viewModelScope.launch {
             _isResettingE2EE.value = true
-            val result = resetE2EUseCase()
-            _isResettingE2EE.value = false
-            if (result.isSuccess) {
-                _error.value = null
-            } else {
-                _error.value = result.exceptionOrNull()?.message ?: "Failed to reset encryption keys"
+            try {
+                val result = resetE2EUseCase()
+                if (result.isSuccess) {
+                    _error.value = "Encryption keys reset successfully"
+                } else {
+                    _error.value = result.exceptionOrNull()?.message ?: "Failed to reset encryption keys"
+                }
+            } finally {
+                _isResettingE2EE.value = false
             }
         }
     }
