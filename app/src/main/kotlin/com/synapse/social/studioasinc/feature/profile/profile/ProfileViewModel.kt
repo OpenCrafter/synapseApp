@@ -542,20 +542,16 @@ class ProfileViewModel @Inject constructor(
         return result
     }
 
-    fun deletePost(postId: String) {
-        viewModelScope.launch {
-            deletePostUseCase(postId).collect { result ->
-                result.onSuccess {
-                    PostEventBus.emit(PostEvent.Deleted(postId))
-                }
+    suspend fun deletePost(postId: String): Result<Unit> {
+        return deletePostUseCase(postId).first().also { result ->
+            result.onSuccess {
+                PostEventBus.emit(PostEvent.Deleted(postId))
             }
         }
     }
 
-    fun reportPost(postId: String, reason: String) {
-        viewModelScope.launch {
-            reportPostUseCase(postId, reason, null).collect { }
-        }
+    suspend fun reportPost(postId: String, reason: String): Result<Unit> {
+        return reportPostUseCase(postId, reason, null).first()
     }
 
     // UI Helpers

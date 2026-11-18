@@ -418,13 +418,11 @@ class SearchViewModel @Inject constructor(
         }
     }
 
-    fun deletePost(post: com.synapse.social.studioasinc.domain.model.Post) {
-        viewModelScope.launch {
-            deletePostUseCase(post.id).collect { result ->
-                result.onSuccess {
-                    updateState { state -> state.copy(posts = state.posts.filter { it.id != post.id }) }
-                }.onFailure { err -> updateState { it.copy(error = err.message) } }
-            }
+    suspend fun deletePost(post: com.synapse.social.studioasinc.domain.model.Post): Result<Unit> {
+        return deletePostUseCase(post.id).first().also { result ->
+            result.onSuccess {
+                updateState { state -> state.copy(posts = state.posts.filter { it.id != post.id }) }
+            }.onFailure { err -> updateState { it.copy(error = err.message) } }
         }
     }
 
@@ -434,8 +432,9 @@ class SearchViewModel @Inject constructor(
             .onFailure { err -> updateState { it.copy(error = err.message) } }
     }
 
-    fun reportPost(post: com.synapse.social.studioasinc.domain.model.Post) {
+    suspend fun reportPost(post: com.synapse.social.studioasinc.domain.model.Post): Result<Unit> {
         updateState { it.copy(isReportDialogShowing = true, reportDialogPost = post) }
+        return Result.success(Unit)
     }
 
     fun submitReport(reason: String) {

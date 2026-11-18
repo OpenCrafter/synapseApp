@@ -117,10 +117,7 @@ fun HashtagFeedScreen(
                 commentsDisabled = post.postDisableReplies == "true",
                 onDismiss = { selectedPost = null },
                 onEdit = { onNavigateToEditPost(post.id); selectedPost = null },
-                onDelete = {
-                    viewModel.deletePost(post)
-                    selectedPost = null
-                },
+                onDelete = { viewModel.deletePost(post) },
                 onShare = {
                     PostShareUtils.sharePost(context, post.id)
                     selectedPost = null
@@ -144,10 +141,7 @@ fun HashtagFeedScreen(
                     }
                     result
                 },
-                onReport = {
-                    viewModel.reportPost(post.id)
-                    selectedPost = null
-                },
+                onReport = { viewModel.reportPost(post.id) },
                 onBlock = {
                     val result = viewModel.blockUser(post.authorUid)
                     if (result.isSuccess) {
