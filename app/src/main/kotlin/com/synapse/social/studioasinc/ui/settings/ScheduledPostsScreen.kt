@@ -189,8 +189,12 @@ fun ScheduledPostsScreen(
             confirmButton = {
                 TextButton(
                     onClick = {
-                        viewModel.cancelScheduledPost(postId)
-                        cancelConfirmPostId = null
+                        viewModel.cancelScheduledPost(postId) { success ->
+                            // Dismiss only when the async cancel succeeds. On failure the dialog
+                            // stays open so the user can retry; the list is refreshed by the
+                            // ViewModel so the post remains visible.
+                            if (success) cancelConfirmPostId = null
+                        }
                     }
                 ) {
                     Text(stringResource(R.string.m_delete), color = MaterialTheme.colorScheme.error)
