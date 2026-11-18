@@ -1116,8 +1116,10 @@ onSuccess = {
                 confirmButton = {
                     TextButton(
                         onClick = {
-                            showClearChatDialog = false
                             viewModel.clearCurrentChat { result ->
+                                if (result.isSuccess) {
+                                    showClearChatDialog = false
+                                }
                                 Toast.makeText(
                                     context,
                                     if (result.isSuccess) R.string.chat_info_msg_cleared else R.string.chat_info_error_clear_chat,
