@@ -774,7 +774,8 @@ private fun InboxScreenContent(
                             returnToInbox()
                         } else {
                             // Delete failed for some conversations: keep them selected for retry.
-                            showDeleteDialog = false
+                            // The dialog stays open so the user can retry; the failure is surfaced
+                            // via the error snackbar from the ViewModel.
                             if (selectedChatIds.isEmpty()) returnToInbox()
                         }
                     }
