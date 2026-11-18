@@ -597,19 +597,19 @@ class GroupInfoViewModel @Inject constructor(
         }
     }
 
-    fun reportGroup(reason: String) {
+    fun reportGroup(reason: String, onResult: () -> Unit) {
         val chatId = currentChatId ?: return
         viewModelScope.launch {
-            chatRepository.reportChat(chatId, reason)
-                .onSuccess {
-                    _uiState.value = _uiState.value.copy(
-                        successMessageRes = R.string.group_report_success,
-                        errorRes = null
-                    )
-                }
-                .onFailure {
-                    _uiState.value = _uiState.value.copy(errorRes = R.string.group_error_create)
-                }
+            val result = chatRepository.reportChat(chatId, reason)
+            if (result.isSuccess) {
+                _uiState.value = _uiState.value.copy(
+                    successMessageRes = R.string.group_report_success,
+                    errorRes = null
+                )
+                onResult()
+            } else {
+                _uiState.value = _uiState.value.copy(errorRes = R.string.group_error_create)
+            }
         }
     }
 
