@@ -764,9 +764,20 @@ private fun InboxScreenContent(
             text = { Text(stringResource(R.string.inbox_delete_message, selectedChatIds.size)) },
             confirmButton = {
                 TextButton(onClick = {
-                    viewModel.deleteConversations(selectedChatIds)
-                    showDeleteDialog = false
-                    returnToInbox()
+                    viewModel.deleteConversations(selectedChatIds) { success, deletedIds ->
+                        // Remove successfully deleted IDs from the selection so a retry only
+                        // targets conversations that actually failed, avoiding duplicate delete
+                        // API calls for conversations that are already gone.
+                        selectedChatIds = selectedChatIds - deletedIds
+                        if (success) {
+                            showDeleteDialog = false
+                            returnToInbox()
+                        } else {
+                            // Delete failed for some conversations: keep them selected for retry.
+                            showDeleteDialog = false
+                            if (selectedChatIds.isEmpty()) returnToInbox()
+                        }
+                    }
                 }) { Text(stringResource(R.string.inbox_delete_confirm), color = MaterialTheme.colorScheme.error) }
             },
             dismissButton = { TextButton(onClick = { showDeleteDialog = false }) { Text(stringResource(R.string.inbox_cancel)) } }
