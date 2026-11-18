@@ -533,8 +533,11 @@ fun ChatInfoScreen(
             text = { Text(stringResource(R.string.chat_info_report_user_confirm, displayName)) },
             confirmButton = {
                 PressScaleTextButton(onClick = {
-                    showReportConfirmDialog = false
-                    viewModel.reportUser(userId, context.getString(R.string.chat_info_report_reason))
+                    viewModel.reportUser(userId, context.getString(R.string.chat_info_report_reason)) { result ->
+                        if (result.isSuccess) {
+                            showReportConfirmDialog = false
+                        }
+                    }
                 }) {
                     Text(stringResource(R.string.chat_info_report_contact), color = MaterialTheme.colorScheme.error)
                 }
