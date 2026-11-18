@@ -12,6 +12,10 @@ data class ProfileMediaUiState(
     val avatarUploadState: UploadState = UploadState.Idle,
     val coverUploadState: UploadState = UploadState.Idle,
     val error: String? = null,
+    /** True while an avatar removal request is in flight; used to disable the confirm button and keep the dialog open. */
+    val isRemovingAvatar: Boolean = false,
+    /** True while a cover removal request is in flight; used to disable the confirm button and keep the dialog open. */
+    val isRemovingCover: Boolean = false,
     val showRemoveAvatarDialog: Boolean = false,
     val showRemoveCoverDialog: Boolean = false,
     val showShareToFeedDialog: Boolean = false
