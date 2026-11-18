@@ -29,6 +29,8 @@ import com.synapse.social.studioasinc.domain.usecase.profile.GetProfileFollowSta
 import com.synapse.social.studioasinc.domain.model.ProfileFollowStatus
 import com.synapse.social.studioasinc.domain.usecase.profile.LockProfileUseCase
 import com.synapse.social.studioasinc.domain.usecase.profile.MuteUserUseCase
+import com.synapse.social.studioasinc.domain.usecase.profile.RemoveCoverPhotoUseCase
+import com.synapse.social.studioasinc.domain.usecase.profile.RemoveProfilePhotoUseCase
 import com.synapse.social.studioasinc.domain.usecase.profile.ReportUserUseCase
 import com.synapse.social.studioasinc.domain.usecase.profile.UnfollowUserUseCase
 import com.synapse.social.studioasinc.domain.usecase.story.HasActiveStoryUseCase
@@ -90,7 +92,11 @@ data class ProfileScreenState(
     val isSummarizing: Boolean = false,
     val postSummary: String? = null,
     val summaryError: String? = null,
-    val navigateToLockProfile: Boolean = false
+    val navigateToLockProfile: Boolean = false,
+    val isRemovingPhoto: Boolean = false,
+    val profilePhotoRemoved: Boolean = false,
+    val coverPhotoRemoved: Boolean = false,
+    val photoRemovalError: String? = null
 )
 
 @HiltViewModel
@@ -116,6 +122,8 @@ class ProfileViewModel @Inject constructor(
     private val blockUserUseCase: BlockUserUseCase,
     private val reportUserUseCase: ReportUserUseCase,
     private val muteUserUseCase: MuteUserUseCase,
+    private val removeProfilePhotoUseCase: RemoveProfilePhotoUseCase,
+    private val removeCoverPhotoUseCase: RemoveCoverPhotoUseCase,
     private val getProfileFollowStatusUseCase: GetProfileFollowStatusUseCase,
     private val hasActiveStoryUseCase: HasActiveStoryUseCase,
     private val postRepository: PostRepositoryImpl,
@@ -736,4 +744,72 @@ class ProfileViewModel @Inject constructor(
     fun clearPostSummary() {
         _state.update { it.copy(postSummary = null, summaryError = null) }
     }
+
+    /**
+     * Removes the signed-in user's profile picture and reloads the profile so the default
+     * avatar replaces it everywhere on the screen.
+     */
+    fun removeProfilePhoto() {
+        removePhoto(ProfilePhotoKind.PROFILE_PHOTO)
+    }
+
+    /** Removes the signed-in user's cover photo and reloads the profile. */
+    fun removeCoverPhoto() {
+        removePhoto(ProfilePhotoKind.COVER_PHOTO)
+    }
+
+    fun clearPhotoRemovalStatus() {
+        _state.update {
+            it.copy(
+                profilePhotoRemoved = false,
+                coverPhotoRemoved = false,
+                photoRemovalError = null
+            )
+        }
+    }
+
+    private fun removePhoto(kind: ProfilePhotoKind) {
+        val userId = _state.value.currentUserId
+        if (userId.isBlank()) return
+        viewModelScope.launch {
+            _state.update {
+                it.copy(
+                    isRemovingPhoto = true,
+                    profilePhotoRemoved = false,
+                    coverPhotoRemoved = false,
+                    photoRemovalError = null
+                )
+            }
+
+            val result = when (kind) {
+                ProfilePhotoKind.PROFILE_PHOTO -> removeProfilePhotoUseCase(userId)
+                ProfilePhotoKind.COVER_PHOTO -> removeCoverPhotoUseCase(userId)
+            }
+
+            result
+                .onSuccess {
+                    _state.update {
+                        it.copy(
+                            isRemovingPhoto = false,
+                            profilePhotoRemoved = kind == ProfilePhotoKind.PROFILE_PHOTO,
+                            coverPhotoRemoved = kind == ProfilePhotoKind.COVER_PHOTO
+                        )
+                    }
+                    refreshProfile(userId)
+                }
+                .onFailure { error ->
+                    _state.update {
+                        it.copy(
+                            isRemovingPhoto = false,
+                            photoRemovalError = error.message ?: when (kind) {
+                                ProfilePhotoKind.PROFILE_PHOTO -> "Failed to remove profile photo"
+                                ProfilePhotoKind.COVER_PHOTO -> "Failed to remove cover photo"
+                            }
+                        )
+                    }
+                }
+        }
+    }
+
+    private enum class ProfilePhotoKind { PROFILE_PHOTO, COVER_PHOTO }
 }

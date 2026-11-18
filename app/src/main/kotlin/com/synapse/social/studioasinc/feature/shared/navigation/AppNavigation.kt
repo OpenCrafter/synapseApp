@@ -652,6 +652,9 @@ fun NavGraphBuilder.profileGraph(
                     onNavigateToEditProfile = {
                         navController.navigate(AppDestination.EditProfile)
                     },
+                    onNavigateToProfileMedia = {
+                        navController.navigate(AppDestination.ProfileMedia)
+                    },
                     onNavigateToEditPost = { postId ->
                         navController.navigate(AppDestination.CreatePost(postId = postId))
                     },
