@@ -27,6 +27,7 @@ data class PostDetailUiState(
     val postSummary: String? = null,
     val commentError: String? = null,
     val commentActionCompleted: Boolean = false,
+    val commentActionError: String? = null,
     val isSummarizing: Boolean = false,
     val summaryError: String? = null,
     val voteError: String? = null,

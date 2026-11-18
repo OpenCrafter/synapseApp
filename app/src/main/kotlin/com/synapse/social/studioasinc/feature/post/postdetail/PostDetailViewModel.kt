@@ -362,7 +362,7 @@ class PostDetailViewModel @Inject constructor(
                 invalidateComments()
                 _uiState.update { it.copy(commentActionCompleted = true) }
             }.onFailure { e ->
-                _uiState.update { it.copy(commentError = e.message ?: "Failed to delete comment") }
+                _uiState.update { it.copy(commentActionError = e.message ?: "Failed to delete comment") }
             }.also {
                 _uiState.update { it.copy(commentActionsLoading = it.commentActionsLoading - commentId) }
             }
@@ -560,7 +560,7 @@ class PostDetailViewModel @Inject constructor(
             commentRepository.reportComment(commentId, reason).onSuccess {
                 _uiState.update { it.copy(commentActionCompleted = true) }
             }.onFailure { e ->
-                _uiState.update { it.copy(commentError = e.message ?: "Failed to report comment") }
+                _uiState.update { it.copy(commentActionError = e.message ?: "Failed to report comment") }
             }.also {
                 _uiState.update { it.copy(commentActionsLoading = it.commentActionsLoading - commentId) }
             }
@@ -595,7 +595,7 @@ class PostDetailViewModel @Inject constructor(
     }
 
     fun clearCommentError() {
-        _uiState.update { it.copy(commentError = null) }
+        _uiState.update { it.copy(commentActionError = null) }
     }
 
     fun clearError() {

@@ -126,16 +126,14 @@ fun PostDetailScreen(
     }
 
     // Handle comment delete/report completion: dismiss options sheet only on success, show error on failure
-    LaunchedEffect(uiState.commentActionCompleted, uiState.commentError) {
+    LaunchedEffect(uiState.commentActionCompleted, uiState.commentActionError) {
         if (uiState.commentActionCompleted) {
             showCommentOptions = null
             viewModel.clearCommentActionCompleted()
         }
-        if (!uiState.commentSubmitted) {
-            uiState.commentError?.let { error ->
-                snackbarHostState.showSnackbar(message = error)
-                viewModel.clearCommentError()
-            }
+        uiState.commentActionError?.let { error ->
+            snackbarHostState.showSnackbar(message = error)
+            viewModel.clearCommentError()
         }
     }
 
