@@ -276,9 +276,13 @@ fun ApiKeySettingsScreen(
             availableProviders = viewModel.getAvailableProviders(),
             onDismiss = { showAddKeyDialog = false },
             onAdd = { provider, key, name, limit ->
-                viewModel.addApiKey(provider, name ?: "", key, limit)
-                showAddKeyDialog = false
-            }
+                viewModel.addApiKey(provider, name ?: "", key, limit) { success ->
+                    if (success) {
+                        showAddKeyDialog = false
+                    }
+                }
+            },
+            isLoading = isLoading
         )
     }
 }
