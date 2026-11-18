@@ -29,6 +29,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlin.Result
@@ -345,21 +346,26 @@ class ChatInfoViewModel @Inject constructor(
         }
     }
 
-    fun reportUser(reportedUserId: String, reason: String) {
-        if (reportedUserId.isBlank() || reason.isBlank()) return
+    fun reportUser(reportedUserId: String, reason: String, onResult: (Result<Unit>) -> Unit) {
+        if (reportedUserId.isBlank() || reason.isBlank()) {
+            _uiState.update { it.copy(errorMessageRes = R.string.chat_info_error_report_user) }
+            onResult(Result.failure(IllegalArgumentException("reportedUserId or reason is blank")))
+            return
+        }
         val reporterId = getCurrentUserIdUseCase().orEmpty()
         if (reporterId.isBlank()) {
             _uiState.update { it.copy(errorMessageRes = R.string.chat_info_error_report_user) }
+            onResult(Result.failure(IllegalStateException("reporterId is blank")))
             return
         }
         viewModelScope.launch {
-            reportUserUseCase(reporterId, reportedUserId, reason).collect { result ->
-                result.onSuccess {
-                    _uiState.update { it.copy(userMessageRes = R.string.chat_info_msg_reported) }
-                }.onFailure {
-                    _uiState.update { it.copy(errorMessageRes = R.string.chat_info_error_report_user) }
-                }
+            val result = reportUserUseCase(reporterId, reportedUserId, reason).first()
+            if (result.isSuccess) {
+                _uiState.update { it.copy(userMessageRes = R.string.chat_info_msg_reported) }
+            } else {
+                _uiState.update { it.copy(errorMessageRes = R.string.chat_info_error_report_user) }
             }
+            onResult(result)
         }
     }
 
