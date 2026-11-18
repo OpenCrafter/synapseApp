@@ -18,7 +18,7 @@ import com.synapse.social.studioasinc.feature.shared.theme.AppTypography
 @Composable
 fun ApiKeyItem(
     apiKey: ApiKeyInfo,
-    onDelete: (String) -> Unit
+    onDelete: (String, (Boolean) -> Unit) -> Unit
 ) {
     var showDeleteConfirm by remember { mutableStateOf(false) }
 
@@ -64,8 +64,12 @@ fun ApiKeyItem(
             confirmButton = {
                 TextButton(
                     onClick = {
-                        onDelete(apiKey.id)
-                        showDeleteConfirm = false
+                        onDelete(apiKey.id) { success ->
+                            // Dismiss only when the async delete succeeds. On failure the dialog
+                            // stays open so the user can retry; the error is surfaced by the
+                            // ViewModel state observed by the caller.
+                            if (success) showDeleteConfirm = false
+                        }
                     },
                     colors = ButtonDefaults.textButtonColors(contentColor = AppColors.destructiveButton)
                 ) {
