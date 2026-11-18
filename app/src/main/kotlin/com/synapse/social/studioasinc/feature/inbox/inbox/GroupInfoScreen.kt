@@ -640,8 +640,13 @@ fun GroupInfoScreen(
             confirmButton = {
                 PressScaleTextButton(
                     onClick = {
-                        showInviteRevokeDialog = false
-                        viewModel.rotateInviteCode()
+                        viewModel.rotateInviteCode { success ->
+                            if (success) {
+                                showInviteRevokeDialog = false
+                            }
+                            // On failure the dialog stays open so the user can retry;
+                            // the error is surfaced via the existing errorRes snackbar.
+                        }
                     }
                 ) { Text(stringResource(R.string.group_revoke_confirm)) }
             },
