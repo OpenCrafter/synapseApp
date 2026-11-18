@@ -481,7 +481,7 @@ class GroupInfoViewModel @Inject constructor(
         }
     }
 
-    fun removeMember(userId: String) {
+    fun removeMember(userId: String, onResult: (Boolean) -> Unit = {}) {
         val chatId = currentChatId ?: return
         viewModelScope.launch {
             chatRepository.removeGroupMember(chatId, userId)
@@ -492,9 +492,11 @@ class GroupInfoViewModel @Inject constructor(
                         filteredMembers = _uiState.value.filteredMembers.filterNot { it.first.uid == userId },
                         errorRes = null
                     )
+                    onResult(true)
                 }
                 .onFailure {
                     _uiState.value = _uiState.value.copy(errorRes = R.string.group_error_member_update)
+                    onResult(false)
                 }
         }
     }
