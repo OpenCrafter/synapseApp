@@ -544,8 +544,11 @@ fun GroupInfoScreen(
             confirmButton = {
                 PressScaleTextButton(
                     onClick = {
-                        viewModel.removeMember(member.uid)
-                        memberToRemove = null
+                        viewModel.removeMember(member.uid) { success ->
+                            if (success) memberToRemove = null
+                            // On failure the dialog stays open so the user can retry; errorRes
+                            // surfaces the failure.
+                        }
                     }
                 ) {
                     Text(stringResource(R.string.action_remove), color = MaterialTheme.colorScheme.error)

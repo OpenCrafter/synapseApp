@@ -184,8 +184,9 @@ fun GroupParticipantsScreen(
             confirmButton = {
                 TextButton(
                     onClick = {
-                        viewModel.removeMember(member.uid)
-                        memberToRemove = null
+                        viewModel.removeMember(member.uid) { success ->
+                            if (success) memberToRemove = null
+                        }
                     }
                 ) {
                     Text(stringResource(R.string.action_remove), color = MaterialTheme.colorScheme.error)
