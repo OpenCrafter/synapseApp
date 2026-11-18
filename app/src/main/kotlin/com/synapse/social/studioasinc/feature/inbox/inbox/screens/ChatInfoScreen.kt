@@ -485,8 +485,12 @@ fun ChatInfoScreen(
             text = { Text(stringResource(R.string.chat_info_clear_chat_confirm)) },
             confirmButton = {
                 PressScaleTextButton(onClick = {
-                    showClearChatDialog = false
-                    viewModel.clearChat(chatId) { onNavigateBack() }
+                    // Do not dismiss the dialog here: clearing is async. Keep it open until the
+                    // result is known so the user gets success/failure feedback and can retry.
+                    viewModel.clearChat(chatId) {
+                        showClearChatDialog = false
+                        onNavigateBack()
+                    }
                 }) {
                     Text(stringResource(R.string.action_delete), color = MaterialTheme.colorScheme.error)
                 }
