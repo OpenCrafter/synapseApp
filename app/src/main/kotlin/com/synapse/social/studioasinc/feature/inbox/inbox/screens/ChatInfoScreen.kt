@@ -921,12 +921,14 @@ private fun SettingsItem(
 private fun PressScaleTextButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    enabled: Boolean = true,
     content: @Composable RowScope.() -> Unit
 ) {
     val interaction = remember { MutableInteractionSource() }
     TextButton(
         onClick = onClick,
         modifier = modifier.pressScale(interaction),
+        enabled = enabled,
         interactionSource = interaction,
         content = content
     )
