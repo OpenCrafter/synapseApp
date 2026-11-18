@@ -292,12 +292,12 @@ fun CreateGroupScreen(
                     inviteUpdating = viewModel.isUpdatingInvite.collectAsStateWithLifecycle().value,
                     currentUserId = viewModel.currentUserId,
                     error = error,
-                    onRegenerateInvite = viewModel::regenerateInvite,
+                    onRegenerateInvite = { callback -> viewModel.regenerateInvite(callback) },
                     onOpenRequests = viewModel::refreshPendingRequests,
                     onApproveRequest = viewModel::approveRequest,
                     onDeclineRequest = viewModel::declineRequest,
                     onChangeRole = viewModel::changeMemberRole,
-                    onRemoveMember = viewModel::removeGroupMember,
+                    onRemoveMember = { userId, callback -> viewModel.removeGroupMember(userId, callback) },
                     onClearError = viewModel::clearError
                 )
             }
