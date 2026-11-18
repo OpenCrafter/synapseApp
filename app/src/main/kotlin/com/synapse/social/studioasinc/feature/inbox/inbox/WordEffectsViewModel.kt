@@ -26,6 +26,8 @@ data class WordEffectsUiState(
     val isLoading: Boolean = true,
     val effects: List<WordEffect> = emptyList(),
     val isSaving: Boolean = false,
+    /** Word effects currently being deleted, used to guard against concurrent invocations. */
+    val deletingIds: Set<String> = emptySet(),
     @StringRes val errorMessageRes: Int? = null,
     val canRetry: Boolean = false,
     @StringRes val editorErrorRes: Int? = null,
@@ -158,17 +160,32 @@ class WordEffectsViewModel @Inject constructor(
         }
     }
 
-    fun deleteEffect(chatId: String, effectId: String) {
+    fun deleteEffect(chatId: String, effectId: String, onResult: (Boolean) -> Unit) {
+        if (_uiState.value.deletingIds.contains(effectId)) {
+            // Guard against concurrent invocations (e.g. rapid double-tap): multiple in-flight
+            // deletions would each refresh effects and could leave state inconsistent.
+            onResult(false)
+            return
+        }
         viewModelScope.launch {
+            _uiState.update { it.copy(deletingIds = it.deletingIds + effectId, errorMessageRes = null) }
             deleteWordEffectUseCase(chatId, effectId)
                 .onSuccess {
                     _uiState.update { state ->
-                        state.copy(effects = state.effects.filterNot { it.id == effectId })
+                        state.copy(
+                            effects = state.effects.filterNot { it.id == effectId },
+                            deletingIds = state.deletingIds - effectId
+                        )
                     }
                     resolvePreview()
+                    onResult(true)
                 }
                 .onFailure {
-                    _uiState.update { it.copy(errorMessageRes = R.string.word_effects_error_delete) }
+                    _uiState.update { it.copy(
+                        deletingIds = it.deletingIds - effectId,
+                        errorMessageRes = R.string.word_effects_error_delete
+                    )}
+                    onResult(false)
                 }
         }
     }

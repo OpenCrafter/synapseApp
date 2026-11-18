@@ -176,8 +176,11 @@ fun WordEffectsScreen(
             effect = effect,
             onDismiss = { pendingDelete = null },
             onConfirm = {
-                viewModel.deleteEffect(chatId, effect.id)
-                pendingDelete = null
+                viewModel.deleteEffect(chatId, effect.id) { success ->
+                    // Dismiss only when the async delete succeeds. On failure the dialog stays
+                    // open so the user can retry; the error is surfaced via ViewModel state.
+                    if (success) pendingDelete = null
+                }
             }
         )
     }
