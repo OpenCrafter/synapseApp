@@ -174,12 +174,20 @@ fun WordEffectsScreen(
     pendingDelete?.let { effect ->
         DeleteEffectDialog(
             effect = effect,
+            isDeleting = uiState.isDeleting,
             onDismiss = { pendingDelete = null },
             onConfirm = {
                 viewModel.deleteEffect(chatId, effect.id)
-                pendingDelete = null
             }
         )
+    }
+
+    // Only clear the pending deletion once the backend confirms the delete succeeded. While the
+    // delete is in flight the dialog stays open; on failure it stays open and shows the error.
+    LaunchedEffect(uiState.deletedCount) {
+        if (uiState.deletedCount > 0) {
+            pendingDelete = null
+        }
     }
 }
 
@@ -457,20 +465,21 @@ private fun WordEffectEditorDialog(
 @Composable
 private fun DeleteEffectDialog(
     effect: WordEffect,
+    isDeleting: Boolean,
     onDismiss: () -> Unit,
     onConfirm: () -> Unit
 ) {
     AlertDialog(
-        onDismissRequest = onDismiss,
+        onDismissRequest = { if (!isDeleting) onDismiss() },
         title = { Text(stringResource(R.string.word_effects_delete_confirm_title)) },
         text = { Text(stringResource(R.string.word_effects_delete_confirm_body, effect.trigger)) },
         confirmButton = {
-            TextButton(onClick = onConfirm) {
+            TextButton(onClick = onConfirm, enabled = !isDeleting) {
                 Text(stringResource(R.string.word_effects_delete_confirm))
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) {
+            TextButton(onClick = onDismiss, enabled = !isDeleting) {
                 Text(stringResource(R.string.word_effects_cancel))
             }
         }
