@@ -617,8 +617,13 @@ fun GroupInfoScreen(
             confirmButton = {
                 PressScaleTextButton(
                     onClick = {
-                        viewModel.reportGroup(GROUP_REPORT_REASON)
-                        showReportConfirmDialog = false
+                        viewModel.reportGroup(GROUP_REPORT_REASON) { success ->
+                            if (success) {
+                                showReportConfirmDialog = false
+                            }
+                            // On failure the dialog stays open so the user can retry;
+                            // the error is surfaced via the existing errorRes snackbar.
+                        }
                     }
                 ) {
                     Text(stringResource(R.string.group_report), color = MaterialTheme.colorScheme.error)

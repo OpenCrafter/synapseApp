@@ -599,7 +599,7 @@ class GroupInfoViewModel @Inject constructor(
         }
     }
 
-    fun reportGroup(reason: String) {
+    fun reportGroup(reason: String, onResult: (Boolean) -> Unit = {}) {
         val chatId = currentChatId ?: return
         viewModelScope.launch {
             chatRepository.reportChat(chatId, reason)
@@ -608,9 +608,11 @@ class GroupInfoViewModel @Inject constructor(
                         successMessageRes = R.string.group_report_success,
                         errorRes = null
                     )
+                    onResult(true)
                 }
                 .onFailure {
                     _uiState.value = _uiState.value.copy(errorRes = R.string.group_error_create)
+                    onResult(false)
                 }
         }
     }
