@@ -72,20 +72,27 @@ class PasskeysViewModel @Inject constructor(
         }
     }
 
-    fun removePasskey(id: String) {
-        if (_uiState.value.removingIds.contains(id)) return
+    fun removePasskey(id: String, onResult: (Boolean) -> Unit) {
+        if (_uiState.value.removingIds.contains(id)) {
+            // Guard against concurrent invocations (e.g. rapid double-tap): multiple in-flight
+            // removals would each refresh passkeys and could leave state inconsistent.
+            onResult(false)
+            return
+        }
         viewModelScope.launch {
             _uiState.update { it.copy(removingIds = it.removingIds + id, error = null) }
             removePasskeyUseCase(id)
                 .onSuccess {
                     _uiState.update { it.copy(removingIds = it.removingIds - id) }
                     loadPasskeys()
+                    onResult(true)
                 }
                 .onFailure { error ->
                     Log.e(TAG, "Error removing passkey", error)
                     _uiState.update {
                         it.copy(removingIds = it.removingIds - id, error = error.message)
                     }
+                    onResult(false)
                 }
         }
     }
