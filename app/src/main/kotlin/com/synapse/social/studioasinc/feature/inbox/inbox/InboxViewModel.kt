@@ -398,20 +398,24 @@ class InboxViewModel @Inject constructor(
 
     fun deleteConversation(chatId: String) = deleteConversations(setOf(chatId))
 
-    fun deleteConversations(chatIds: Set<String>, onDeleted: (Boolean) -> Unit = {}) {
+    fun deleteConversations(chatIds: Set<String>, onDeleted: (Boolean, Set<String>) -> Unit = { _, _ -> }) {
         if (chatIds.isEmpty()) return
         viewModelScope.launch {
+            val deleted = mutableSetOf<String>()
             var failures = 0
             chatIds.forEach { chatId ->
                 chatRepository.deleteConversation(chatId)
-                    .onSuccess { _conversations.value = _conversations.value.filterNot { it.chatId == chatId } }
+                    .onSuccess {
+                        deleted += chatId
+                        _conversations.value = _conversations.value.filterNot { it.chatId == chatId }
+                    }
                     .onFailure { failures++ }
             }
             if (failures > 0) {
                 _error.value = "Failed to delete $failures conversation(s)."
-                onDeleted(false)
+                onDeleted(false, deleted)
             } else {
-                onDeleted(true)
+                onDeleted(true, deleted)
             }
         }
     }
