@@ -1202,7 +1202,6 @@ onSuccess = {
                 confirmButton = {
                     TextButton(
                         onClick = {
-                            showDeleteChatDialog = false
                             viewModel.deleteCurrentChat { result ->
                                 Toast.makeText(
                                     context,
@@ -1213,7 +1212,10 @@ onSuccess = {
                                     },
                                     Toast.LENGTH_SHORT
                                 ).show()
-                                if (result.isSuccess) onNavigateBack()
+                                if (result.isSuccess) {
+                                    showDeleteChatDialog = false
+                                    onNavigateBack()
+                                }
                             }
                         }
                     ) { Text(stringResource(R.string.action_ok)) }
