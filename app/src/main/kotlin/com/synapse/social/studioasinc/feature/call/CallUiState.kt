@@ -13,6 +13,8 @@ data class CallUiState(
     val elapsedMs: Long = 0L,
     val startFailed: Boolean = false,
     val closeRequested: Boolean = false,
+    /** True while the end-call request is in flight; used to disable the Confirm button and keep the dialog open. */
+    val isEndingCall: Boolean = false,
     /**
      * A call that is stopped at a permission, or null when nothing is standing in the way.
      *
