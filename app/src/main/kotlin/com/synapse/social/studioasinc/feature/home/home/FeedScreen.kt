@@ -453,7 +453,6 @@ fun FeedScreen(
         )
     }
     }
-}
 
 }
 
