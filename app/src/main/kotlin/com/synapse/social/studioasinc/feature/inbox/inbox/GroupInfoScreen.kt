@@ -452,8 +452,9 @@ fun GroupInfoScreen(
             confirmButton = {
                 PressScaleTextButton(
                     onClick = {
-                        viewModel.updateGroupName(nameText.trim())
-                        showEditNameDialog = false
+                        viewModel.updateGroupName(nameText.trim()) {
+                            showEditNameDialog = false
+                        }
                     },
                     enabled = nameText.isNotBlank()
                 ) { Text(stringResource(R.string.group_save)) }
@@ -484,8 +485,9 @@ fun GroupInfoScreen(
             confirmButton = {
                 PressScaleTextButton(
                     onClick = {
-                        viewModel.updateGroupDescription(descriptionText.trim())
-                        showEditDescriptionDialog = false
+                        viewModel.updateGroupDescription(descriptionText.trim()) {
+                            showEditDescriptionDialog = false
+                        }
                     }
                 ) { Text(stringResource(R.string.group_save)) }
             },

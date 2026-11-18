@@ -177,12 +177,13 @@ class GroupInfoViewModel @Inject constructor(
 
     // region Group profile edits
 
-    fun updateGroupName(name: String) {
+    fun updateGroupName(name: String, onResult: () -> Unit) {
         val chatId = currentChatId ?: return
         viewModelScope.launch {
             chatRepository.updateGroupInfo(chatId, name = name)
                 .onSuccess { updated ->
                     _uiState.value = _uiState.value.copy(groupInfo = updated, errorRes = null)
+                    onResult()
                 }
                 .onFailure {
                     _uiState.value = _uiState.value.copy(errorRes = R.string.group_error_create)
@@ -190,12 +191,13 @@ class GroupInfoViewModel @Inject constructor(
         }
     }
 
-    fun updateGroupDescription(description: String) {
+    fun updateGroupDescription(description: String, onResult: () -> Unit) {
         val chatId = currentChatId ?: return
         viewModelScope.launch {
             chatRepository.updateGroupInfo(chatId, description = description)
                 .onSuccess { updated ->
                     _uiState.value = _uiState.value.copy(groupInfo = updated, errorRes = null)
+                    onResult()
                 }
                 .onFailure {
                     _uiState.value = _uiState.value.copy(errorRes = R.string.group_error_create)
