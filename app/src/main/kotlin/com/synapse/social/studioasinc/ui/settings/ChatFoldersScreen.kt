@@ -35,9 +35,35 @@ fun ChatFoldersScreen(
     onNavigateBack: () -> Unit
 ) {
     val folders by viewModel.chatFolders.collectAsState()
+    val saveStatus by viewModel.saveStatus.collectAsState()
+    val snackbarHostState = remember { SnackbarHostState() }
     var showAddDialog by remember { mutableStateOf(false) }
     var folderToRename by remember { mutableStateOf<ChatFolder?>(null) }
     var dialogName by remember { mutableStateOf("") }
+
+    // Dismiss dialogs and show feedback once the save result is known.
+    LaunchedEffect(saveStatus) {
+        when (val status = saveStatus) {
+            is FolderSaveStatus.Success -> {
+                showAddDialog = false
+                folderToRename = null
+                dialogName = ""
+                snackbarHostState.showSnackbar(
+                    message = stringResource(R.string.changes_saved),
+                    duration = SnackbarDuration.Short
+                )
+                viewModel.clearSaveStatus()
+            }
+            is FolderSaveStatus.Failure -> {
+                snackbarHostState.showSnackbar(
+                    message = status.error,
+                    duration = SnackbarDuration.Long
+                )
+                viewModel.clearSaveStatus()
+            }
+            else -> {}
+        }
+    }
 
     Scaffold(
         containerColor = AppColors.screenBackground,
@@ -63,7 +89,8 @@ fun ChatFoldersScreen(
             }) {
                 Icon(Icons.Default.Add, contentDescription = stringResource(R.string.create_folder_title))
             }
-        }
+        },
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
     ) { paddingValues ->
         if (folders.isEmpty()) {
             EmptyFoldersPlaceholder(Modifier.padding(paddingValues))
@@ -88,10 +115,12 @@ fun ChatFoldersScreen(
             name = dialogName,
             onNameChange = { dialogName = it },
             onConfirm = {
-                viewModel.addFolder(dialogName)
-                showAddDialog = false
+                if (saveStatus is FolderSaveStatus.Idle || saveStatus is FolderSaveStatus.Failure) {
+                    viewModel.addFolder(dialogName)
+                }
             },
-            onDismiss = { showAddDialog = false }
+            onDismiss = { showAddDialog = false },
+            isSaving = saveStatus is FolderSaveStatus.Saving
         )
     }
 
@@ -102,10 +131,12 @@ fun ChatFoldersScreen(
             name = dialogName,
             onNameChange = { dialogName = it },
             onConfirm = {
-                viewModel.renameFolder(folder.id, dialogName)
-                folderToRename = null
+                if (saveStatus is FolderSaveStatus.Idle || saveStatus is FolderSaveStatus.Failure) {
+                    viewModel.renameFolder(folder.id, dialogName)
+                }
             },
-            onDismiss = { folderToRename = null }
+            onDismiss = { folderToRename = null },
+            isSaving = saveStatus is FolderSaveStatus.Saving
         )
     }
 }
@@ -236,7 +267,8 @@ private fun FolderNameDialog(
     name: String,
     onNameChange: (String) -> Unit,
     onConfirm: () -> Unit,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    isSaving: Boolean = false
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -251,7 +283,7 @@ private fun FolderNameDialog(
             )
         },
         confirmButton = {
-            Button(onClick = onConfirm, enabled = name.isNotBlank()) {
+            Button(onClick = onConfirm, enabled = name.isNotBlank() && !isSaving) {
                 Text(stringResource(R.string.action_save))
             }
         },
