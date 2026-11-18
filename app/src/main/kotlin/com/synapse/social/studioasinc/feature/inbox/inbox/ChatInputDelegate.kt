@@ -340,25 +340,43 @@ class ChatInputDelegate(
         _selectedMessageIds.value = emptySet()
     }
 
-    fun deleteSelectedMessagesForMe() {
+    fun deleteSelectedMessagesForMe(
+        onError: (String?) -> Unit = {},
+        onSuccess: () -> Unit = {}
+    ) {
         val selectedIds = _selectedMessageIds.value.toList()
         if (selectedIds.isEmpty()) return
 
         messagingDelegate.deleteSelectedMessagesForMe(
             selectedIds = selectedIds,
-            onError = { _error.value = "Failed to delete messages: $it" },
-            onSuccess = { _selectedMessageIds.value = emptySet() }
+            onError = { err ->
+                _error.value = "Failed to delete messages: $err"
+                onError(err)
+            },
+            onSuccess = {
+                _selectedMessageIds.value = emptySet()
+                onSuccess()
+            }
         )
     }
 
-    fun deleteSelectedMessagesForEveryone() {
+    fun deleteSelectedMessagesForEveryone(
+        onError: (String?) -> Unit = {},
+        onSuccess: () -> Unit = {}
+    ) {
         val selectedIds = _selectedMessageIds.value.toList()
         if (selectedIds.isEmpty()) return
 
         messagingDelegate.deleteSelectedMessagesForEveryone(
             selectedIds = selectedIds,
-            onError = { _error.value = "Failed to delete messages: $it" },
-            onSuccess = { _selectedMessageIds.value = emptySet() }
+            onError = { err ->
+                _error.value = "Failed to delete messages: $err"
+                onError(err)
+            },
+            onSuccess = {
+                _selectedMessageIds.value = emptySet()
+                onSuccess()
+            }
         )
     }
 

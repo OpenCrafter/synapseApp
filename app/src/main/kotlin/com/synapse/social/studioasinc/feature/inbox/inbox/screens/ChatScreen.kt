@@ -825,12 +825,46 @@ val currentUserId = currentUserIdState ?: ""
                 canDeleteForEveryone = showDeleteMessageDialog?.senderId == currentUserId,
                 onDismissRequest = { showDeleteMessageDialog = null },
                 onDeleteForMe = { message ->
-                    showDeleteMessageDialog = null
-                    viewModel.deleteMessageForMe(message)
+                    // Do not dismiss the dialog here: deletion is async. Keep it open until the
+                    // result is known so the user gets success/failure feedback and can retry.
+                    viewModel.deleteMessageForMe(
+                        message,
+                        onError = { err ->
+                            android.widget.Toast.makeText(
+                                context,
+                                err,
+                                android.widget.Toast.LENGTH_LONG
+                            ).show()
+                        },
+onSuccess = {
+                            showDeleteSelectedDialog = false
+                            android.widget.Toast.makeText(
+                                context,
+                                context.getString(R.string.message_deleted_successfully),
+                                android.widget.Toast.LENGTH_SHORT
+                            ).show()
+                        }
+                    )
                 },
                 onDeleteForEveryone = { message ->
-                    showDeleteMessageDialog = null
-                    viewModel.deleteMessage(message)
+                    viewModel.deleteMessage(
+                        message,
+                        onError = { err ->
+                            android.widget.Toast.makeText(
+                                context,
+                                err,
+                                android.widget.Toast.LENGTH_LONG
+                            ).show()
+                        },
+                        onSuccess = {
+                            showDeleteMessageDialog = null
+                            android.widget.Toast.makeText(
+                                context,
+                                context.getString(R.string.success_delete_for_everyone),
+                                android.widget.Toast.LENGTH_SHORT
+                            ).show()
+                        }
+                    )
                 }
             )
 
@@ -842,12 +876,36 @@ val currentUserId = currentUserIdState ?: ""
                         selectedMessages.all { it.senderId == currentUserId },
                     onDismissRequest = { showDeleteSelectedDialog = false },
                     onDeleteForMe = {
-                        showDeleteSelectedDialog = false
-                        viewModel.deleteSelectedMessagesForMe()
+                        viewModel.deleteSelectedMessagesForMe(
+                            onError = { err ->
+                                // Error is surfaced via viewModel.error -> LaunchedEffect(error) toast
+                                // (set by the delegate). Keep the dialog open so the user can retry.
+                            },
+                            onSuccess = {
+                                showDeleteSelectedDialog = false
+                                android.widget.Toast.makeText(
+                                    context,
+                                    context.getString(R.string.message_deleted_successfully),
+                                    android.widget.Toast.LENGTH_SHORT
+                                ).show()
+                            }
+                        )
                     },
                     onDeleteForEveryone = {
-                        showDeleteSelectedDialog = false
-                        viewModel.deleteSelectedMessagesForEveryone()
+                        viewModel.deleteSelectedMessagesForEveryone(
+                            onError = { err ->
+                                // Error is surfaced via viewModel.error -> LaunchedEffect(error) toast
+                                // (set by the delegate). Keep the dialog open so the user can retry.
+                            },
+                            onSuccess = {
+                                showDeleteSelectedDialog = false
+                                android.widget.Toast.makeText(
+                                    context,
+                                    context.getString(R.string.message_deleted_successfully),
+                                    android.widget.Toast.LENGTH_SHORT
+                                ).show()
+                            }
+                        )
                     }
                 )
             }
@@ -1163,57 +1221,58 @@ val currentUserId = currentUserIdState ?: ""
                 }
             )
         }
-    }
-
-    selectedMediaFiles?.let { files ->
-        MediaPreviewDialog(
-            selectedFiles = files,
-            context = context,
-            onDismissRequest = {
-                selectedMediaFiles = null
-            },
-            onSendMedia = { finalFiles, caption, quality ->
-                val validFiles = finalFiles.mapNotNull { pickedFile ->
-                    val filePath = com.synapse.social.studioasinc.core.util.FileUtils.validateAndCleanPath(context, pickedFile.uri.toString())
-                    if (filePath != null) filePath to pickedFile else null
-                }
-                if (validFiles.size != finalFiles.size) {
-                    android.widget.Toast.makeText(context, R.string.chat_attachment_read_failed, android.widget.Toast.LENGTH_SHORT).show()
-                }
-                if (validFiles.isNotEmpty()) {
-                    val allVisualMedia = validFiles.all { (_, pickedFile) ->
-                        pickedFile.mimeType.startsWith("image/") || pickedFile.mimeType.startsWith("video/")
+    
+        selectedMediaFiles?.let { files ->
+            MediaPreviewDialog(
+                selectedFiles = files,
+                context = context,
+                onDismissRequest = {
+                    selectedMediaFiles = null
+                },
+                onSendMedia = { finalFiles, caption, quality ->
+                    val validFiles = finalFiles.mapNotNull { pickedFile ->
+                        val filePath = com.synapse.social.studioasinc.core.util.FileUtils.validateAndCleanPath(context, pickedFile.uri.toString())
+                        if (filePath != null) filePath to pickedFile else null
                     }
-                    if (allVisualMedia) {
-                        viewModel.uploadAndSendMultipleMedia(validFiles, caption, quality)
-                    } else {
-                        validFiles.forEach { (filePath, pickedFile) ->
-                            val messageType = if (pickedFile.mimeType.startsWith("audio/")) "audio" else "file"
-                            viewModel.uploadAndSendMedia(
-                                filePath = filePath,
-                                fileName = pickedFile.fileName,
-                                contentType = pickedFile.mimeType,
-                                messageType = messageType,
-                                caption = caption,
-                                quality = quality
-                            )
+                    if (validFiles.size != finalFiles.size) {
+                        android.widget.Toast.makeText(context, R.string.chat_attachment_read_failed, android.widget.Toast.LENGTH_SHORT).show()
+                    }
+                    if (validFiles.isNotEmpty()) {
+                        val allVisualMedia = validFiles.all { (_, pickedFile) ->
+                            pickedFile.mimeType.startsWith("image/") || pickedFile.mimeType.startsWith("video/")
+                        }
+                        if (allVisualMedia) {
+                            viewModel.uploadAndSendMultipleMedia(validFiles, caption, quality)
+                        } else {
+                            validFiles.forEach { (filePath, pickedFile) ->
+                                val messageType = if (pickedFile.mimeType.startsWith("audio/")) "audio" else "file"
+                                viewModel.uploadAndSendMedia(
+                                    filePath = filePath,
+                                    fileName = pickedFile.fileName,
+                                    contentType = pickedFile.mimeType,
+                                    messageType = messageType,
+                                    caption = caption,
+                                    quality = quality
+                                )
+                            }
                         }
                     }
+                    selectedMediaFiles = null
                 }
-                selectedMediaFiles = null
-            }
-        )
-    }
-    if (showEncryptionSheet && !isGroupChat) {
-        ChatEncryptionSheet(
-            chatId = resolvedChatId ?: chatId,
-            participantName = participantProfile?.displayName?.takeIf { it.isNotBlank() }
-                ?: participantProfile?.name?.takeIf { it.isNotBlank() }
-                ?: participantProfile?.username?.takeIf { it.isNotBlank() }
-                ?: initialParticipantName?.takeIf { it.isNotBlank() }
-                ?: stringResource(R.string.chat_security_contact_fallback),
-            onDismiss = { showEncryptionSheet = false }
-        )
+            )
+        }
+
+        if (showEncryptionSheet && !isGroupChat) {
+            ChatEncryptionSheet(
+                chatId = resolvedChatId ?: chatId,
+                participantName = participantProfile?.displayName?.takeIf { it.isNotBlank() }
+                    ?: participantProfile?.name?.takeIf { it.isNotBlank() }
+                    ?: participantProfile?.username?.takeIf { it.isNotBlank() }
+                    ?: initialParticipantName?.takeIf { it.isNotBlank() }
+                    ?: stringResource(R.string.chat_security_contact_fallback),
+                onDismiss = { showEncryptionSheet = false }
+            )
+        }
     }
 }
 
