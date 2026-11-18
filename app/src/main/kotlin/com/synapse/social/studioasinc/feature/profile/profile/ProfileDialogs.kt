@@ -255,9 +255,7 @@ internal fun PostOptionsSection(
                 onDismiss()
                 onNavigateToEditPost(post.id)
             },
-            onDelete = {
-                viewModel.deletePost(post.id)
-            },
+            onDelete = { viewModel.deletePost(post.id) },
             onShare = {
                 PostShareUtils.sharePost(context, post.id)
             },
@@ -269,10 +267,7 @@ internal fun PostOptionsSection(
                 viewModel.toggleSave(post)
             },
             onToggleComments = { viewModel.toggleComments(post) },
-            onReport = {
-                viewModel.reportPost(post.id, context.getString(R.string.toast_reported_from_profile))
-                Toast.makeText(context, context.getString(R.string.toast_report_submitted), Toast.LENGTH_SHORT).show()
-            },
+            onReport = { viewModel.reportPost(post.id, context.getString(R.string.toast_reported_from_profile)) },
             onBlock = {
                 viewModel.blockUser(post.authorUid)
             },

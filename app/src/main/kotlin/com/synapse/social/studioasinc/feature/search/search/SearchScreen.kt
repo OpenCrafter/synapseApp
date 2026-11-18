@@ -509,10 +509,7 @@ onMediaClick = { post, index ->
             commentsDisabled = viewModel.areCommentsDisabled(post),
             onDismiss = { selectedPost = null },
             onEdit = { onNavigateToEditPost(post.id) },
-            onDelete = {
-                viewModel.deletePost(post)
-                selectedPost = null
-            },
+            onDelete = { viewModel.deletePost(post) },
             onShare = {
                 PostShareUtils.sharePost(context, post.id)
                 selectedPost = null
@@ -527,10 +524,7 @@ onMediaClick = { post, index ->
                 selectedPost = null
             },
             onToggleComments = { val result = viewModel.toggleComments(post); if (result.isSuccess) { selectedPost = null }; result },
-            onReport = {
-                viewModel.reportPost(post)
-                selectedPost = null
-            },
+            onReport = { viewModel.reportPost(post) },
             onBlock = { val result = viewModel.blockUser(post.authorUid); if (result.isSuccess) { selectedPost = null }; result },
             onRevokeVote = {
                 viewModel.revokeVote(post)

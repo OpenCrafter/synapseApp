@@ -273,13 +273,11 @@ class FeedViewModel @Inject constructor(
         return post.postDisableReplies?.toBoolean() ?: false
     }
 
-    fun deletePost(post: Post) {
-        viewModelScope.launch {
-            deletePostUseCase(post.id).collect { result ->
-                result.onFailure { e ->
-                    e.printStackTrace()
-                    updateState { it.copy(error = e.message ?: "Failed to delete post") }
-                }
+    suspend fun deletePost(post: Post): Result<Unit> {
+        return deletePostUseCase(post.id).first().also { result ->
+            result.onFailure { e ->
+                e.printStackTrace()
+                updateState { it.copy(error = e.message ?: "Failed to delete post") }
             }
         }
     }

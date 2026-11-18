@@ -242,7 +242,7 @@ fun PostDetailScreen(
             onCopyLink = { PostShareUtils.copyPostLink(context, postId) },
             onBookmark = { viewModel.toggleBookmark() },
             onToggleComments = { viewModel.toggleComments() },
-            onReport = { showReportDialog = true },
+            onReport = { showReportDialog = true; Result.success(Unit) },
             onBlock = { viewModel.blockUser(postDetail.post.authorUid) },
             onRevokeVote = { viewModel.revokeVote() },
             onSummarize = {

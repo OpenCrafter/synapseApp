@@ -38,14 +38,14 @@ fun PostOptionsBottomSheet(
     commentsDisabled: Boolean = false,
     onDismiss: () -> Unit,
     onEdit: () -> Unit,
-    onDelete: () -> Unit,
+    onDelete: suspend () -> Result<Unit>,
     onAddToThread: (() -> Unit)? = null,
     onShare: () -> Unit,
     onCopyLink: () -> Unit,
     onBookmark: () -> Unit,
     onReshare: () -> Unit = {},
     onToggleComments: suspend () -> Result<Unit>,
-    onReport: () -> Unit,
+    onReport: suspend () -> Result<Unit>,
     onBlock: suspend () -> Result<Unit>,
     onRevokeVote: () -> Unit,
     onSummarize: () -> Unit = {},
@@ -131,7 +131,7 @@ fun PostOptionsBottomSheet(
                 onDelete = { showDeleteDialog = true },
                 onAddToThread = { onAddToThread?.invoke(); onDismiss() },
                 onToggleComments = onToggleCommentsAction,
-                onReport = { onReport(); onDismiss() },
+                onReport = { scope.launch { val result = onReport(); if (result.isSuccess) onDismiss() } },
                 onBlock = onBlockAction,
                 onShare = { onShare(); onDismiss() },
                 onRevokeVote = { onRevokeVote(); onDismiss() },
@@ -158,11 +158,12 @@ fun PostOptionsBottomSheet(
                 TextButton(
                     onClick = {
                         showDeleteDialog = false
-                        // Close the options sheet before invoking the delete so that, on a failed
-                        // delete, the error snackbar posted by the screen is visible instead of being
-                        // covered by a still-open sheet.
-                        onDismiss()
-                        onDelete()
+                        scope.launch {
+                            val result = onDelete()
+                            if (result.isSuccess) {
+                                onDismiss()
+                            }
+                        }
                     }
                 ) {
                     Text(stringResource(R.string.action_delete), color = MaterialTheme.colorScheme.error)
