@@ -168,8 +168,8 @@ fun PasskeysScreen(
             confirmButton = {
                 TextButton(
                     onClick = {
-                        passkeyPendingRemoval?.let { id ->
-                            viewModel.removePasskey(id) { success ->
+                        passkeyPendingRemoval?.let { passkey ->
+                            viewModel.removePasskey(passkey.id) { success ->
                                 // Dismiss only when the async remove succeeds. On failure the dialog
                                 // stays open so the user can retry; the error is surfaced via the
                                 // ViewModel state observed by the caller.
