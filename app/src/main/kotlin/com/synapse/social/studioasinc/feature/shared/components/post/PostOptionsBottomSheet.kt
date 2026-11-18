@@ -158,8 +158,11 @@ fun PostOptionsBottomSheet(
                 TextButton(
                     onClick = {
                         showDeleteDialog = false
-                        onDelete()
+                        // Close the options sheet before invoking the delete so that, on a failed
+                        // delete, the error snackbar posted by the screen is visible instead of being
+                        // covered by a still-open sheet.
                         onDismiss()
+                        onDelete()
                     }
                 ) {
                     Text(stringResource(R.string.action_delete), color = MaterialTheme.colorScheme.error)

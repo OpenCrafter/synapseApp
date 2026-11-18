@@ -125,6 +125,22 @@ fun PostDetailScreen(
         }
     }
 
+    // Handle post delete completion: navigate back only on success, surface error on failure
+    LaunchedEffect(uiState.deletePostSuccess, uiState.deletePostError) {
+        when {
+            uiState.deletePostSuccess -> {
+                onNavigateBack()
+                viewModel.clearDeletePostStatus()
+            }
+            uiState.deletePostError != null -> {
+                snackbarHostState.showSnackbar(
+                    message = uiState.deletePostError ?: context.getString(R.string.error_unknown)
+                )
+                viewModel.clearDeletePostStatus()
+            }
+        }
+    }
+
     // Handle comment delete/report completion: dismiss options sheet only on success, show error on failure
     LaunchedEffect(uiState.commentActionCompleted, uiState.commentActionError) {
         if (uiState.commentActionCompleted) {
@@ -213,7 +229,6 @@ fun PostDetailScreen(
             onAddToThread = { onNavigateToReplyToPost(postId) },
             onDelete = {
                 viewModel.deletePost(postId)
-                onNavigateBack()
             },
             onShare = {
                 postToShare = postDetail.post

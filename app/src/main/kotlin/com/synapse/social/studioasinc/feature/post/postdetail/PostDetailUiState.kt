@@ -22,6 +22,8 @@ data class PostDetailUiState(
     val refreshTrigger: Int = 0,
     val blockSuccess: Boolean = false,
     val blockError: String? = null,
+    val deletePostSuccess: Boolean = false,
+    val deletePostError: String? = null,
     val commentSubmitted: Boolean = false,
     val ancestorComments: List<CommentWithUser> = emptyList(),
     val postSummary: String? = null,
