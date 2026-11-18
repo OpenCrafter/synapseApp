@@ -48,12 +48,22 @@ fun SettingsScreen(
     val storageConfig by viewModel.storageConfig.collectAsState()
     val currentUser by viewModel.currentUser.collectAsState()
     val isResettingE2EE by viewModel.isResettingE2EE.collectAsState()
+    val error by viewModel.error.collectAsState()
 
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    LaunchedEffect(error) {
+        if (!error.isNullOrBlank()) {
+            snackbarHostState.showSnackbar(error.orEmpty())
+            viewModel.clearError()
+        }
+    }
 
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         containerColor = AppColors.screenBackground,
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             LargeTopAppBar(
                 title = { Text(stringResource(R.string.settings_title)) },
