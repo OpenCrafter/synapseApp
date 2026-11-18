@@ -93,7 +93,7 @@ class ProfileMediaViewModel @Inject constructor(
                 removeAvatar()
             }
             ProfileMediaEvent.DismissRemoveAvatarDialog -> {
-                _uiState.update { it.copy(showRemoveAvatarDialog = false) }
+                _uiState.update { it.copy(showRemoveAvatarDialog = false, isRemovingAvatar = false) }
             }
             ProfileMediaEvent.RequestRemoveCover -> {
                 _uiState.update { it.copy(showRemoveCoverDialog = true) }
@@ -102,7 +102,7 @@ class ProfileMediaViewModel @Inject constructor(
                 removeCover()
             }
             ProfileMediaEvent.DismissRemoveCoverDialog -> {
-                _uiState.update { it.copy(showRemoveCoverDialog = false) }
+                _uiState.update { it.copy(showRemoveCoverDialog = false, isRemovingCover = false) }
             }
             ProfileMediaEvent.RetryAvatarUpload -> {
                 lastAvatarUri?.let { handleAvatarCropped(it) }
@@ -299,7 +299,10 @@ class ProfileMediaViewModel @Inject constructor(
     private fun removeAvatar() {
         _uiState.update { it.copy(isRemovingAvatar = true) }
         viewModelScope.launch {
-            val userId = repository.getCurrentUserId() ?: return@launch
+            val userId = repository.getCurrentUserId() ?: run {
+                _uiState.update { it.copy(isRemovingAvatar = false) }
+                return@launch
+            }
             val updateData = mapOf<String, Any?>("avatar" to null)
             val result = repository.updateProfile(userId, updateData)
             result.fold(
@@ -316,7 +319,10 @@ class ProfileMediaViewModel @Inject constructor(
     private fun removeCover() {
         _uiState.update { it.copy(isRemovingCover = true) }
         viewModelScope.launch {
-            val userId = repository.getCurrentUserId() ?: return@launch
+            val userId = repository.getCurrentUserId() ?: run {
+                _uiState.update { it.copy(isRemovingCover = false) }
+                return@launch
+            }
             val updateData = mapOf<String, Any?>("profile_cover_image" to null)
             val result = repository.updateProfile(userId, updateData)
             result.fold(
