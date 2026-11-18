@@ -128,6 +128,7 @@ internal fun GroupHubStage(
     requests: List<GroupJoinRequest>,
     requestsLoading: Boolean,
     inviteUpdating: Boolean,
+    saveStatus: CreateGroupViewModel.GroupHubSaveStatus,
     currentUserId: String?,
     error: GroupCreationError?,
     onRegenerateInvite: () -> Unit,
@@ -147,13 +148,36 @@ internal fun GroupHubStage(
     var memberToRemove by remember { mutableStateOf<User?>(null) }
     val inviteLink = inviteCode?.let { GroupInviteLinks.httpsLink(it) }
 
+    // Dismiss confirmation dialogs and surface feedback once the async save result is known.
+    LaunchedEffect(saveStatus) {
+        when (saveStatus) {
+            is CreateGroupViewModel.GroupHubSaveStatus.Success -> {
+                showRevokeDialog = false
+                memberToRemove = null
+            }
+            is CreateGroupViewModel.GroupHubSaveStatus.Failure -> {
+                showRevokeDialog = false
+                memberToRemove = null
+            }
+            else -> {}
+        }
+    }
+
     if (showRevokeDialog) {
         AlertDialog(
             onDismissRequest = { showRevokeDialog = false },
             title = { Text(stringResource(R.string.group_revoke_title)) },
             text = { Text(stringResource(R.string.group_revoke_body)) },
             confirmButton = {
-                TextButton(onClick = { showRevokeDialog = false; onRegenerateInvite() }) {
+                TextButton(
+                    onClick = {
+                        if (saveStatus is CreateGroupViewModel.GroupHubSaveStatus.Idle
+                            || saveStatus is CreateGroupViewModel.GroupHubSaveStatus.Failure) {
+                            onRegenerateInvite()
+                        }
+                    },
+                    enabled = saveStatus !is CreateGroupViewModel.GroupHubSaveStatus.Saving
+                ) {
                     Text(stringResource(R.string.group_revoke_confirm))
                 }
             },
@@ -175,7 +199,15 @@ internal fun GroupHubStage(
             title = { Text(stringResource(R.string.group_remove_member_title)) },
             text = { Text(stringResource(R.string.group_remove_member_body, userDisplayName(user))) },
             confirmButton = {
-                TextButton(onClick = { onRemoveMember(user.uid); memberToRemove = null }) {
+                TextButton(
+                    onClick = {
+                        if (saveStatus is CreateGroupViewModel.GroupHubSaveStatus.Idle
+                            || saveStatus is CreateGroupViewModel.GroupHubSaveStatus.Failure) {
+                            onRemoveMember(user.uid)
+                        }
+                    },
+                    enabled = saveStatus !is CreateGroupViewModel.GroupHubSaveStatus.Saving
+                ) {
                     Text(stringResource(R.string.remove_member), color = MaterialTheme.colorScheme.error)
                 }
             },

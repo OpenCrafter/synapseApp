@@ -290,6 +290,7 @@ fun CreateGroupScreen(
                     requests = viewModel.pendingRequests.collectAsStateWithLifecycle().value,
                     requestsLoading = viewModel.isLoadingRequests.collectAsStateWithLifecycle().value,
                     inviteUpdating = viewModel.isUpdatingInvite.collectAsStateWithLifecycle().value,
+                    saveStatus = viewModel.saveStatus.collectAsStateWithLifecycle().value,
                     currentUserId = viewModel.currentUserId,
                     error = error,
                     onRegenerateInvite = viewModel::regenerateInvite,
