@@ -35,15 +35,27 @@ class SettingsViewModel @Inject constructor(
     private val _isResettingE2EE = MutableStateFlow(false)
     val isResettingE2EE: StateFlow<Boolean> = _isResettingE2EE.asStateFlow()
 
+    private val _error = MutableStateFlow<String?>(null)
+    val error: StateFlow<String?> = _error.asStateFlow()
+
     fun resetE2EE() {
         viewModelScope.launch {
             _isResettingE2EE.value = true
             try {
-                resetE2EUseCase()
+                val result = resetE2EUseCase()
+                if (result.isSuccess) {
+                    _error.value = "Encryption keys reset successfully"
+                } else {
+                    _error.value = result.exceptionOrNull()?.message ?: "Failed to reset encryption keys"
+                }
             } finally {
                 _isResettingE2EE.value = false
             }
         }
+    }
+
+    fun clearError() {
+        _error.value = null
     }
 
     val storageConfig: StateFlow<StorageConfig> = getStorageConfigUseCase()
