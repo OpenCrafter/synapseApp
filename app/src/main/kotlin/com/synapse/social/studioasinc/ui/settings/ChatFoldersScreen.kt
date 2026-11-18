@@ -40,6 +40,7 @@ fun ChatFoldersScreen(
     var showAddDialog by remember { mutableStateOf(false) }
     var folderToRename by remember { mutableStateOf<ChatFolder?>(null) }
     var dialogName by remember { mutableStateOf("") }
+    val changesSavedMessage = stringResource(R.string.changes_saved)
 
     // Dismiss dialogs and show feedback once the save result is known.
     LaunchedEffect(saveStatus) {
@@ -49,7 +50,7 @@ fun ChatFoldersScreen(
                 folderToRename = null
                 dialogName = ""
                 snackbarHostState.showSnackbar(
-                    message = stringResource(R.string.changes_saved),
+                    message = changesSavedMessage,
                     duration = SnackbarDuration.Short
                 )
                 viewModel.clearSaveStatus()

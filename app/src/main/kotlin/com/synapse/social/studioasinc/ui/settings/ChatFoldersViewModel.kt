@@ -30,7 +30,7 @@ class ChatFoldersViewModel @Inject constructor(
     private val _chatFolders = MutableStateFlow<List<ChatFolder>>(emptyList())
     val chatFolders: StateFlow<List<ChatFolder>> = _chatFolders.asStateFlow()
 
-    private val _saveStatus = MutableStateFlow(FolderSaveStatus.Idle)
+    private val _saveStatus = MutableStateFlow<FolderSaveStatus>(FolderSaveStatus.Idle)
     val saveStatus: StateFlow<FolderSaveStatus> = _saveStatus.asStateFlow()
 
     init {
