@@ -46,6 +46,8 @@ data class GroupInfoUiState(
     val currentUserId: String? = null,
     val errorRes: Int? = null,
     val successMessageRes: Int? = null,
+    /** True while a group report submission is in flight; used to disable the confirm button. */
+    val isReporting: Boolean = false,
     val memberSearchQuery: String = "",
     val filteredMembers: List<Pair<User, Boolean>> = emptyList(),
     /** True when the current user may edit group info: admins always, members only when the group allows it. */
@@ -597,19 +599,24 @@ class GroupInfoViewModel @Inject constructor(
         }
     }
 
-    fun reportGroup(reason: String) {
+    fun reportGroup(reason: String, onResult: () -> Unit) {
         val chatId = currentChatId ?: return
+        _uiState.value = _uiState.value.copy(isReporting = true)
         viewModelScope.launch {
-            chatRepository.reportChat(chatId, reason)
-                .onSuccess {
-                    _uiState.value = _uiState.value.copy(
-                        successMessageRes = R.string.group_report_success,
-                        errorRes = null
-                    )
-                }
-                .onFailure {
-                    _uiState.value = _uiState.value.copy(errorRes = R.string.group_error_create)
-                }
+            val result = chatRepository.reportChat(chatId, reason)
+            if (result.isSuccess) {
+                _uiState.value = _uiState.value.copy(
+                    successMessageRes = R.string.group_report_success,
+                    errorRes = null,
+                    isReporting = false
+                )
+                onResult()
+            } else {
+                _uiState.value = _uiState.value.copy(
+                    errorRes = R.string.group_error_report,
+                    isReporting = false
+                )
+            }
         }
     }
 

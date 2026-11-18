@@ -617,9 +617,11 @@ fun GroupInfoScreen(
             confirmButton = {
                 PressScaleTextButton(
                     onClick = {
-                        viewModel.reportGroup(GROUP_REPORT_REASON)
-                        showReportConfirmDialog = false
-                    }
+                        viewModel.reportGroup(GROUP_REPORT_REASON) {
+                            showReportConfirmDialog = false
+                        }
+                    },
+                    enabled = !uiState.isReporting
                 ) {
                     Text(stringResource(R.string.group_report), color = MaterialTheme.colorScheme.error)
                 }

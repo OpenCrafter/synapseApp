@@ -127,6 +127,7 @@
     <string name="group_report_title">Report group</string>
     <string name="group_report_body">Report this group for spam, abuse, or inappropriate content?</string>
     <string name="group_report_success">Report submitted. Our team will review this group.</string>
+    <string name="group_error_report">Report submission failed. Please try again.</string>
     <string name="group_members_section">Participants</string>
     <string name="group_add_member">Add member</string>
     <string name="group_avatar_uploading">Uploading photo…</string>
