@@ -68,15 +68,18 @@ class ScheduledPostsViewModel @Inject constructor(
         }
     }
 
-    fun cancelScheduledPost(id: String) {
+    fun cancelScheduledPost(id: String, onResult: (Boolean) -> Unit) {
         viewModelScope.launch {
             _uiState.update { state ->
                 state.copy(posts = state.posts.filter { it.id != id })
             }
-            scheduledPostRepository.cancelScheduledPost(id)
-                .onFailure {
-                    loadScheduledPosts()
-                }
+            val result = scheduledPostRepository.cancelScheduledPost(id)
+            if (result.isSuccess) {
+                onResult(true)
+            } else {
+                loadScheduledPosts()
+                onResult(false)
+            }
         }
     }
 
