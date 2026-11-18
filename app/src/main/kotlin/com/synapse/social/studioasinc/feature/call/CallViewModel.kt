@@ -133,10 +133,17 @@ class CallViewModel @Inject constructor(
 
     /** Ends the live session before leaving so no ghost call survives the screen. */
     fun endAndClose() {
-        val session = currentSession()
+        val session = currentSession() ?: return
+        _uiState.update { it.copy(isEndingCall = true) }
         viewModelScope.launch {
-            endCall(session)
-            _uiState.update { it.copy(closeRequested = true) }
+            endCall(session).fold(
+                onSuccess = {
+                    _uiState.update { it.copy(isEndingCall = false, closeRequested = true) }
+                },
+                onFailure = {
+                    _uiState.update { it.copy(isEndingCall = false) }
+                }
+            )
         }
     }
 

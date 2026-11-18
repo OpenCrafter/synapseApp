@@ -235,7 +235,8 @@ private fun DebugActionRow(
 @Composable
 fun CallEndConfirmationDialog(
     onConfirm: () -> Unit,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    enabled: Boolean = true
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -244,6 +245,7 @@ fun CallEndConfirmationDialog(
         confirmButton = {
             TextButton(
                 onClick = onConfirm,
+                enabled = enabled,
                 colors = ButtonDefaults.textButtonColors(
                     contentColor = MaterialTheme.colorScheme.error
                 )

@@ -271,10 +271,10 @@ fun CallScreenContent(
     if (showEndDialog) {
         CallEndConfirmationDialog(
             onConfirm = {
-                showEndDialog = false
                 surfaceActions.onEndAndClose()
             },
-            onDismiss = { showEndDialog = false }
+            onDismiss = { showEndDialog = false },
+            enabled = !state.isEndingCall
         )
     }
 }
