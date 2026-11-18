@@ -31,7 +31,11 @@ data class WordEffectsUiState(
     @StringRes val editorErrorRes: Int? = null,
     val previewEffects: List<MessageEffect> = emptyList(),
     /** Increments after every successful write, so the editor knows when to close. */
-    val savedCount: Int = 0
+    val savedCount: Int = 0,
+    /** Increments after every successful delete, so the delete dialog knows when to close. */
+    val deletedCount: Int = 0,
+    /** True while a delete is in flight, so the delete confirmation dialog stays open. */
+    val isDeleting: Boolean = false
 )
 
 /**
@@ -159,16 +163,23 @@ class WordEffectsViewModel @Inject constructor(
     }
 
     fun deleteEffect(chatId: String, effectId: String) {
+        if (_uiState.value.isDeleting) return
+        _uiState.update { it.copy(isDeleting = true, errorMessageRes = null) }
+
         viewModelScope.launch {
             deleteWordEffectUseCase(chatId, effectId)
                 .onSuccess {
                     _uiState.update { state ->
-                        state.copy(effects = state.effects.filterNot { it.id == effectId })
+                        state.copy(
+                            isDeleting = false,
+                            effects = state.effects.filterNot { it.id == effectId },
+                            deletedCount = state.deletedCount + 1
+                        )
                     }
                     resolvePreview()
                 }
                 .onFailure {
-                    _uiState.update { it.copy(errorMessageRes = R.string.word_effects_error_delete) }
+                    _uiState.update { it.copy(isDeleting = false, errorMessageRes = R.string.word_effects_error_delete) }
                 }
         }
     }
