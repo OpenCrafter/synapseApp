@@ -133,6 +133,7 @@ fun ChatInfoScreen(
     val context = LocalContext.current
     var showClearChatDialog by remember { mutableStateOf(false) }
     var showBlockConfirmDialog by remember { mutableStateOf(false) }
+    var blockOperationInProgress by remember { mutableStateOf(false) }
     var showReportConfirmDialog by remember { mutableStateOf(false) }
     var showGroupsDialog by remember { mutableStateOf(false) }
     var showEncryptionSheet by remember { mutableStateOf(false) }
@@ -513,10 +514,18 @@ fun ChatInfoScreen(
             title = { Text(title) },
             text = { Text(message) },
             confirmButton = {
-                PressScaleTextButton(onClick = {
-                    showBlockConfirmDialog = false
-                    viewModel.toggleBlockUser(userId)
-                }) { Text(title, color = MaterialTheme.colorScheme.error) }
+                PressScaleTextButton(
+                    onClick = {
+                        blockOperationInProgress = true
+                        viewModel.toggleBlockUser(userId) { result ->
+                            blockOperationInProgress = false
+                            if (result.isSuccess) {
+                                showBlockConfirmDialog = false
+                            }
+                        }
+                    },
+                    enabled = !blockOperationInProgress
+                ) { Text(title, color = MaterialTheme.colorScheme.error) }
             },
             dismissButton = {
                 PressScaleTextButton(onClick = { showBlockConfirmDialog = false }) {
@@ -912,12 +921,14 @@ private fun SettingsItem(
 private fun PressScaleTextButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    enabled: Boolean = true,
     content: @Composable RowScope.() -> Unit
 ) {
     val interaction = remember { MutableInteractionSource() }
     TextButton(
         onClick = onClick,
         modifier = modifier.pressScale(interaction),
+        enabled = enabled,
         interactionSource = interaction,
         content = content
     )
