@@ -125,6 +125,20 @@ fun PostDetailScreen(
         }
     }
 
+    // Handle comment delete/report completion: dismiss options sheet only on success, show error on failure
+    LaunchedEffect(uiState.commentActionCompleted, uiState.commentError) {
+        if (uiState.commentActionCompleted) {
+            showCommentOptions = null
+            viewModel.clearCommentActionCompleted()
+        }
+        if (!uiState.commentSubmitted) {
+            uiState.commentError?.let { error ->
+                snackbarHostState.showSnackbar(message = error)
+                viewModel.clearCommentError()
+            }
+        }
+    }
+
     // Handle comment submission completion: clear input, show errors, reset sending state
     LaunchedEffect(uiState.commentSubmitted) {
         if (uiState.commentSubmitted) {
@@ -263,7 +277,12 @@ fun PostDetailScreen(
                     scope = scope,
                     commentLabel = commentLabel
                 )
-                showCommentOptions = null
+                // Dismiss immediately for synchronous actions; Delete/Report dismissal is gated
+                // on commentActionCompleted in the LaunchedEffect below so the sheet stays open
+                // until the async result is known.
+                if (action !is CommentAction.Delete && action !is CommentAction.Report) {
+                    showCommentOptions = null
+                }
             }
         )
     }
