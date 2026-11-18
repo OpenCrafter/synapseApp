@@ -52,7 +52,8 @@ fun CoverPhoto(
                 translationY = scrollOffset * height.toPx() * 0.5f
                 alpha = 1f - scrollOffset
             }
-            .clickable(enabled = coverImageUrl != null) { onCoverClick() }
+            // The owner can tap the placeholder to add a cover photo; visitors cannot tap a missing image.
+            .clickable(enabled = coverImageUrl != null || isOwnProfile) { onCoverClick() }
     ) {
         if (coverImageUrl != null) {
             AsyncImage(
