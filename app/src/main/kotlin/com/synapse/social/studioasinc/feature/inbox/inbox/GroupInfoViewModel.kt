@@ -50,6 +50,10 @@ data class GroupInfoUiState(
     val isReporting: Boolean = false,
     /** True while an invite link rotation is in flight; used to disable the confirm button. */
     val isRevokingInvite: Boolean = false,
+    /** True while a group name update is in flight; used to disable the confirm button and prevent double-tap. */
+    val isUpdatingName: Boolean = false,
+    /** True while a group description update is in flight; used to disable the confirm button and prevent double-tap. */
+    val isUpdatingDescription: Boolean = false,
     val memberSearchQuery: String = "",
     val filteredMembers: List<Pair<User, Boolean>> = emptyList(),
     /** True when the current user may edit group info: admins always, members only when the group allows it. */
@@ -177,28 +181,32 @@ class GroupInfoViewModel @Inject constructor(
 
     // region Group profile edits
 
-    fun updateGroupName(name: String) {
+    fun updateGroupName(name: String, onResult: () -> Unit) {
         val chatId = currentChatId ?: return
+        _uiState.value = _uiState.value.copy(isUpdatingName = true)
         viewModelScope.launch {
             chatRepository.updateGroupInfo(chatId, name = name)
                 .onSuccess { updated ->
-                    _uiState.value = _uiState.value.copy(groupInfo = updated, errorRes = null)
+                    _uiState.value = _uiState.value.copy(groupInfo = updated, errorRes = null, isUpdatingName = false)
+                    onResult()
                 }
                 .onFailure {
-                    _uiState.value = _uiState.value.copy(errorRes = R.string.group_error_create)
+                    _uiState.value = _uiState.value.copy(errorRes = R.string.group_error_create, isUpdatingName = false)
                 }
         }
     }
 
-    fun updateGroupDescription(description: String) {
+    fun updateGroupDescription(description: String, onResult: () -> Unit) {
         val chatId = currentChatId ?: return
+        _uiState.value = _uiState.value.copy(isUpdatingDescription = true)
         viewModelScope.launch {
             chatRepository.updateGroupInfo(chatId, description = description)
                 .onSuccess { updated ->
-                    _uiState.value = _uiState.value.copy(groupInfo = updated, errorRes = null)
+                    _uiState.value = _uiState.value.copy(groupInfo = updated, errorRes = null, isUpdatingDescription = false)
+                    onResult()
                 }
                 .onFailure {
-                    _uiState.value = _uiState.value.copy(errorRes = R.string.group_error_create)
+                    _uiState.value = _uiState.value.copy(errorRes = R.string.group_error_create, isUpdatingDescription = false)
                 }
         }
     }
