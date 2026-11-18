@@ -180,7 +180,9 @@ fun AvatarScreen(
                                 Toast.makeText(context, context.getString(R.string.profile_photo_removed), Toast.LENGTH_SHORT).show()
                             },
                             onError = { error ->
-                                showRemoveDialog = false
+                                // Keep the dialog open on failure so the user can retry; the error is
+                                // surfaced via the Toast and `isRemoving` resets in `finally`, re-enabling
+                                // the confirm button. Dismiss only on success.
                                 Toast.makeText(context, error, Toast.LENGTH_SHORT).show()
                             }
                         )
