@@ -359,12 +359,13 @@ class GroupInfoViewModel @Inject constructor(
 
     // region Invite link
 
-    fun rotateInviteCode() {
+    fun rotateInviteCode(onResult: () -> Unit) {
         val chatId = currentChatId ?: return
         viewModelScope.launch {
             groupCreationRepository.rotateGroupInviteCode(chatId)
                 .onSuccess { code ->
                     _uiState.value = _uiState.value.copy(inviteCode = code, errorRes = null)
+                    onResult()
                 }
                 .onFailure {
                     _uiState.value = _uiState.value.copy(errorRes = R.string.group_error_invite)

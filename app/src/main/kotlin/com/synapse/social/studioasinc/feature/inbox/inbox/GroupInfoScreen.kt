@@ -640,8 +640,9 @@ fun GroupInfoScreen(
             confirmButton = {
                 PressScaleTextButton(
                     onClick = {
-                        showInviteRevokeDialog = false
-                        viewModel.rotateInviteCode()
+                        viewModel.rotateInviteCode {
+                            showInviteRevokeDialog = false
+                        }
                     }
                 ) { Text(stringResource(R.string.group_revoke_confirm)) }
             },
