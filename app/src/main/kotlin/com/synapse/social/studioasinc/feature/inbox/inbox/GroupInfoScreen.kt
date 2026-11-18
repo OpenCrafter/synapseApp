@@ -456,7 +456,7 @@ fun GroupInfoScreen(
                             showEditNameDialog = false
                         }
                     },
-                    enabled = nameText.isNotBlank()
+                    enabled = nameText.isNotBlank() && !uiState.isUpdatingName
                 ) { Text(stringResource(R.string.group_save)) }
             },
             dismissButton = {
@@ -488,7 +488,8 @@ fun GroupInfoScreen(
                         viewModel.updateGroupDescription(descriptionText.trim()) {
                             showEditDescriptionDialog = false
                         }
-                    }
+                    },
+                    enabled = !uiState.isUpdatingDescription
                 ) { Text(stringResource(R.string.group_save)) }
             },
             dismissButton = {
