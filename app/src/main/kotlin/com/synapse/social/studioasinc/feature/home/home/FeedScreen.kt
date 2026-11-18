@@ -455,8 +455,6 @@ fun FeedScreen(
     }
 }
 
-}
-
 @Composable
 private fun FeedCommentItem(
     feedItem: FeedItem.CommentItem,
