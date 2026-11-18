@@ -398,8 +398,11 @@ class InboxViewModel @Inject constructor(
 
     fun deleteConversation(chatId: String) = deleteConversations(setOf(chatId))
 
-    fun deleteConversations(chatIds: Set<String>) {
-        if (chatIds.isEmpty()) return
+    fun deleteConversations(chatIds: Set<String>, onResult: (Boolean) -> Unit = {}) {
+        if (chatIds.isEmpty()) {
+            onResult(true)
+            return
+        }
         viewModelScope.launch {
             var failures = 0
             chatIds.forEach { chatId ->
@@ -410,6 +413,7 @@ class InboxViewModel @Inject constructor(
             if (failures > 0) {
                 _error.value = "Failed to delete $failures conversation(s)."
             }
+            onResult(failures == 0)
         }
     }
 

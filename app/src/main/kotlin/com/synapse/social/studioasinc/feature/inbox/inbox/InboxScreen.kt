@@ -764,9 +764,14 @@ private fun InboxScreenContent(
             text = { Text(stringResource(R.string.inbox_delete_message, selectedChatIds.size)) },
             confirmButton = {
                 TextButton(onClick = {
-                    viewModel.deleteConversations(selectedChatIds)
-                    showDeleteDialog = false
-                    returnToInbox()
+                    viewModel.deleteConversations(selectedChatIds) { success ->
+                        if (success) {
+                            showDeleteDialog = false
+                            returnToInbox()
+                        }
+                        // On failure the dialog stays open so the user can retry;
+                        // the error is surfaced via the existing error snackbar.
+                    }
                 }) { Text(stringResource(R.string.inbox_delete_confirm), color = MaterialTheme.colorScheme.error) }
             },
             dismissButton = { TextButton(onClick = { showDeleteDialog = false }) { Text(stringResource(R.string.inbox_cancel)) } }
