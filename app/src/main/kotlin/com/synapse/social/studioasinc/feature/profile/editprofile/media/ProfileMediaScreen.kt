@@ -259,19 +259,36 @@ fun ProfileMediaScreen(
 
         if (uiState.showRemoveAvatarDialog) {
             AlertDialog(
-                onDismissRequest = { viewModel.onEvent(ProfileMediaEvent.DismissRemoveAvatarDialog) },
+                onDismissRequest = {
+                    if (!uiState.removingAvatar) {
+                        viewModel.onEvent(ProfileMediaEvent.DismissRemoveAvatarDialog)
+                    }
+                },
                 title = { Text(text = stringResource(R.string.remove_profile_photo_title)) },
-                text = { Text(text = stringResource(R.string.remove_profile_photo_body)) },
+                text = {
+                    Column(verticalArrangement = Arrangement.spacedBy(Spacing.space8)) {
+                        Text(text = stringResource(R.string.remove_profile_photo_body))
+                        uiState.error?.let { error ->
+                            Text(
+                                text = error,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.error
+                            )
+                        }
+                    }
+                },
                 confirmButton = {
                     TextButton(
-                        onClick = { viewModel.onEvent(ProfileMediaEvent.ConfirmRemoveAvatar) }
+                        onClick = { viewModel.onEvent(ProfileMediaEvent.ConfirmRemoveAvatar) },
+                        enabled = !uiState.removingAvatar
                     ) {
                         Text(text = stringResource(R.string.remove))
                     }
                 },
                 dismissButton = {
                     TextButton(
-                        onClick = { viewModel.onEvent(ProfileMediaEvent.DismissRemoveAvatarDialog) }
+                        onClick = { viewModel.onEvent(ProfileMediaEvent.DismissRemoveAvatarDialog) },
+                        enabled = !uiState.removingAvatar
                     ) {
                         Text(text = stringResource(R.string.cancel))
                     }
@@ -281,19 +298,36 @@ fun ProfileMediaScreen(
 
         if (uiState.showRemoveCoverDialog) {
             AlertDialog(
-                onDismissRequest = { viewModel.onEvent(ProfileMediaEvent.DismissRemoveCoverDialog) },
+                onDismissRequest = {
+                    if (!uiState.removingCover) {
+                        viewModel.onEvent(ProfileMediaEvent.DismissRemoveCoverDialog)
+                    }
+                },
                 title = { Text(text = stringResource(R.string.remove_cover_photo_title)) },
-                text = { Text(text = stringResource(R.string.remove_cover_photo_body)) },
+                text = {
+                    Column(verticalArrangement = Arrangement.spacedBy(Spacing.space8)) {
+                        Text(text = stringResource(R.string.remove_cover_photo_body))
+                        uiState.error?.let { error ->
+                            Text(
+                                text = error,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.error
+                            )
+                        }
+                    }
+                },
                 confirmButton = {
                     TextButton(
-                        onClick = { viewModel.onEvent(ProfileMediaEvent.ConfirmRemoveCover) }
+                        onClick = { viewModel.onEvent(ProfileMediaEvent.ConfirmRemoveCover) },
+                        enabled = !uiState.removingCover
                     ) {
                         Text(text = stringResource(R.string.remove))
                     }
                 },
                 dismissButton = {
                     TextButton(
-                        onClick = { viewModel.onEvent(ProfileMediaEvent.DismissRemoveCoverDialog) }
+                        onClick = { viewModel.onEvent(ProfileMediaEvent.DismissRemoveCoverDialog) },
+                        enabled = !uiState.removingCover
                     ) {
                         Text(text = stringResource(R.string.cancel))
                     }
