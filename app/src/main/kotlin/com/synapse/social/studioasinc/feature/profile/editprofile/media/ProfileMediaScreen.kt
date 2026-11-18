@@ -264,7 +264,8 @@ fun ProfileMediaScreen(
                 text = { Text(text = stringResource(R.string.remove_profile_photo_body)) },
                 confirmButton = {
                     TextButton(
-                        onClick = { viewModel.onEvent(ProfileMediaEvent.ConfirmRemoveAvatar) }
+                        onClick = { viewModel.onEvent(ProfileMediaEvent.ConfirmRemoveAvatar) },
+                        enabled = !uiState.isRemovingAvatar
                     ) {
                         Text(text = stringResource(R.string.remove))
                     }
@@ -286,7 +287,8 @@ fun ProfileMediaScreen(
                 text = { Text(text = stringResource(R.string.remove_cover_photo_body)) },
                 confirmButton = {
                     TextButton(
-                        onClick = { viewModel.onEvent(ProfileMediaEvent.ConfirmRemoveCover) }
+                        onClick = { viewModel.onEvent(ProfileMediaEvent.ConfirmRemoveCover) },
+                        enabled = !uiState.isRemovingCover
                     ) {
                         Text(text = stringResource(R.string.remove))
                     }
