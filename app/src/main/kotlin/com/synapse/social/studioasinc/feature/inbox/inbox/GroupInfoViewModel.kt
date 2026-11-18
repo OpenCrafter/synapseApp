@@ -46,6 +46,8 @@ data class GroupInfoUiState(
     val currentUserId: String? = null,
     val errorRes: Int? = null,
     val successMessageRes: Int? = null,
+    /** True while an invite link rotation is in flight; used to disable the confirm button. */
+    val isRevokingInvite: Boolean = false,
     val memberSearchQuery: String = "",
     val filteredMembers: List<Pair<User, Boolean>> = emptyList(),
     /** True when the current user may edit group info: admins always, members only when the group allows it. */
@@ -361,14 +363,15 @@ class GroupInfoViewModel @Inject constructor(
 
     fun rotateInviteCode(onResult: () -> Unit) {
         val chatId = currentChatId ?: return
+        _uiState.value = _uiState.value.copy(isRevokingInvite = true)
         viewModelScope.launch {
             groupCreationRepository.rotateGroupInviteCode(chatId)
                 .onSuccess { code ->
-                    _uiState.value = _uiState.value.copy(inviteCode = code, errorRes = null)
+                    _uiState.value = _uiState.value.copy(inviteCode = code, errorRes = null, isRevokingInvite = false)
                     onResult()
                 }
                 .onFailure {
-                    _uiState.value = _uiState.value.copy(errorRes = R.string.group_error_invite)
+                    _uiState.value = _uiState.value.copy(errorRes = R.string.group_error_invite, isRevokingInvite = false)
                 }
         }
     }

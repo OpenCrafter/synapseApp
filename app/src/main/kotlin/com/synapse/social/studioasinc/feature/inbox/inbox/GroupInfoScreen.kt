@@ -643,7 +643,8 @@ fun GroupInfoScreen(
                         viewModel.rotateInviteCode {
                             showInviteRevokeDialog = false
                         }
-                    }
+                    },
+                    enabled = !uiState.isRevokingInvite
                 ) { Text(stringResource(R.string.group_revoke_confirm)) }
             },
             dismissButton = {
