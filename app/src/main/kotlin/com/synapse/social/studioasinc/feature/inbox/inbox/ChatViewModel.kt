@@ -1087,12 +1087,18 @@ private val messageSyncUseCase: MessageSyncUseCase = MessageSyncUseCase(getMessa
         inputDelegate.clearSelection()
     }
 
-    fun deleteSelectedMessagesForMe() {
-        inputDelegate.deleteSelectedMessagesForMe()
+    fun deleteSelectedMessagesForMe(
+        onError: (String?) -> Unit = {},
+        onSuccess: () -> Unit = {}
+    ) {
+        inputDelegate.deleteSelectedMessagesForMe(onError = onError, onSuccess = onSuccess)
     }
 
-    fun deleteSelectedMessagesForEveryone() {
-        inputDelegate.deleteSelectedMessagesForEveryone()
+    fun deleteSelectedMessagesForEveryone(
+        onError: (String?) -> Unit = {},
+        onSuccess: () -> Unit = {}
+    ) {
+        inputDelegate.deleteSelectedMessagesForEveryone(onError = onError, onSuccess = onSuccess)
     }
 
     fun setReplyingToMessage(message: Message) {
@@ -1107,20 +1113,36 @@ private val messageSyncUseCase: MessageSyncUseCase = MessageSyncUseCase(getMessa
         messagingDelegate.editMessage(messageId, newContent)
     }
 
-    fun deleteMessage(messageId: String) {
-        messagingDelegate.deleteMessage(messageId)
+    fun deleteMessage(
+        messageId: String,
+        onError: (String?) -> Unit = {},
+        onSuccess: () -> Unit = {}
+    ) {
+        messagingDelegate.deleteMessage(messageId, onError = onError, onSuccess = onSuccess)
     }
 
-    fun deleteMessage(message: Message) {
-        messagingDelegate.deleteMessage(message.id)
+    fun deleteMessage(
+        message: Message,
+        onError: (String?) -> Unit = {},
+        onSuccess: () -> Unit = {}
+    ) {
+        messagingDelegate.deleteMessage(message.id, onError = onError, onSuccess = onSuccess)
     }
 
-    fun deleteMessageForMe(messageId: String) {
-        messagingDelegate.deleteMessageForMe(messageId)
+    fun deleteMessageForMe(
+        messageId: String,
+        onError: (String?) -> Unit = {},
+        onSuccess: () -> Unit = {}
+    ) {
+        messagingDelegate.deleteMessageForMe(messageId, onError = onError, onSuccess = onSuccess)
     }
 
-    fun deleteMessageForMe(message: Message) {
-        messagingDelegate.deleteMessageForMe(message.id)
+    fun deleteMessageForMe(
+        message: Message,
+        onError: (String?) -> Unit = {},
+        onSuccess: () -> Unit = {}
+    ) {
+        messagingDelegate.deleteMessageForMe(message.id, onError = onError, onSuccess = onSuccess)
     }
 
     fun retrySendMessage(message: Message) {
