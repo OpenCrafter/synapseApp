@@ -24,6 +24,13 @@ import com.synapse.social.studioasinc.shared.core.util.getCurrentIsoTime
 import javax.inject.Inject
 import kotlinx.serialization.json.*
 
+sealed class QuietHoursSaveStatus {
+    object Idle : QuietHoursSaveStatus()
+    object Saving : QuietHoursSaveStatus()
+    object Success : QuietHoursSaveStatus()
+    data class Failure(val error: String) : QuietHoursSaveStatus()
+}
+
 @HiltViewModel
 class NotificationSettingsViewModel @Inject constructor(
     private val authRepository: AuthRepository,
@@ -43,6 +50,13 @@ class NotificationSettingsViewModel @Inject constructor(
 
     private val _error = MutableStateFlow<String?>(null)
     val error: StateFlow<String?> = _error.asStateFlow()
+
+    private val _quietHoursSaveStatus = MutableStateFlow<QuietHoursSaveStatus>(QuietHoursSaveStatus.Idle)
+    val quietHoursSaveStatus: StateFlow<QuietHoursSaveStatus> = _quietHoursSaveStatus.asStateFlow()
+
+    fun clearQuietHoursSaveStatus() {
+        _quietHoursSaveStatus.value = QuietHoursSaveStatus.Idle
+    }
 
     private val preferencesUpdateMutex = Mutex()
     private var persistedPreferences = NotificationPreferences()
@@ -121,12 +135,26 @@ class NotificationSettingsViewModel @Inject constructor(
     }
 
     fun setQuietHours(start: String, end: String) {
-        updatePreferences { it.copy(quietHoursStart = start, quietHoursEnd = end) }
+        _quietHoursSaveStatus.value = QuietHoursSaveStatus.Saving
+        updatePreferences(
+            { it.copy(quietHoursStart = start, quietHoursEnd = end) },
+            onSaved = { success ->
+                _quietHoursSaveStatus.value = if (success) {
+                    QuietHoursSaveStatus.Success
+                } else {
+                    QuietHoursSaveStatus.Failure("Failed to sync quiet hours")
+                }
+            }
+        )
     }
 
-    private fun updatePreferences(updateBlock: (NotificationPreferences) -> NotificationPreferences) {
+    private fun updatePreferences(
+        updateBlock: (NotificationPreferences) -> NotificationPreferences,
+        onSaved: (Boolean) -> Unit = {}
+    ) {
         if (!preferencesLoaded) {
             _error.value = "Notification preferences are not ready yet"
+            onSaved(false)
             return
         }
 
@@ -135,6 +163,7 @@ class NotificationSettingsViewModel @Inject constructor(
         val requestVersion = latestPreferenceUpdateVersion.incrementAndGet()
 
         viewModelScope.launch {
+            var success = false
             try {
                 val userId = authRepository.getCurrentUserId()
                     ?: throw IllegalStateException("User is not authenticated")
@@ -146,7 +175,10 @@ class NotificationSettingsViewModel @Inject constructor(
                         persistedPreferences = preferencesToPersist
                         updateOneSignalTags(preferencesToPersist)
                     }
-                    if (latestPreferenceUpdateVersion.get() == versionBeingPersisted) _error.value = null
+                    if (latestPreferenceUpdateVersion.get() == versionBeingPersisted) {
+                        _error.value = null
+                        success = true
+                    }
                 }
             } catch (e: CancellationException) {
                 throw e
@@ -158,6 +190,8 @@ class NotificationSettingsViewModel @Inject constructor(
                         _notificationPreferences.value = persistedPreferences
                     }
                 }
+            } finally {
+                onSaved(success)
             }
         }
     }
