@@ -376,6 +376,8 @@ fun FeedScreen(
         modifier = Modifier.align(Alignment.BottomCenter)
     )
 
+    }
+
     if (showMediaViewer && selectedMediaUrls.isNotEmpty()) {
         MediaViewer(
             mediaUrls = selectedMediaUrls,
@@ -452,9 +454,6 @@ fun FeedScreen(
             onShareExternal = { PostShareUtils.sharePost(context, post.id) }
         )
     }
-    }
-}
-
 }
 
 @Composable
