@@ -356,10 +356,13 @@ class PostDetailViewModel @Inject constructor(
 
     fun deleteComment(commentId: String) {
         viewModelScope.launch {
-             _uiState.update { it.copy(commentActionsLoading = it.commentActionsLoading + commentId) }
+            _uiState.update { it.copy(commentActionsLoading = it.commentActionsLoading + commentId) }
             commentRepository.deleteComment(commentId).onSuccess {
                 refreshComments()
                 invalidateComments()
+                _uiState.update { it.copy(commentActionCompleted = true) }
+            }.onFailure { e ->
+                _uiState.update { it.copy(commentActionError = e.message ?: "Failed to delete comment") }
             }.also {
                 _uiState.update { it.copy(commentActionsLoading = it.commentActionsLoading - commentId) }
             }
@@ -553,7 +556,14 @@ class PostDetailViewModel @Inject constructor(
 
     fun reportComment(commentId: String, reason: String, description: String?) {
         viewModelScope.launch {
-            commentRepository.reportComment(commentId, reason)
+            _uiState.update { it.copy(commentActionsLoading = it.commentActionsLoading + commentId) }
+            commentRepository.reportComment(commentId, reason).onSuccess {
+                _uiState.update { it.copy(commentActionCompleted = true) }
+            }.onFailure { e ->
+                _uiState.update { it.copy(commentActionError = e.message ?: "Failed to report comment") }
+            }.also {
+                _uiState.update { it.copy(commentActionsLoading = it.commentActionsLoading - commentId) }
+            }
         }
     }
 
@@ -578,6 +588,14 @@ class PostDetailViewModel @Inject constructor(
 
     fun clearCommentSubmission() {
         _uiState.update { it.copy(commentSubmitted = false, commentError = null) }
+    }
+
+    fun clearCommentActionCompleted() {
+        _uiState.update { it.copy(commentActionCompleted = false) }
+    }
+
+    fun clearCommentError() {
+        _uiState.update { it.copy(commentActionError = null) }
     }
 
     fun clearError() {
