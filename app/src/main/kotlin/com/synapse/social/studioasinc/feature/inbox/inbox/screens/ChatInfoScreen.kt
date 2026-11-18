@@ -514,8 +514,11 @@ fun ChatInfoScreen(
             text = { Text(message) },
             confirmButton = {
                 PressScaleTextButton(onClick = {
-                    showBlockConfirmDialog = false
-                    viewModel.toggleBlockUser(userId)
+                    viewModel.toggleBlockUser(userId) { result ->
+                        if (result.isSuccess) {
+                            showBlockConfirmDialog = false
+                        }
+                    }
                 }) { Text(title, color = MaterialTheme.colorScheme.error) }
             },
             dismissButton = {

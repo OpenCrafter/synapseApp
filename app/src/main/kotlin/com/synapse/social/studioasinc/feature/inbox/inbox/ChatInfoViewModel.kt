@@ -29,8 +29,10 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlin.Result
 import javax.inject.Inject
 
 data class ChatInfoUiState(
@@ -316,27 +318,31 @@ class ChatInfoViewModel @Inject constructor(
         }
     }
 
-    fun toggleBlockUser(userId: String) {
-        if (userId.isBlank()) return
+    fun toggleBlockUser(userId: String, onResult: (Result<Unit>) -> Unit) {
+        if (userId.isBlank()) {
+            onResult(Result.failure(IllegalArgumentException("userId is blank")))
+            return
+        }
         val currentlyBlocked = _uiState.value.isBlocked
         viewModelScope.launch {
-            if (currentlyBlocked) {
+            val result = if (currentlyBlocked) {
                 unblockUserUseCase(userId)
-                    .onSuccess {
-                        _uiState.update {
-                            it.copy(isBlocked = false, userMessageRes = R.string.chat_info_msg_unblocked)
-                        }
-                    }
-                    .onFailure { _uiState.update { it.copy(errorMessageRes = R.string.chat_info_error_unblock) } }
             } else {
                 blockUserUseCase(userId)
-                    .onSuccess {
-                        _uiState.update {
-                            it.copy(isBlocked = true, userMessageRes = R.string.chat_info_msg_blocked)
-                        }
-                    }
-                    .onFailure { _uiState.update { it.copy(errorMessageRes = R.string.chat_info_error_block) } }
             }
+            if (result.isSuccess) {
+                _uiState.update {
+                    it.copy(
+                        isBlocked = !currentlyBlocked,
+                        userMessageRes = if (currentlyBlocked) R.string.chat_info_msg_unblocked else R.string.chat_info_msg_blocked
+                    )
+                }
+            } else {
+                _uiState.update {
+                    it.copy(errorMessageRes = if (currentlyBlocked) R.string.chat_info_error_unblock else R.string.chat_info_error_block)
+                }
+            }
+            onResult(result)
         }
     }
 
