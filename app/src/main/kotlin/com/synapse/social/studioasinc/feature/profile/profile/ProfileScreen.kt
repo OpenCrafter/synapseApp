@@ -263,10 +263,26 @@ fun ProfileScreen(
             viewModel = viewModel,
             context = context,
             onNavigateToEditPost = onNavigateToEditPost,
+            onSummarize = {
+                showSummarySheet = true
+                selectedPost?.let { viewModel.summarizePost(it) }
+            },
             onDismiss = {
                 showPostOptions = false
                 selectedPost = null
             }
         )
+
+        if (showSummarySheet) {
+            PostSummarySheet(
+                isSummarizing = state.isSummarizing,
+                summary = state.postSummary,
+                error = state.summaryError,
+                onDismiss = {
+                    showSummarySheet = false
+                    viewModel.clearPostSummary()
+                }
+            )
+        }
     }
 }

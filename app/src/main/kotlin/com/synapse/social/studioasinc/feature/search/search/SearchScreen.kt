@@ -517,6 +517,7 @@ onMediaClick = { post, index ->
                 PostShareUtils.sharePost(context, post.id)
                 selectedPost = null
             },
+            onReshare = { viewModel.resharePost(post); selectedPost = null },
             onCopyLink = {
                 PostShareUtils.copyPostLink(context, post.id)
                 selectedPost = null

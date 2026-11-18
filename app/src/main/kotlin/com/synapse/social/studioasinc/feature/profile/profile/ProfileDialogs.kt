@@ -168,6 +168,7 @@ internal fun PostOptionsSection(
     viewModel: ProfileViewModel,
     context: Context,
     onNavigateToEditPost: (String) -> Unit,
+    onSummarize: () -> Unit,
     onDismiss: () -> Unit
 ) {
     if (showPostOptions && selectedPost != null) {
@@ -187,6 +188,7 @@ internal fun PostOptionsSection(
             onShare = {
                 PostShareUtils.sharePost(context, post.id)
             },
+            onReshare = { viewModel.resharePost(post) },
             onCopyLink = {
                 PostShareUtils.copyPostLink(context, post.id)
             },
