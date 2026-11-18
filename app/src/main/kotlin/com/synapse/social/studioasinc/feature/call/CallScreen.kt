@@ -179,7 +179,8 @@ fun CallScreenContent(
                 surfaceActions.onDecline()
 
             session.direction == CallDirection.OUTGOING &&
-                (session.phase == CallPhase.DIALING || session.phase == CallPhase.RINGING) ->
+                (session.phase == CallPhase.DIALING || session.phase == CallPhase.RINGING) &&
+                !state.isEndingCall ->
                 surfaceActions.onEndAndClose()
 
             else -> showEndDialog = true
