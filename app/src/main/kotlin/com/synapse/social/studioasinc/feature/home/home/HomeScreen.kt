@@ -85,8 +85,7 @@ fun HomeScreen(
     onNavigateToStoryViewer: (String, List<String>) -> Unit,
     onNavigateToCreateReel: () -> Unit,
     viewModel: HomeViewModel = hiltViewModel(),
-    notificationsViewModel: NotificationsViewModel = hiltViewModel(),
-    initialTab: Int = 0
+    notificationsViewModel: NotificationsViewModel = hiltViewModel()
 ) {
     val navController = rememberNavController()
 

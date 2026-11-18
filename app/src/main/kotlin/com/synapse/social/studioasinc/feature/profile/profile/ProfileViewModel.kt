@@ -15,7 +15,6 @@ import com.synapse.social.studioasinc.domain.usecase.post.ReactToPostUseCase
 import com.synapse.social.studioasinc.domain.usecase.post.ReportPostUseCase
 import com.synapse.social.studioasinc.domain.usecase.post.RevokeVoteUseCase
 import com.synapse.social.studioasinc.domain.usecase.post.VotePollUseCase
-import com.synapse.social.studioasinc.domain.usecase.post.RevokeVoteUseCase
 import com.synapse.social.studioasinc.domain.usecase.profile.ArchiveProfileUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.blocking.BlockUserUseCase
 import com.synapse.social.studioasinc.domain.usecase.profile.FollowUserUseCase
@@ -118,7 +117,6 @@ class ProfileViewModel @Inject constructor(
     private val bookmarkPostUseCase: BookmarkPostUseCase,
     private val deletePostUseCase: DeletePostUseCase,
     private val reportPostUseCase: ReportPostUseCase,
-    private val revokeVoteUseCase: RevokeVoteUseCase,
     private val lockProfileUseCase: LockProfileUseCase,
     private val archiveProfileUseCase: ArchiveProfileUseCase,
     private val blockUserUseCase: BlockUserUseCase,
@@ -555,29 +553,6 @@ class ProfileViewModel @Inject constructor(
     fun reportPost(postId: String, reason: String) {
         viewModelScope.launch {
             reportPostUseCase(postId, reason, null).collect { }
-        }
-    }
-
-    suspend fun toggleComments(post: Post): Result<Unit> {
-        return viewModelScope.async {
-            postRepository.toggleComments(post.id).also { result ->
-                result.onSuccess {
-                    val toggled = post.copy(
-                        postDisableReplies = if (post.postDisableReplies == "true") "false" else "true"
-                    )
-                    PostEventBus.emit(PostEvent.Updated(toggled))
-                }
-            }
-        }.await()
-    }
-
-    fun revokeVote(post: Post) {
-        viewModelScope.launch {
-            revokeVoteUseCase(post).collect { result ->
-                result.onSuccess { updatedPost ->
-                    PostEventBus.emit(PostEvent.Updated(updatedPost))
-                }
-            }
         }
     }
 
