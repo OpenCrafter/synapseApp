@@ -130,12 +130,12 @@ internal fun GroupHubStage(
     inviteUpdating: Boolean,
     currentUserId: String?,
     error: GroupCreationError?,
-    onRegenerateInvite: () -> Unit,
+    onRegenerateInvite: ((Boolean) -> Unit) -> Unit,
     onOpenRequests: () -> Unit,
     onApproveRequest: (String) -> Unit,
     onDeclineRequest: (String) -> Unit,
     onChangeRole: (String, Boolean) -> Unit,
-    onRemoveMember: (String) -> Unit,
+    onRemoveMember: (String, (Boolean) -> Unit) -> Unit,
     onClearError: () -> Unit
 ) {
     val context = LocalContext.current
@@ -153,7 +153,7 @@ internal fun GroupHubStage(
             title = { Text(stringResource(R.string.group_revoke_title)) },
             text = { Text(stringResource(R.string.group_revoke_body)) },
             confirmButton = {
-                TextButton(onClick = { showRevokeDialog = false; onRegenerateInvite() }) {
+                TextButton(onClick = { onRegenerateInvite { success -> if (success) showRevokeDialog = false } }) {
                     Text(stringResource(R.string.group_revoke_confirm))
                 }
             },
@@ -175,7 +175,7 @@ internal fun GroupHubStage(
             title = { Text(stringResource(R.string.group_remove_member_title)) },
             text = { Text(stringResource(R.string.group_remove_member_body, userDisplayName(user))) },
             confirmButton = {
-                TextButton(onClick = { onRemoveMember(user.uid); memberToRemove = null }) {
+                TextButton(onClick = { onRemoveMember(user.uid) { success -> if (success) memberToRemove = null } }) {
                     Text(stringResource(R.string.remove_member), color = MaterialTheme.colorScheme.error)
                 }
             },

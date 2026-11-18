@@ -241,14 +241,14 @@ class CreateGroupViewModel @Inject constructor(
         viewModelScope.launch { loadPendingRequests(chatId) }
     }
 
-    fun regenerateInvite() {
-        val chatId = _createdChatId.value ?: return
-        if (_isUpdatingInvite.value) return
+    fun regenerateInvite(onResult: (Boolean) -> Unit) {
+        val chatId = _createdChatId.value ?: return onResult(false)
+        if (_isUpdatingInvite.value) return onResult(false)
         viewModelScope.launch {
             _isUpdatingInvite.value = true
             _error.value = null
-            groupCreationRepository.rotateGroupInviteCode(chatId).onSuccess { _inviteCode.value = it }
-                .onFailure { _error.value = GroupCreationError.INVITE_UNAVAILABLE }
+            groupCreationRepository.rotateGroupInviteCode(chatId).onSuccess { _inviteCode.value = it; onResult(true) }
+                .onFailure { _error.value = GroupCreationError.INVITE_UNAVAILABLE; onResult(false) }
             _isUpdatingInvite.value = false
         }
     }
@@ -282,11 +282,17 @@ class CreateGroupViewModel @Inject constructor(
         }
     }
 
-    fun removeGroupMember(userId: String) {
-        val chatId = _createdChatId.value ?: return
+    fun removeGroupMember(userId: String, onResult: (Boolean) -> Unit) {
+        val chatId = _createdChatId.value ?: return onResult(false)
         viewModelScope.launch {
-            chatRepository.removeGroupMember(chatId, userId).onSuccess { loadGroupMembers(chatId) }
-                .onFailure { _error.value = GroupCreationError.UPDATE_MEMBER_FAILED }
+            val result = chatRepository.removeGroupMember(chatId, userId)
+            if (result.isSuccess) {
+                loadGroupMembers(chatId)
+                onResult(true)
+            } else {
+                _error.value = GroupCreationError.UPDATE_MEMBER_FAILED
+                onResult(false)
+            }
         }
     }
 }
