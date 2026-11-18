@@ -59,7 +59,7 @@ class GitHubReleaseApi @Inject constructor(
     }
 
     private companion object {
-        const val ENDPOINT = "https://api.github.com/repos/synapseSRC/SynapseApp/releases?per_page=10"
+        const val ENDPOINT = "https://api.github.com/repos/OpenCrafter/synapseApp/releases?per_page=10"
         const val USER_AGENT = "Synapse-Android"
         const val REQUEST_TIMEOUT_MILLIS = 10_000L
     }

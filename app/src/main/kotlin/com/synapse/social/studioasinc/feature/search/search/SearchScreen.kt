@@ -517,6 +517,7 @@ onMediaClick = { post, index ->
                 PostShareUtils.sharePost(context, post.id)
                 selectedPost = null
             },
+            onReshare = { viewModel.resharePost(post); selectedPost = null },
             onCopyLink = {
                 PostShareUtils.copyPostLink(context, post.id)
                 selectedPost = null
@@ -527,7 +528,6 @@ onMediaClick = { post, index ->
             },
             onToggleComments = {
                 viewModel.toggleComments(post)
-                Result.success(Unit)
             },
             onReport = {
                 viewModel.reportPost(post)
@@ -535,7 +535,6 @@ onMediaClick = { post, index ->
             },
             onBlock = {
                 viewModel.blockUser(post.authorUid)
-                Result.success(Unit)
             },
             onRevokeVote = {
                 viewModel.revokeVote(post)

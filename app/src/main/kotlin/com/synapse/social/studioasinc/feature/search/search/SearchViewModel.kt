@@ -26,6 +26,7 @@ import com.synapse.social.studioasinc.feature.shared.components.post.PostEvent
 import com.synapse.social.studioasinc.feature.shared.components.post.PostEventBus
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -427,11 +428,9 @@ class SearchViewModel @Inject constructor(
         }
     }
 
-    fun toggleComments(post: com.synapse.social.studioasinc.domain.model.Post) {
-        viewModelScope.launch {
-            togglePostCommentsUseCase(post.id).collect { result ->
-                result.onFailure { err -> updateState { it.copy(error = err.message) } }
-            }
+    suspend fun toggleComments(post: com.synapse.social.studioasinc.domain.model.Post): Result<Unit> {
+        return togglePostCommentsUseCase(post.id).first().also { result ->
+            result.onFailure { err -> updateState { it.copy(error = err.message) } }
         }
     }
 
@@ -472,18 +471,17 @@ class SearchViewModel @Inject constructor(
         updateState { it.copy(reportSuccess = false, reportError = null) }
     }
 
-    fun blockUser(userId: String) {
-        viewModelScope.launch {
-            updateState { it.copy(blockSuccess = false, blockError = null) }
-            
-            blockUserUseCase(userId)
-                .onSuccess {
-                    updateState { it.copy(blockSuccess = true) }
-                    performSearch(currentState.query)
-                }
-                .onFailure { error ->
-                    updateState { it.copy(blockError = error.message ?: "Failed to block user") }
-                }
+    suspend fun blockUser(userId: String): Result<Unit> {
+        updateState { it.copy(blockSuccess = false, blockError = null) }
+        
+        return blockUserUseCase(userId).also { result ->
+            result.onSuccess {
+                updateState { it.copy(blockSuccess = true) }
+                performSearch(currentState.query)
+            }
+            result.onFailure { error ->
+                updateState { it.copy(blockError = error.message ?: "Failed to block user") }
+            }
         }
     }
     

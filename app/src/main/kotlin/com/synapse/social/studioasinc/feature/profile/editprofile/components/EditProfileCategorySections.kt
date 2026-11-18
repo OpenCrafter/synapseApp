@@ -161,8 +161,8 @@ fun CustomizationCategorySection(
                 subtitle = stringResource(R.string.nav_profile_layout_sub),
                 imageVector = Icons.AutoMirrored.Filled.ViewQuilt,
                 onClick = { onCategoryClick(ProfileCategoryType.PROFILE_LAYOUT) },
-                position = SettingsItemPosition.Middle,
-                enabled = false
+                enabled = false,
+                position = SettingsItemPosition.Middle
             )
 
             // Featured Content - Bottom

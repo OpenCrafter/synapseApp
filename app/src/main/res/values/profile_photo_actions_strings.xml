@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Profile / cover photo action sheet (issue #342). -->
+    <string name="photo_actions_view_full_screen">View full screen</string>
+    <string name="cover_photo_removed">Cover photo removed</string>
+</resources>

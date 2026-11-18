@@ -3,7 +3,13 @@ package com.synapse.social.studioasinc.feature.profile.profile
 import android.content.Context
 import android.content.Intent
 import android.widget.Toast
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.res.stringResource
+import kotlinx.coroutines.launch
 import com.synapse.social.studioasinc.BuildConfig
 import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.domain.model.Post
@@ -21,6 +27,7 @@ internal fun ProfileMoreMenuSection(
     context: Context,
     onNavigateToSettings: () -> Unit
 ) {
+    val scope = rememberCoroutineScope()
     if (state.showMoreMenu) {
         ProfileMoreMenuBottomSheet(
             isOwnProfile = effectiveIsOwnProfile,
@@ -32,7 +39,12 @@ internal fun ProfileMoreMenuSection(
             },
             onSettings = onNavigateToSettings,
             onBlockUser = {
-                profile?.let { viewModel.blockUser(it.id) }
+                val target = profile
+                scope.launch {
+                    target?.let { viewModel.blockUser(it.id) }
+                    Unit
+                }
+                Unit
             },
             onReportUser = { viewModel.showReportDialog() },
             onMuteUser = {
@@ -59,6 +71,67 @@ private fun shareProfile(context: Context, username: String?) {
     } catch (e: android.content.ActivityNotFoundException) {
         Toast.makeText(context, R.string.profile_menu_share_unavailable, Toast.LENGTH_SHORT).show()
     }
+}
+
+@Composable
+internal fun ProfilePhotoActionsSection(
+    target: ProfilePhotoType?,
+    hasImage: Boolean,
+    onDismiss: () -> Unit,
+    onChangePhoto: () -> Unit,
+    onRemovePhoto: () -> Unit,
+    onViewFullScreen: () -> Unit
+) {
+    if (target != null) {
+        ProfilePhotoActionsBottomSheet(
+            target = target,
+            hasImage = hasImage,
+            onDismiss = onDismiss,
+            onChangePhoto = onChangePhoto,
+            onRemovePhoto = onRemovePhoto,
+            onViewFullScreen = onViewFullScreen
+        )
+    }
+}
+
+@Composable
+internal fun RemoveProfilePhotoConfirmationSection(
+    target: ProfilePhotoType?,
+    isRemoving: Boolean,
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    if (target == null) return
+
+    val isAvatar = target == ProfilePhotoType.AVATAR
+
+    AlertDialog(
+        onDismissRequest = { if (!isRemoving) onDismiss() },
+        title = {
+            Text(
+                text = stringResource(
+                    if (isAvatar) R.string.remove_profile_photo_title else R.string.remove_cover_photo_title
+                )
+            )
+        },
+        text = {
+            Text(
+                text = stringResource(
+                    if (isAvatar) R.string.remove_profile_photo_body else R.string.remove_cover_photo_body
+                )
+            )
+        },
+        confirmButton = {
+            TextButton(onClick = onConfirm, enabled = !isRemoving) {
+                Text(text = stringResource(R.string.remove))
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss, enabled = !isRemoving) {
+                Text(text = stringResource(R.string.cancel))
+            }
+        }
+    )
 }
 
 @Composable
@@ -157,6 +230,7 @@ internal fun PostOptionsSection(
     viewModel: ProfileViewModel,
     context: Context,
     onNavigateToEditPost: (String) -> Unit,
+    onSummarize: () -> Unit,
     onDismiss: () -> Unit
 ) {
     if (showPostOptions && selectedPost != null) {
@@ -176,6 +250,7 @@ internal fun PostOptionsSection(
             onShare = {
                 PostShareUtils.sharePost(context, post.id)
             },
+            onReshare = { viewModel.resharePost(post) },
             onCopyLink = {
                 PostShareUtils.copyPostLink(context, post.id)
             },
@@ -192,11 +267,11 @@ internal fun PostOptionsSection(
             },
             onBlock = {
                 viewModel.blockUser(post.authorUid)
-                Result.success(Unit)
             },
             onRevokeVote = {
                 viewModel.revokeVote(post)
-            }
+            },
+            onSummarize = onSummarize
         )
     }
 }

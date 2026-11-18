@@ -80,6 +80,10 @@
     <string name="inbox_action_folder">Move to folder</string>
     <string name="inbox_action_delete">Delete</string>
     <string name="inbox_action_open_conversation">Open conversation</string>
+    <!-- The conversation row carries no button of its own: the label the row announces for a long
+         press, and the entry that opens the selection flow from the menu that gesture opens. -->
+    <string name="inbox_conversation_actions">Conversation actions</string>
+    <string name="inbox_action_select">Select</string>
     <string name="inbox_action_clear_search">Clear search</string>
     <plurals name="inbox_selected_conversations">
         <item quantity="one">%1$d conversation</item>

@@ -57,6 +57,7 @@ fun ProfileScreen(
     currentUserId: String,
     onNavigateBack: () -> Unit,
     onNavigateToEditProfile: () -> Unit = {},
+    onNavigateToProfileMedia: () -> Unit = {},
     onNavigateToEditPost: (String) -> Unit = {},
     onNavigateToFollowers: () -> Unit = {},
     onNavigateToFollowing: () -> Unit = {},
@@ -88,6 +89,9 @@ fun ProfileScreen(
     var selectedPost by remember { mutableStateOf<Post?>(null) }
     var showSummarySheet by remember { mutableStateOf(false) }
 
+    var photoOptionsTarget by remember { mutableStateOf<ProfilePhotoType?>(null) }
+    var removePhotoTarget by remember { mutableStateOf<ProfilePhotoType?>(null) }
+
     // Handle block success/error messages
     LaunchedEffect(state.blockSuccess, state.blockError) {
         when {
@@ -103,6 +107,20 @@ fun ProfileScreen(
                 )
                 viewModel.clearBlockStatus()
             }
+        }
+    }
+
+    // Handle profile/cover photo removal results
+    LaunchedEffect(state.profilePhotoRemoved, state.coverPhotoRemoved, state.photoRemovalError) {
+        val removalMessage = when {
+            state.profilePhotoRemoved -> context.getString(R.string.profile_photo_removed)
+            state.coverPhotoRemoved -> context.getString(R.string.cover_photo_removed)
+            state.photoRemovalError != null -> state.photoRemovalError
+            else -> null
+        }
+        if (removalMessage != null) {
+            snackbarHostState.showSnackbar(message = removalMessage)
+            viewModel.clearPhotoRemovalStatus()
         }
     }
 
@@ -183,11 +201,12 @@ fun ProfileScreen(
                             initialMediaPage = index
                             showMediaViewer = true
                         },
+                        onOpenPhotoOptions = { target -> photoOptionsTarget = target },
                         onShowPostOptions = { post ->
                             selectedPost = post
                             showPostOptions = true
                         },
-                        onReelItemClick = { onNavigateToReels() }
+                        onReelItemClick = onNavigateToReels
                     )
                 }
             }
@@ -195,6 +214,50 @@ fun ProfileScreen(
         }
 
         val profile = (state.profileState as? ProfileUiState.Success)?.profile
+
+        val photoOptionsUrl = when (photoOptionsTarget) {
+            ProfilePhotoType.AVATAR -> profile?.avatar
+            ProfilePhotoType.COVER -> profile?.coverImageUrl
+            null -> null
+        }
+
+        ProfilePhotoActionsSection(
+            target = photoOptionsTarget,
+            hasImage = !photoOptionsUrl.isNullOrBlank(),
+            onDismiss = { photoOptionsTarget = null },
+            onChangePhoto = {
+                photoOptionsTarget = null
+                onNavigateToProfileMedia()
+            },
+            onRemovePhoto = {
+                removePhotoTarget = photoOptionsTarget
+                photoOptionsTarget = null
+            },
+            onViewFullScreen = {
+                val url = photoOptionsUrl
+                photoOptionsTarget = null
+                if (!url.isNullOrBlank()) {
+                    selectedMediaUrls = listOf(url)
+                    initialMediaPage = 0
+                    showMediaViewer = true
+                }
+            }
+        )
+
+        RemoveProfilePhotoConfirmationSection(
+            target = removePhotoTarget,
+            isRemoving = state.isRemovingPhoto,
+            onConfirm = {
+                when (removePhotoTarget) {
+                    ProfilePhotoType.AVATAR -> viewModel.removeProfilePhoto()
+                    ProfilePhotoType.COVER -> viewModel.removeCoverPhoto()
+                    null -> Unit
+                }
+                removePhotoTarget = null
+            },
+            onDismiss = { removePhotoTarget = null }
+        )
+
         ProfileTopAppBar(
             displayName = profile?.name ?: profile?.username ?: state.viewAsUserName ?: "",
             scrollProgressProvider = { scrollProgress.value },
@@ -245,10 +308,26 @@ fun ProfileScreen(
             viewModel = viewModel,
             context = context,
             onNavigateToEditPost = onNavigateToEditPost,
+            onSummarize = {
+                showSummarySheet = true
+                selectedPost?.let { viewModel.summarizePost(it) }
+            },
             onDismiss = {
                 showPostOptions = false
                 selectedPost = null
             }
         )
+
+        if (showSummarySheet) {
+            PostSummarySheet(
+                isSummarizing = state.isSummarizing,
+                summary = state.postSummary,
+                error = state.summaryError,
+                onDismiss = {
+                    showSummarySheet = false
+                    viewModel.clearPostSummary()
+                }
+            )
+        }
     }
 }

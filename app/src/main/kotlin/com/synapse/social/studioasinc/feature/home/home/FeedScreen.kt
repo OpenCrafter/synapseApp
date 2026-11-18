@@ -395,16 +395,15 @@ fun FeedScreen(
                 sharePostViewModel.start(post)
                 selectedPost = null
             },
+            onReshare = { viewModel.resharePost(post) },
             onCopyLink = { PostShareUtils.copyPostLink(context, post.id) },
             onBookmark = { viewModel.bookmarkPost(post) },
             onToggleComments = {
                 viewModel.toggleComments(post)
-                Result.success(Unit)
             },
             onReport = { postToReport = post; showReportDialog = true },
             onBlock = {
                 viewModel.blockUser(post.authorUid)
-                Result.success(Unit)
             },
             onRevokeVote = { viewModel.revokeVote(post) },
             onSummarize = {

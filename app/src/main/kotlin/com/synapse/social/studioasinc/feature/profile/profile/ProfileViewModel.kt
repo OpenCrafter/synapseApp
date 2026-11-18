@@ -13,6 +13,7 @@ import com.synapse.social.studioasinc.domain.usecase.post.BookmarkPostUseCase
 import com.synapse.social.studioasinc.shared.domain.usecase.post.DeletePostUseCase
 import com.synapse.social.studioasinc.domain.usecase.post.ReactToPostUseCase
 import com.synapse.social.studioasinc.domain.usecase.post.ReportPostUseCase
+import com.synapse.social.studioasinc.domain.usecase.post.RevokeVoteUseCase
 import com.synapse.social.studioasinc.domain.usecase.post.VotePollUseCase
 import com.synapse.social.studioasinc.domain.usecase.post.RevokeVoteUseCase
 import com.synapse.social.studioasinc.domain.usecase.profile.ArchiveProfileUseCase
@@ -29,6 +30,8 @@ import com.synapse.social.studioasinc.domain.usecase.profile.GetProfileFollowSta
 import com.synapse.social.studioasinc.domain.model.ProfileFollowStatus
 import com.synapse.social.studioasinc.domain.usecase.profile.LockProfileUseCase
 import com.synapse.social.studioasinc.domain.usecase.profile.MuteUserUseCase
+import com.synapse.social.studioasinc.domain.usecase.profile.RemoveCoverPhotoUseCase
+import com.synapse.social.studioasinc.domain.usecase.profile.RemoveProfilePhotoUseCase
 import com.synapse.social.studioasinc.domain.usecase.profile.ReportUserUseCase
 import com.synapse.social.studioasinc.domain.usecase.profile.UnfollowUserUseCase
 import com.synapse.social.studioasinc.domain.usecase.story.HasActiveStoryUseCase
@@ -42,6 +45,7 @@ import com.synapse.social.studioasinc.feature.shared.components.post.PostUiMappe
 import com.synapse.social.studioasinc.domain.usecase.ai.SummarizePostUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -89,7 +93,11 @@ data class ProfileScreenState(
     val isSummarizing: Boolean = false,
     val postSummary: String? = null,
     val summaryError: String? = null,
-    val navigateToLockProfile: Boolean = false
+    val navigateToLockProfile: Boolean = false,
+    val isRemovingPhoto: Boolean = false,
+    val profilePhotoRemoved: Boolean = false,
+    val coverPhotoRemoved: Boolean = false,
+    val photoRemovalError: String? = null
 )
 
 @HiltViewModel
@@ -110,11 +118,14 @@ class ProfileViewModel @Inject constructor(
     private val bookmarkPostUseCase: BookmarkPostUseCase,
     private val deletePostUseCase: DeletePostUseCase,
     private val reportPostUseCase: ReportPostUseCase,
+    private val revokeVoteUseCase: RevokeVoteUseCase,
     private val lockProfileUseCase: LockProfileUseCase,
     private val archiveProfileUseCase: ArchiveProfileUseCase,
     private val blockUserUseCase: BlockUserUseCase,
     private val reportUserUseCase: ReportUserUseCase,
     private val muteUserUseCase: MuteUserUseCase,
+    private val removeProfilePhotoUseCase: RemoveProfilePhotoUseCase,
+    private val removeCoverPhotoUseCase: RemoveCoverPhotoUseCase,
     private val getProfileFollowStatusUseCase: GetProfileFollowStatusUseCase,
     private val hasActiveStoryUseCase: HasActiveStoryUseCase,
     private val postRepository: PostRepositoryImpl,
@@ -547,6 +558,29 @@ class ProfileViewModel @Inject constructor(
         }
     }
 
+    suspend fun toggleComments(post: Post): Result<Unit> {
+        return viewModelScope.async {
+            postRepository.toggleComments(post.id).also { result ->
+                result.onSuccess {
+                    val toggled = post.copy(
+                        postDisableReplies = if (post.postDisableReplies == "true") "false" else "true"
+                    )
+                    PostEventBus.emit(PostEvent.Updated(toggled))
+                }
+            }
+        }.await()
+    }
+
+    fun revokeVote(post: Post) {
+        viewModelScope.launch {
+            revokeVoteUseCase(post).collect { result ->
+                result.onSuccess { updatedPost ->
+                    PostEventBus.emit(PostEvent.Updated(updatedPost))
+                }
+            }
+        }
+    }
+
     // UI Helpers
     fun showViewAsSheet() { _state.update { it.copy(showViewAsSheet = true) } }
     fun hideViewAsSheet() { _state.update { it.copy(showViewAsSheet = false) } }
@@ -621,12 +655,12 @@ class ProfileViewModel @Inject constructor(
         }
     }
 
-    fun blockUser(blockedUserId: String) {
-        viewModelScope.launch {
+    suspend fun blockUser(blockedUserId: String): Result<Unit> {
+        return viewModelScope.async {
             _state.update { it.copy(blockSuccess = false, blockError = null) }
             
-            blockUserUseCase(blockedUserId)
-                .onSuccess {
+            blockUserUseCase(blockedUserId).also { result ->
+                result.onSuccess {
                     _state.update { it.copy(blockSuccess = true) }
                 }
                 .onFailure { error ->
@@ -634,7 +668,8 @@ class ProfileViewModel @Inject constructor(
                         it.copy(blockError = error.message ?: "Failed to block user")
                     }
                 }
-        }
+            }
+        }.await()
     }
     
     fun clearBlockStatus() {
@@ -732,4 +767,72 @@ class ProfileViewModel @Inject constructor(
     fun clearPostSummary() {
         _state.update { it.copy(postSummary = null, summaryError = null) }
     }
+
+    /**
+     * Removes the signed-in user's profile picture and reloads the profile so the default
+     * avatar replaces it everywhere on the screen.
+     */
+    fun removeProfilePhoto() {
+        removePhoto(ProfilePhotoKind.PROFILE_PHOTO)
+    }
+
+    /** Removes the signed-in user's cover photo and reloads the profile. */
+    fun removeCoverPhoto() {
+        removePhoto(ProfilePhotoKind.COVER_PHOTO)
+    }
+
+    fun clearPhotoRemovalStatus() {
+        _state.update {
+            it.copy(
+                profilePhotoRemoved = false,
+                coverPhotoRemoved = false,
+                photoRemovalError = null
+            )
+        }
+    }
+
+    private fun removePhoto(kind: ProfilePhotoKind) {
+        val userId = _state.value.currentUserId
+        if (userId.isBlank()) return
+        viewModelScope.launch {
+            _state.update {
+                it.copy(
+                    isRemovingPhoto = true,
+                    profilePhotoRemoved = false,
+                    coverPhotoRemoved = false,
+                    photoRemovalError = null
+                )
+            }
+
+            val result = when (kind) {
+                ProfilePhotoKind.PROFILE_PHOTO -> removeProfilePhotoUseCase(userId)
+                ProfilePhotoKind.COVER_PHOTO -> removeCoverPhotoUseCase(userId)
+            }
+
+            result
+                .onSuccess {
+                    _state.update {
+                        it.copy(
+                            isRemovingPhoto = false,
+                            profilePhotoRemoved = kind == ProfilePhotoKind.PROFILE_PHOTO,
+                            coverPhotoRemoved = kind == ProfilePhotoKind.COVER_PHOTO
+                        )
+                    }
+                    refreshProfile(userId)
+                }
+                .onFailure { error ->
+                    _state.update {
+                        it.copy(
+                            isRemovingPhoto = false,
+                            photoRemovalError = error.message ?: when (kind) {
+                                ProfilePhotoKind.PROFILE_PHOTO -> "Failed to remove profile photo"
+                                ProfilePhotoKind.COVER_PHOTO -> "Failed to remove cover photo"
+                            }
+                        )
+                    }
+                }
+        }
+    }
+
+    private enum class ProfilePhotoKind { PROFILE_PHOTO, COVER_PHOTO }
 }
