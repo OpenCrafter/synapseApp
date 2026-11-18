@@ -448,6 +448,7 @@ fun FeedScreen(
             onShareExternal = { PostShareUtils.sharePost(context, post.id) }
         )
     }
+    }
 }
 
 @Composable
