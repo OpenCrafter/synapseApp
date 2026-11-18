@@ -482,9 +482,12 @@ class PostDetailViewModel @Inject constructor(
         }
     }
 
-    fun reportPost(reason: String) {
-        val postId = currentPostId ?: return
-        viewModelScope.launch { reportRepository.createReport(postId, reason, null) }
+    fun reportPost(reason: String, onResult: (Result<Unit>) -> Unit) {
+        val postId = currentPostId ?: return onResult(Result.failure(IllegalStateException("No post ID")))
+        viewModelScope.launch {
+            val result = reportRepository.createReport(postId, reason, null)
+            onResult(result)
+        }
     }
 
     fun deletePost(postId: String) {

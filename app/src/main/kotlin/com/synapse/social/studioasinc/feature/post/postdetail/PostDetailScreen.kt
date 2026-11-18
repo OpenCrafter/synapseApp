@@ -256,9 +256,16 @@ fun PostDetailScreen(
         ReportPostDialog(
             onDismiss = { showReportDialog = false },
             onConfirm = { reason ->
-                viewModel.reportPost(reason)
-                showReportDialog = false
-                Toast.makeText(context, context.getString(R.string.toast_report_submitted), Toast.LENGTH_SHORT).show()
+                // Do not dismiss the dialog or report success until the async report result is known,
+                // so a failed report is not mistaken for a submitted one.
+                viewModel.reportPost(reason) { result ->
+                    showReportDialog = false
+                    if (result.isSuccess) {
+                        Toast.makeText(context, context.getString(R.string.toast_report_submitted), Toast.LENGTH_SHORT).show()
+                    } else {
+                        Toast.makeText(context, context.getString(R.string.chat_report_error), Toast.LENGTH_SHORT).show()
+                    }
+                }
             }
         )
     }
