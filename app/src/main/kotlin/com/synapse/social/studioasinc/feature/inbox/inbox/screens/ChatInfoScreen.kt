@@ -134,6 +134,7 @@ fun ChatInfoScreen(
     var showClearChatDialog by remember { mutableStateOf(false) }
     var showBlockConfirmDialog by remember { mutableStateOf(false) }
     var showReportConfirmDialog by remember { mutableStateOf(false) }
+    var reportOperationInProgress by remember { mutableStateOf(false) }
     var showGroupsDialog by remember { mutableStateOf(false) }
     var showEncryptionSheet by remember { mutableStateOf(false) }
     var moreMenuExpanded by remember { mutableStateOf(false) }
@@ -532,13 +533,18 @@ fun ChatInfoScreen(
             title = { Text(stringResource(R.string.chat_info_report_contact)) },
             text = { Text(stringResource(R.string.chat_info_report_user_confirm, displayName)) },
             confirmButton = {
-                PressScaleTextButton(onClick = {
-                    viewModel.reportUser(userId, context.getString(R.string.chat_info_report_reason)) { result ->
-                        if (result.isSuccess) {
-                            showReportConfirmDialog = false
+                PressScaleTextButton(
+                    onClick = {
+                        reportOperationInProgress = true
+                        viewModel.reportUser(userId, context.getString(R.string.chat_info_report_reason)) { result ->
+                            reportOperationInProgress = false
+                            if (result.isSuccess) {
+                                showReportConfirmDialog = false
+                            }
                         }
-                    }
-                }) {
+                    },
+                    enabled = !reportOperationInProgress
+                ) {
                     Text(stringResource(R.string.chat_info_report_contact), color = MaterialTheme.colorScheme.error)
                 }
             },

@@ -344,6 +344,7 @@ class ChatInfoViewModel @Inject constructor(
 
     fun reportUser(reportedUserId: String, reason: String, onResult: (Result<Unit>) -> Unit) {
         if (reportedUserId.isBlank() || reason.isBlank()) {
+            _uiState.update { it.copy(errorMessageRes = R.string.chat_info_error_report_user) }
             onResult(Result.failure(IllegalArgumentException("reportedUserId or reason is blank")))
             return
         }
