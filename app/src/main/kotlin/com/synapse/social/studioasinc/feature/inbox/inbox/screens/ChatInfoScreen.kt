@@ -133,6 +133,7 @@ fun ChatInfoScreen(
     val context = LocalContext.current
     var showClearChatDialog by remember { mutableStateOf(false) }
     var showBlockConfirmDialog by remember { mutableStateOf(false) }
+    var blockOperationInProgress by remember { mutableStateOf(false) }
     var showReportConfirmDialog by remember { mutableStateOf(false) }
     var showGroupsDialog by remember { mutableStateOf(false) }
     var showEncryptionSheet by remember { mutableStateOf(false) }
@@ -513,13 +514,18 @@ fun ChatInfoScreen(
             title = { Text(title) },
             text = { Text(message) },
             confirmButton = {
-                PressScaleTextButton(onClick = {
-                    viewModel.toggleBlockUser(userId) { result ->
-                        if (result.isSuccess) {
-                            showBlockConfirmDialog = false
+                PressScaleTextButton(
+                    onClick = {
+                        blockOperationInProgress = true
+                        viewModel.toggleBlockUser(userId) { result ->
+                            blockOperationInProgress = false
+                            if (result.isSuccess) {
+                                showBlockConfirmDialog = false
+                            }
                         }
-                    }
-                }) { Text(title, color = MaterialTheme.colorScheme.error) }
+                    },
+                    enabled = !blockOperationInProgress
+                ) { Text(title, color = MaterialTheme.colorScheme.error) }
             },
             dismissButton = {
                 PressScaleTextButton(onClick = { showBlockConfirmDialog = false }) {
