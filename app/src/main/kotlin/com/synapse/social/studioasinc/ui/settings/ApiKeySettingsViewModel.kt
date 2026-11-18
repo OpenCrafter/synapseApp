@@ -78,18 +78,21 @@ class ApiKeySettingsViewModel @Inject constructor(
         }
     }
 
-    fun deleteApiKey(keyId: String) {
+    fun deleteApiKey(keyId: String, onResult: (Boolean) -> Unit) {
         viewModelScope.launch {
             _isLoading.value = true
             try {
                 val result = apiKeySettingsService.deleteApiKey(keyId)
                 if (result.isSuccess) {
                     _apiKeys.value = apiKeySettingsService.getUserApiKeys()
+                    onResult(true)
                 } else {
                     _error.value = result.exceptionOrNull()?.message ?: "Failed to delete API key"
+                    onResult(false)
                 }
             } catch (e: Exception) {
                 _error.value = "An error occurred while deleting API key"
+                onResult(false)
             } finally {
                 _isLoading.value = false
             }
