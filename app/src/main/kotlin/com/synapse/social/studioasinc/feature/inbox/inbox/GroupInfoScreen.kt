@@ -620,7 +620,8 @@ fun GroupInfoScreen(
                         viewModel.reportGroup(GROUP_REPORT_REASON) {
                             showReportConfirmDialog = false
                         }
-                    }
+                    },
+                    enabled = !uiState.isReporting
                 ) {
                     Text(stringResource(R.string.group_report), color = MaterialTheme.colorScheme.error)
                 }
