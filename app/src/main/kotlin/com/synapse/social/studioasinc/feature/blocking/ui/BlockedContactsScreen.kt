@@ -122,12 +122,14 @@ fun BlockedContactsScreen(
     userToUnblock?.let { userId ->
         UnblockConfirmationDialog(
             onConfirm = {
+                // Do not dismiss here: wait for the async unblock result so the user
+                // sees success/failure feedback while the dialog stays open.
                 viewModel.unblockUser(userId)
-                userToUnblock = null
             },
             onDismiss = {
                 userToUnblock = null
-            }
+            },
+            isLoading = uiState is BlockingUiState.Loading
         )
     }
     
@@ -149,6 +151,7 @@ fun BlockedContactsScreen(
                     message = unblockSuccessMessage,
                     duration = SnackbarDuration.Short
                 )
+                userToUnblock = null
                 viewModel.resetState()
             }
             is BlockingUiState.Error -> {
@@ -156,6 +159,7 @@ fun BlockedContactsScreen(
                     message = state.message,
                     duration = SnackbarDuration.Long
                 )
+                userToUnblock = null
                 viewModel.resetState()
             }
             else -> {}
