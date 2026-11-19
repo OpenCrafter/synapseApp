@@ -67,7 +67,7 @@ fun AutoDownloadDialog(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clickable {
+                            .clickable(enabled = !isSaving) {
                                 if (tempSelection.contains(type)) {
                                     tempSelection.remove(type)
                                 } else {
