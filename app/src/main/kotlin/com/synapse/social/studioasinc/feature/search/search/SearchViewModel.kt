@@ -440,6 +440,9 @@ class SearchViewModel @Inject constructor(
 
     fun submitReport(reason: String) {
         val post = currentState.reportDialogPost ?: return
+        // Clear any stale error from a previous failed attempt so a retry
+        // does not misleadingly show an old failure while the new request is in flight.
+        updateState { it.copy(reportError = null) }
         viewModelScope.launch {
             reportPostUseCase(post.id, reason, null).collect { result ->
                 result.onSuccess {
