@@ -28,11 +28,29 @@ fun StorageDataScreen(
     val autoDownloadRules by viewModel.autoDownloadRules.collectAsState()
     val useLessDataCalls by viewModel.useLessDataCalls.collectAsState()
     val showMediaQualitySheet by viewModel.showMediaQualitySheet.collectAsState()
+    val autoDownloadSaveStatus by viewModel.autoDownloadSaveStatus.collectAsState()
 
 
     var showMobileDialog by remember { mutableStateOf(false) }
     var showWifiDialog by remember { mutableStateOf(false) }
     var showRoamingDialog by remember { mutableStateOf(false) }
+
+    // Keep each auto-download confirmation dialog open until the async save result is known.
+    // On success the dialog closes; on failure it stays open so the user can retry.
+    LaunchedEffect(autoDownloadSaveStatus) {
+        when (autoDownloadSaveStatus) {
+            is AutoDownloadSaveStatus.Success -> {
+                showMobileDialog = false
+                showWifiDialog = false
+                showRoamingDialog = false
+            }
+            is AutoDownloadSaveStatus.Failure -> {
+                // Keep the dialog open and surface the error so the user can retry.
+                autoDownloadSaveStatus.error?.let { snackbarHostState.showSnackbar(it) }
+            }
+            AutoDownloadSaveStatus.Idle, AutoDownloadSaveStatus.Saving -> Unit
+        }
+    }
 
     StorageDataContent(
         mediaUploadQuality = mediaUploadQuality,
@@ -201,9 +219,9 @@ private fun StorageDataScreenDialogs(
             selectedTypes = autoDownloadRules.mobileData,
             onConfirm = {
                 onSetAutoDownloadRule("mobile", it)
-                onDismissMobileDialog()
             },
-            onDismiss = onDismissMobileDialog
+            onDismiss = onDismissMobileDialog,
+            enabled = autoDownloadSaveStatus !is AutoDownloadSaveStatus.Saving
         )
     }
 
@@ -213,9 +231,9 @@ private fun StorageDataScreenDialogs(
             selectedTypes = autoDownloadRules.wifi,
             onConfirm = {
                 onSetAutoDownloadRule("wifi", it)
-                onDismissWifiDialog()
             },
-            onDismiss = onDismissWifiDialog
+            onDismiss = onDismissWifiDialog,
+            enabled = autoDownloadSaveStatus !is AutoDownloadSaveStatus.Saving
         )
     }
 
@@ -225,9 +243,9 @@ private fun StorageDataScreenDialogs(
             selectedTypes = autoDownloadRules.roaming,
             onConfirm = {
                 onSetAutoDownloadRule("roaming", it)
-                onDismissRoamingDialog()
             },
-            onDismiss = onDismissRoamingDialog
+            onDismiss = onDismissRoamingDialog,
+            enabled = autoDownloadSaveStatus !is AutoDownloadSaveStatus.Saving
         )
     }
 }

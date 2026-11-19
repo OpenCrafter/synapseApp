@@ -53,7 +53,8 @@ fun AutoDownloadDialog(
     title: String,
     selectedTypes: Set<MediaType>,
     onConfirm: (Set<MediaType>) -> Unit,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    enabled: Boolean = true
 ) {
     val tempSelection = remember(selectedTypes) { mutableStateListOf(*selectedTypes.toTypedArray()) }
 
@@ -87,7 +88,7 @@ fun AutoDownloadDialog(
             }
         },
         confirmButton = {
-            TextButton(onClick = { onConfirm(tempSelection.toSet()) }) {
+            TextButton(onClick = { onConfirm(tempSelection.toSet()) }, enabled = enabled) {
                 Text(stringResource(R.string.ok))
             }
         },
