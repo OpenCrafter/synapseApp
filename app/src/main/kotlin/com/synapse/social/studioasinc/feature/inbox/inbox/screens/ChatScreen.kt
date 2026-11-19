@@ -1117,13 +1117,21 @@ val currentUserId = currentUserIdState ?: ""
                 confirmButton = {
                     TextButton(
                         onClick = {
-                            showBlockDialog = false
                             viewModel.blockCurrentChatParticipant(participantId.orEmpty()) { result ->
-                                Toast.makeText(
-                                    context,
-                                    if (result.isSuccess) R.string.chat_info_msg_blocked else R.string.chat_info_error_block,
-                                    Toast.LENGTH_SHORT
-                                ).show()
+                                if (result.isSuccess) {
+                                    showBlockDialog = false
+                                    Toast.makeText(
+                                        context,
+                                        R.string.chat_info_msg_blocked,
+                                        Toast.LENGTH_SHORT
+                                    ).show()
+                                } else {
+                                    Toast.makeText(
+                                        context,
+                                        R.string.chat_info_error_block,
+                                        Toast.LENGTH_SHORT
+                                    ).show()
+                                }
                             }
                         }
                     ) {
