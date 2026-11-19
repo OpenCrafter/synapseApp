@@ -92,6 +92,8 @@ data class ProfileScreenState(
     val isRefreshing: Boolean = false,
     val blockSuccess: Boolean = false,
     val blockError: String? = null,
+    val reportPostSuccess: Boolean = false,
+    val reportPostError: String? = null,
     val isSummarizing: Boolean = false,
     val postSummary: String? = null,
     val summaryError: String? = null,
@@ -555,11 +557,23 @@ class ProfileViewModel @Inject constructor(
 
     fun reportPost(postId: String, reason: String) {
         viewModelScope.launch {
-            reportPostUseCase(postId, reason, null).collect { }
+            _state.update { it.copy(reportPostSuccess = false, reportPostError = null) }
+            reportPostUseCase(postId, reason, null).collect { result ->
+                if (result.isSuccess) {
+                    _state.update { it.copy(reportPostSuccess = true) }
+                } else {
+                    _state.update {
+                        it.copy(reportPostError = result.exceptionOrNull()?.message ?: "Failed to submit report")
+                    }
+                }
+            }
         }
     }
 
-    // UI Helpers
+    fun clearReportPostStatus() {
+        _state.update { it.copy(reportPostSuccess = false, reportPostError = null) }
+    }
+
     fun showViewAsSheet() { _state.update { it.copy(showViewAsSheet = true) } }
     fun hideViewAsSheet() { _state.update { it.copy(showViewAsSheet = false) } }
     fun showReportDialog() { _state.update { it.copy(showReportDialog = true) } }

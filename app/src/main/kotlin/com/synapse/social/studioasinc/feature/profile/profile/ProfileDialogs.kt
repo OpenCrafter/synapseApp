@@ -275,7 +275,6 @@ internal fun PostOptionsSection(
             },
             onReport = {
                 viewModel.reportPost(post.id, context.getString(R.string.toast_reported_from_profile))
-                Toast.makeText(context, context.getString(R.string.toast_report_submitted), Toast.LENGTH_SHORT).show()
             },
             onBlock = {
                 viewModel.blockUser(post.authorUid)
