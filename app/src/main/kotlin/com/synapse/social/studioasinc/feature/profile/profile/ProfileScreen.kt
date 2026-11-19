@@ -110,6 +110,25 @@ fun ProfileScreen(
         }
     }
 
+    // Handle report post success/error: confirm only when the report actually succeeded;
+    // surface the error on failure so the user can retry.
+    LaunchedEffect(state.reportPostSuccess, state.reportPostError) {
+        when {
+            state.reportPostSuccess -> {
+                snackbarHostState.showSnackbar(
+                    message = context.getString(R.string.report_submitted)
+                )
+                viewModel.clearReportPostStatus()
+            }
+            state.reportPostError != null -> {
+                snackbarHostState.showSnackbar(
+                    message = state.reportPostError ?: context.getString(R.string.error_report_failed)
+                )
+                viewModel.clearReportPostStatus()
+            }
+        }
+    }
+
     // Handle profile/cover photo removal results
     LaunchedEffect(state.profilePhotoRemoved, state.coverPhotoRemoved, state.photoRemovalError) {
         val removalMessage = when {
