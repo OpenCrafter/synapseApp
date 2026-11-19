@@ -218,6 +218,9 @@ class FeedViewModel @Inject constructor(
                 result.onFailure {
                     cacheModifiedPost(post)
                     PostEventBus.emit(PostEvent.Updated(post))
+                    updateState {
+                        it.copy(error = application.getString(R.string.error_bookmark_failed))
+                    }
                 }
             }
         }
