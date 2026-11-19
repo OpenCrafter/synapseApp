@@ -160,21 +160,25 @@ class ReelsViewModel @Inject constructor(
         }
     }
 
-    fun reportReel(reelId: String, reason: String) {
+    fun reportReel(reelId: String, reason: String, onResult: (Boolean) -> Unit = {}) {
         viewModelScope.launch {
             reelRepository.reportReel(reelId, reason).onFailure { e ->
                 _uiState.update { it.copy(error = "Failed to report: ${e.message}") }
+                onResult(false)
+            }.onSuccess {
+                onResult(true)
             }
         }
     }
 
-    fun blockCreator(creatorId: String) {
+    fun blockCreator(creatorId: String, onResult: (Boolean) -> Unit = {}) {
         viewModelScope.launch {
             reelRepository.blockCreator(creatorId).onSuccess {
-
                 loadReels()
+                onResult(true)
             }.onFailure { e ->
                 _uiState.update { it.copy(error = "Failed to block: ${e.message}") }
+                onResult(false)
             }
         }
     }

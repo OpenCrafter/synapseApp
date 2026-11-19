@@ -32,7 +32,6 @@ fun MoreActionsBottomSheet(
                 title = "Report",
                 onClick = {
                     onReport()
-                    onDismiss()
                 }
             )
             ActionItem(
@@ -40,7 +39,6 @@ fun MoreActionsBottomSheet(
                 title = "Block",
                 onClick = {
                     onBlock()
-                    onDismiss()
                 }
             )
             ActionItem(
