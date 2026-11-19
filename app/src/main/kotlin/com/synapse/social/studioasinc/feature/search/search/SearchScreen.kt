@@ -135,7 +135,8 @@ fun SearchScreen(
                 snackbarHostState.showSnackbar(
                     message = uiState.reportError ?: context.getString(com.synapse.social.studioasinc.R.string.report_error)
                 )
-                viewModel.clearReportStatus()
+                // reportError is intentionally left set so the inline error stays visible in the
+                // still-open report dialog until the user dismisses or retries.
             }
         }
     }
@@ -544,7 +545,9 @@ onMediaClick = { post, index ->
             },
             onConfirm = { reason ->
                 viewModel.submitReport(reason)
-            }
+            },
+            isLoading = uiState.isReportSubmitting,
+            error = uiState.reportError
         )
     }
 

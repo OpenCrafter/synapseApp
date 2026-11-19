@@ -9,12 +9,16 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.synapse.social.studioasinc.feature.shared.theme.Sizes
+import com.synapse.social.studioasinc.ui.components.ExpressiveLoadingIndicator
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 
 @Composable
 fun ReportPostDialog(
     onDismiss: () -> Unit,
     onConfirm: (String) -> Unit,
+    isLoading: Boolean = false,
+    error: String? = null,
     modifier: Modifier = Modifier
 ) {
     var selectedReason by remember { mutableStateOf("") }
@@ -30,7 +34,7 @@ fun ReportPostDialog(
     )
 
     AlertDialog(
-        onDismissRequest = onDismiss,
+        onDismissRequest = { if (!isLoading) onDismiss() },
         title = { Text(stringResource(R.string.report_post_title)) },
         text = {
             Column {
@@ -39,6 +43,15 @@ fun ReportPostDialog(
                     style = MaterialTheme.typography.bodyMedium,
                     modifier = Modifier.padding(bottom = Spacing.space8)
                 )
+
+                error?.let {
+                    Text(
+                        text = it,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.error,
+                        modifier = Modifier.padding(bottom = Spacing.space8)
+                    )
+                }
 
                 reasons.forEach { reason ->
                     Row(
@@ -63,14 +76,23 @@ fun ReportPostDialog(
         },
         confirmButton = {
             TextButton(
-                onClick = { onConfirm(selectedReason) },
-                enabled = selectedReason.isNotEmpty()
+                onClick = { if (!isLoading && selectedReason.isNotEmpty()) onConfirm(selectedReason) },
+                enabled = !isLoading && selectedReason.isNotEmpty()
             ) {
+                if (isLoading) {
+                    ExpressiveLoadingIndicator(
+                        modifier = Modifier.size(Sizes.IconSemiMedium)
+                    )
+                    Spacer(modifier = Modifier.width(Spacing.space8))
+                }
                 Text(stringResource(R.string.action_report))
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) {
+            TextButton(
+                onClick = onDismiss,
+                enabled = !isLoading
+            ) {
                 Text(stringResource(R.string.cancel))
             }
         },
