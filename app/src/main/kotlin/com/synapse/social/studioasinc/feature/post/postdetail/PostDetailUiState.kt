@@ -24,6 +24,8 @@ data class PostDetailUiState(
     val blockError: String? = null,
     val deleteSuccess: Boolean = false,
     val deleteError: String? = null,
+    val reportPostSuccess: Boolean = false,
+    val reportPostError: String? = null,
     val commentSubmitted: Boolean = false,
     val ancestorComments: List<CommentWithUser> = emptyList(),
     val postSummary: String? = null,

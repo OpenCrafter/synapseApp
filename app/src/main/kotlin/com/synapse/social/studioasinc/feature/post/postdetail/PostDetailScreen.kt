@@ -142,6 +142,16 @@ fun PostDetailScreen(
         }
     }
 
+    // Handle report post completion: dismiss the dialog only on success, keep it open and show
+    // the inline error on failure so the user can retry.
+    LaunchedEffect(uiState.reportPostSuccess) {
+        if (uiState.reportPostSuccess) {
+            showReportDialog = false
+            snackbarHostState.showSnackbar(message = context.getString(R.string.report_submitted))
+            viewModel.clearReportPostStatus()
+        }
+    }
+
     // Handle comment submission completion: clear input, show errors, reset sending state
     LaunchedEffect(uiState.commentSubmitted) {
         if (uiState.commentSubmitted) {
@@ -243,12 +253,9 @@ fun PostDetailScreen(
 
     if (showReportDialog) {
         ReportPostDialog(
-            onDismiss = { showReportDialog = false },
-            onConfirm = { reason ->
-                viewModel.reportPost(reason)
-                showReportDialog = false
-                Toast.makeText(context, context.getString(R.string.toast_report_submitted), Toast.LENGTH_SHORT).show()
-            }
+            onDismiss = { showReportDialog = false; viewModel.clearReportPostStatus() },
+            onConfirm = { reason -> viewModel.reportPost(reason) },
+            error = uiState.reportPostError
         )
     }
 
