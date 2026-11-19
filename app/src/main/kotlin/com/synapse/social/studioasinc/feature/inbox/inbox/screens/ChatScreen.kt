@@ -107,6 +107,7 @@ import kotlinx.coroutines.withContext
     val reducedMotion = AnimationUtil.rememberReducedMotion()
     var showEncryptionSheet by rememberSaveable(chatId) { mutableStateOf(false) }
     var showReportDialog by rememberSaveable(chatId) { mutableStateOf(false) }
+    var isReporting by rememberSaveable(chatId) { mutableStateOf(false) }
     var showDeleteChatDialog by rememberSaveable(chatId) { mutableStateOf(false) }
     var showChatFolderSheet by rememberSaveable(chatId) { mutableStateOf(false) }
     var showCreateFolderDialog by rememberSaveable(chatId) { mutableStateOf(false) }
@@ -1080,10 +1081,15 @@ val currentUserId = currentUserIdState ?: ""
                 targetName = chatDisplayName,
                 onDismiss = { showReportDialog = false },
                 onReport = { reason ->
+                    isReporting = true
                     viewModel.reportCurrentChat(
                         participantUserId = participantId,
                         reason = reason,
                         onResult = { result ->
+                            isReporting = false
+                            if (result.isSuccess) {
+                                showReportDialog = false
+                            }
                             Toast.makeText(
                                 context,
                                 if (result.isSuccess) R.string.chat_info_msg_reported else R.string.chat_report_error,
@@ -1091,7 +1097,8 @@ val currentUserId = currentUserIdState ?: ""
                             ).show()
                         }
                     )
-                }
+                },
+                isLoading = isReporting
             )
         }
 
