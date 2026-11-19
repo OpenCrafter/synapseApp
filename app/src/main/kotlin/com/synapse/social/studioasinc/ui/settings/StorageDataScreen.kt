@@ -39,16 +39,15 @@ fun StorageDataScreen(
     // On success the dialog closes; on failure it stays open so the user can retry.
     LaunchedEffect(autoDownloadSaveStatus) {
         when (autoDownloadSaveStatus) {
-            is AutoDownloadSaveStatus.Success -> {
+            is StorageDataViewModel.AutoDownloadSaveStatus.Success -> {
                 showMobileDialog = false
                 showWifiDialog = false
                 showRoamingDialog = false
             }
-            is AutoDownloadSaveStatus.Failure -> {
-                // Keep the dialog open and surface the error so the user can retry.
-                autoDownloadSaveStatus.error?.let { snackbarHostState.showSnackbar(it) }
+            is StorageDataViewModel.AutoDownloadSaveStatus.Failure -> {
+                // Keep the dialog open so the user can retry.
             }
-            AutoDownloadSaveStatus.Idle, AutoDownloadSaveStatus.Saving -> Unit
+            StorageDataViewModel.AutoDownloadSaveStatus.Idle, StorageDataViewModel.AutoDownloadSaveStatus.Saving -> Unit
         }
     }
 
@@ -79,7 +78,8 @@ fun StorageDataScreen(
         onSetAutoDownloadRule = { type, rules -> viewModel.setAutoDownloadRule(type, rules) },
         onDismissMobileDialog = { showMobileDialog = false },
         onDismissWifiDialog = { showWifiDialog = false },
-        onDismissRoamingDialog = { showRoamingDialog = false }
+        onDismissRoamingDialog = { showRoamingDialog = false },
+        autoDownloadSaveStatus = autoDownloadSaveStatus
     )
 }
 
@@ -200,7 +200,8 @@ private fun StorageDataScreenDialogs(
     onSetAutoDownloadRule: (String, Set<MediaType>) -> Unit,
     onDismissMobileDialog: () -> Unit,
     onDismissWifiDialog: () -> Unit,
-    onDismissRoamingDialog: () -> Unit
+    onDismissRoamingDialog: () -> Unit,
+    autoDownloadSaveStatus: StorageDataViewModel.AutoDownloadSaveStatus
 ) {
     if (showMediaQualitySheet) {
         MediaQualityBottomSheet(
@@ -221,7 +222,7 @@ private fun StorageDataScreenDialogs(
                 onSetAutoDownloadRule("mobile", it)
             },
             onDismiss = onDismissMobileDialog,
-            enabled = autoDownloadSaveStatus !is AutoDownloadSaveStatus.Saving
+            enabled = autoDownloadSaveStatus !is StorageDataViewModel.AutoDownloadSaveStatus.Saving
         )
     }
 
@@ -233,7 +234,7 @@ private fun StorageDataScreenDialogs(
                 onSetAutoDownloadRule("wifi", it)
             },
             onDismiss = onDismissWifiDialog,
-            enabled = autoDownloadSaveStatus !is AutoDownloadSaveStatus.Saving
+            enabled = autoDownloadSaveStatus !is StorageDataViewModel.AutoDownloadSaveStatus.Saving
         )
     }
 
@@ -245,7 +246,7 @@ private fun StorageDataScreenDialogs(
                 onSetAutoDownloadRule("roaming", it)
             },
             onDismiss = onDismissRoamingDialog,
-            enabled = autoDownloadSaveStatus !is AutoDownloadSaveStatus.Saving
+            enabled = autoDownloadSaveStatus !is StorageDataViewModel.AutoDownloadSaveStatus.Saving
         )
     }
 }
