@@ -111,7 +111,8 @@ fun PhotoHistoryScreen(
     // the item stays in the list, the error is shown above, and the dialog
     // stays open so the user can retry.
     LaunchedEffect(uiState.items, itemToDelete) {
-        if (itemToDelete != null && uiState.items.none { it.id == itemToDelete.id }) {
+        val currentItemToDelete = itemToDelete
+        if (currentItemToDelete != null && uiState.items.none { it.id == currentItemToDelete.id }) {
             itemToDelete = null
         }
     }
