@@ -258,7 +258,6 @@ internal fun PostOptionsSection(
             },
             onDelete = {
                 viewModel.deletePost(post.id)
-                Result.success(Unit)
             },
             onShare = {
                 PostShareUtils.sharePost(context, post.id)

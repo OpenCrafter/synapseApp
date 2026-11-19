@@ -228,7 +228,6 @@ fun PostDetailScreen(
             onAddToThread = { onNavigateToReplyToPost(postId) },
             onDelete = {
                 viewModel.deletePost(postId)
-                Result.success(Unit)
             },
             onShare = {
                 postToShare = postDetail.post

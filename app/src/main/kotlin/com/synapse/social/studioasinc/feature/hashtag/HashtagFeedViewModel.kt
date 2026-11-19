@@ -144,14 +144,12 @@ class HashtagFeedViewModel @Inject constructor(
         }
     }
 
-    fun deletePost(post: Post) {
-        viewModelScope.launch {
-            deletePostUseCase(post.id).collect { result ->
-                result.onSuccess {
-                    _uiState.update { state -> state.copy(posts = state.posts.filter { it.id != post.id }) }
-                }.onFailure { e ->
-                    _uiState.update { it.copy(error = e.message) }
-                }
+    suspend fun deletePost(post: Post): Result<Unit> {
+        return deletePostUseCase(post.id).first().also { result ->
+            result.onSuccess {
+                _uiState.update { state -> state.copy(posts = state.posts.filter { it.id != post.id }) }
+            }.onFailure { e ->
+                _uiState.update { it.copy(error = e.message) }
             }
         }
     }
