@@ -164,6 +164,8 @@ fun FeedScreen(
             snackbarHostState.showSnackbar(
                 message = context.getString(R.string.report_submitted)
             )
+            showReportDialog = false
+            postToReport = null
             viewModel.clearReportSubmitted()
         }
     }
@@ -439,8 +441,9 @@ fun FeedScreen(
                 },
                 onConfirm = { reason ->
                     viewModel.reportPost(reportTarget.id, reason)
-                    showReportDialog = false
-                    postToReport = null
+                    // Dialog dismissal is gated on reportSubmitted (success) in the
+                    // LaunchedEffect above. On failure the dialog stays open so the user
+                    // can retry, and the error snackbar surfaces the failure.
                 }
             )
         }
