@@ -43,7 +43,6 @@ fun HashtagFeedScreen(
     var selectedMediaUrls by remember { mutableStateOf<List<String>>(emptyList()) }
     var selectedMediaIndex by remember { mutableIntStateOf(0) }
     var selectedPost by remember { mutableStateOf<Post?>(null) }
-    val scope = rememberCoroutineScope()
     val context = LocalContext.current
     val postLinkLabel = stringResource(R.string.clip_label_post_link)
 
@@ -137,20 +136,12 @@ fun HashtagFeedScreen(
                     viewModel.bookmarkPost(post)
                     selectedPost = null
                 },
-                onToggleComments = {
-                    viewModel.toggleComments(post)
-                    selectedPost = null
-                    Result.success(Unit)
-                },
+                onToggleComments = { viewModel.toggleComments(post) },
                 onReport = {
                     viewModel.reportPost(post.id)
                     selectedPost = null
                 },
-                onBlock = {
-                    viewModel.blockUser(post.authorUid)
-                    selectedPost = null
-                    Result.success(Unit)
-                },
+                onBlock = { viewModel.blockUser(post.authorUid) },
                 onRevokeVote = {
                     viewModel.revokeVote(post)
                     selectedPost = null
