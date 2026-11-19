@@ -50,7 +50,8 @@ fun StorageDataScreen(
             }
             is StorageDataViewModel.AutoDownloadSaveStatus.Failure -> {
                 // Keep the dialog open and surface the error so the user can retry.
-                snackbarHostState.showSnackbar(autoDownloadSaveStatus.error)
+                val failure = autoDownloadSaveStatus as StorageDataViewModel.AutoDownloadSaveStatus.Failure
+                snackbarHostState.showSnackbar(failure.error)
                 viewModel.resetAutoDownloadSaveStatus()
             }
             StorageDataViewModel.AutoDownloadSaveStatus.Idle, StorageDataViewModel.AutoDownloadSaveStatus.Saving -> Unit
@@ -86,8 +87,7 @@ fun StorageDataScreen(
         onSetAutoDownloadRule = { type, rules -> viewModel.setAutoDownloadRule(type, rules) },
         onDismissMobileDialog = { showMobileDialog = false },
         onDismissWifiDialog = { showWifiDialog = false },
-        onDismissRoamingDialog = { showRoamingDialog = false },
-        autoDownloadSaveStatus = autoDownloadSaveStatus
+        onDismissRoamingDialog = { showRoamingDialog = false }
     )
 }
 
