@@ -318,6 +318,7 @@ class InboxViewModel @Inject constructor(
     fun createFolderAndAssign(name: String, chatIds: Set<String>, onResult: (Boolean) -> Unit = {}) {
         val cleanName = name.trim()
         if (cleanName.isBlank() || chatIds.isEmpty()) {
+            _error.value = "Please enter a folder name and select at least one conversation."
             onResult(false)
             return
         }
