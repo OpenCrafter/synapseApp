@@ -199,6 +199,7 @@ fun GroupInfoScreen(
     val members = uiState.members
     val isAdmin = uiState.currentUserIsAdmin
     val canEditGroupInfo = uiState.canEditGroupInfo
+    val isUpdatingDisappearingMode = uiState.isUpdatingDisappearingMode
     val isCreator = uiState.currentUserIsCreator
     val inviteCode = uiState.inviteCode
     val allowMemberInvites = groupInfo?.allowMemberInvites ?: false
@@ -508,9 +509,10 @@ fun GroupInfoScreen(
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clickable {
-                                    viewModel.setDisappearingMode(mode)
-                                    showDisappearingDialog = false
+                                .clickable(enabled = !isUpdatingDisappearingMode) {
+                                    viewModel.setDisappearingMode(mode) {
+                                        showDisappearingDialog = false
+                                    }
                                 }
                                 .padding(vertical = Spacing.space4),
                             verticalAlignment = Alignment.CenterVertically
@@ -518,9 +520,11 @@ fun GroupInfoScreen(
                             RadioButton(
                                 selected = mode == currentMode,
                                 onClick = {
-                                    viewModel.setDisappearingMode(mode)
-                                    showDisappearingDialog = false
-                                }
+                                    viewModel.setDisappearingMode(mode) {
+                                        showDisappearingDialog = false
+                                    }
+                                },
+                                enabled = !isUpdatingDisappearingMode
                             )
                             Spacer(Modifier.width(Spacing.space8))
                             Text(disappearingLabel(mode), style = MaterialTheme.typography.bodyLarge)

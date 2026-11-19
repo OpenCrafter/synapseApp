@@ -54,7 +54,9 @@ data class GroupInfoUiState(
     val addableUsers: List<User> = emptyList(),
     val selectedUsersToAdd: List<User> = emptyList(),
     val addMemberSearchQuery: String = "",
-    val isLoadingContacts: Boolean = false
+    val isLoadingContacts: Boolean = false,
+    /** True while the disappearing mode save is in flight; used to disable the mode options and keep the dialog open until the save result is known. */
+    val isUpdatingDisappearingMode: Boolean = false
 )
 
 @HiltViewModel
@@ -320,18 +322,24 @@ class GroupInfoViewModel @Inject constructor(
         }
     }
 
-    fun setDisappearingMode(mode: DisappearingMode) {
+    fun setDisappearingMode(mode: DisappearingMode, onResult: () -> Unit = {}) {
         val chatId = currentChatId ?: return
+        _uiState.value = _uiState.value.copy(isUpdatingDisappearingMode = true, errorRes = null)
         viewModelScope.launch {
             chatRepository.setDisappearingMode(chatId, mode)
                 .onSuccess {
                     _uiState.value = _uiState.value.copy(
                         groupInfo = _uiState.value.groupInfo?.copy(disappearingMode = mode),
-                        errorRes = null
+                        errorRes = null,
+                        isUpdatingDisappearingMode = false
                     )
+                    onResult()
                 }
                 .onFailure {
-                    _uiState.value = _uiState.value.copy(errorRes = R.string.group_error_create)
+                    _uiState.value = _uiState.value.copy(
+                        errorRes = R.string.group_error_create,
+                        isUpdatingDisappearingMode = false
+                    )
                 }
         }
     }
