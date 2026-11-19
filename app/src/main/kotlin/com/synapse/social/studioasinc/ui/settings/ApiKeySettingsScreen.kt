@@ -36,6 +36,7 @@ fun ApiKeySettingsScreen(
     val providerSettings by viewModel.providerSettings.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
     val error by viewModel.error.collectAsState()
+    val addApiKeyStatus by viewModel.addApiKeyStatus.collectAsState()
 
     var showAddKeyDialog by remember { mutableStateOf(false) }
 
@@ -271,14 +272,30 @@ fun ApiKeySettingsScreen(
         }
     }
 
+    // Dismiss the add dialog only once the add result is known. On success the key has been
+    // persisted; on failure the dialog stays open so the user can see the error and retry.
+    LaunchedEffect(addApiKeyStatus) {
+        when (val status = addApiKeyStatus) {
+            is AddApiKeyStatus.Success -> {
+                showAddKeyDialog = false
+                viewModel.clearAddApiKeyStatus()
+            }
+            is AddApiKeyStatus.Failure -> {
+                viewModel.clearAddApiKeyStatus()
+            }
+            else -> {}
+        }
+    }
+
     if (showAddKeyDialog) {
         AddApiKeyDialog(
             availableProviders = viewModel.getAvailableProviders(),
-            onDismiss = { showAddKeyDialog = false },
+            onDismiss = { showAddKeyDialog = false; viewModel.clearAddApiKeyStatus() },
             onAdd = { provider, key, name, limit ->
                 viewModel.addApiKey(provider, name ?: "", key, limit)
-                showAddKeyDialog = false
-            }
+            },
+            isAdding = addApiKeyStatus is AddApiKeyStatus.Adding,
+            error = error
         )
     }
 }

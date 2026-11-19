@@ -14,6 +14,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import com.synapse.social.studioasinc.R
+import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 import com.synapse.social.studioasinc.feature.shared.theme.AppShapes
 
@@ -22,7 +23,9 @@ import com.synapse.social.studioasinc.feature.shared.theme.AppShapes
 fun AddApiKeyDialog(
     availableProviders: List<String>,
     onDismiss: () -> Unit,
-    onAdd: (String, String, String?, Int?) -> Unit
+    onAdd: (String, String, String?, Int?) -> Unit,
+    isAdding: Boolean = false,
+    error: String? = null
 ) {
     var selectedProvider by remember { mutableStateOf(availableProviders.firstOrNull() ?: "openai") }
     var apiKey by remember { mutableStateOf("") }
@@ -36,7 +39,7 @@ fun AddApiKeyDialog(
     )
 
     ModalBottomSheet(
-        onDismissRequest = onDismiss,
+        onDismissRequest = { if (!isAdding) onDismiss() },
         sheetState = sheetState,
         dragHandle = { BottomSheetDefaults.DragHandle() },
         containerColor = MaterialTheme.colorScheme.surface
@@ -133,6 +136,15 @@ fun AddApiKeyDialog(
 
             Spacer(modifier = Modifier.height(Spacing.space32))
 
+            if (error != null) {
+                Text(
+                    text = error,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.error
+                )
+                Spacer(modifier = Modifier.height(Spacing.space8))
+            }
+
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.End,
@@ -151,8 +163,15 @@ fun AddApiKeyDialog(
                             usageLimit.toIntOrNull()
                         )
                     },
-                    enabled = apiKey.isNotBlank()
+                    enabled = apiKey.isNotBlank() && !isAdding
                 ) {
+                    if (isAdding) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(Sizes.IconSemiMedium),
+                            strokeWidth = Sizes.BorderDefault
+                        )
+                        Spacer(modifier = Modifier.width(Spacing.space8))
+                    }
                     Text(stringResource(R.string.action_save_api_key))
                 }
             }
