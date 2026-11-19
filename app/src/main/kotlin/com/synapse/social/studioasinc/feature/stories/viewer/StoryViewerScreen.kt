@@ -36,10 +36,11 @@ import coil3.compose.AsyncImage
 import com.synapse.social.studioasinc.domain.model.Story
 import com.synapse.social.studioasinc.domain.model.StoryMediaType
 import com.synapse.social.studioasinc.domain.model.User
+import com.synapse.social.studioasinc.ui.components.ExpressiveLoadingIndicator
+import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 import kotlinx.coroutines.delay
 import java.time.Duration
 import java.time.Instant
-import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 import com.synapse.social.studioasinc.feature.stories.management.StoryOptionsSheet
 import com.synapse.social.studioasinc.feature.stories.management.StoryReactionsSheet
@@ -369,19 +370,45 @@ fun StoryViewerScreen(
 
                 if (uiState.showDeleteConfirmation) {
                     AlertDialog(
-                        onDismissRequest = { viewModel.hideDeleteConfirmation() },
+                        onDismissRequest = { if (!uiState.isDeletingStory) viewModel.hideDeleteConfirmation() },
                         title = { Text(stringResource(R.string.story_delete_title)) },
-                        text = { Text(stringResource(R.string.story_delete_body)) },
+                        text = {
+                            Column {
+                                Text(stringResource(R.string.story_delete_body))
+                                uiState.deleteStoryError?.let {
+                                    Text(
+                                        text = it,
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.error,
+                                        modifier = Modifier.padding(top = 8.dp)
+                                    )
+                                }
+                            }
+                        },
                         confirmButton = {
                             TextButton(
-                                onClick = { currentStory.id?.let { viewModel.confirmDeleteStory(it) } },
+                                onClick = {
+                                    if (!uiState.isDeletingStory) {
+                                        currentStory.id?.let { viewModel.confirmDeleteStory(it) }
+                                    }
+                                },
+                                enabled = !uiState.isDeletingStory,
                                 colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
                             ) {
+                                if (uiState.isDeletingStory) {
+                                    ExpressiveLoadingIndicator(
+                                        modifier = Modifier.size(Sizes.IconSemiMedium)
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                }
                                 Text(stringResource(R.string.m_delete))
                             }
                         },
                         dismissButton = {
-                            TextButton(onClick = { viewModel.hideDeleteConfirmation() }) {
+                            TextButton(
+                                onClick = { viewModel.hideDeleteConfirmation() },
+                                enabled = !uiState.isDeletingStory
+                            ) {
                                 Text(stringResource(R.string.cancel))
                             }
                         }
