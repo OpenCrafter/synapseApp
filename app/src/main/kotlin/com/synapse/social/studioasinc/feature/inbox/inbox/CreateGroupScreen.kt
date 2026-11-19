@@ -299,7 +299,8 @@ fun CreateGroupScreen(
                     onDeclineRequest = viewModel::declineRequest,
                     onChangeRole = viewModel::changeMemberRole,
                     onRemoveMember = viewModel::removeGroupMember,
-                    onClearError = viewModel::clearError
+                    onClearError = viewModel::clearError,
+                    onSaveStatusReset = viewModel::clearSaveStatus
                 )
             }
         }

@@ -137,7 +137,8 @@ internal fun GroupHubStage(
     onDeclineRequest: (String) -> Unit,
     onChangeRole: (String, Boolean) -> Unit,
     onRemoveMember: (String) -> Unit,
-    onClearError: () -> Unit
+    onClearError: () -> Unit,
+    onSaveStatusReset: () -> Unit
 ) {
     val context = LocalContext.current
     val clipboard = LocalClipboard.current
@@ -154,10 +155,10 @@ internal fun GroupHubStage(
             is GroupHubSaveStatus.Success -> {
                 showRevokeDialog = false
                 memberToRemove = null
+                onSaveStatusReset()
             }
             is GroupHubSaveStatus.Failure -> {
-                showRevokeDialog = false
-                memberToRemove = null
+                // Keep dialogs open so the user can retry after a failed async operation.
             }
             else -> {}
         }
@@ -165,7 +166,7 @@ internal fun GroupHubStage(
 
     if (showRevokeDialog) {
         AlertDialog(
-            onDismissRequest = { showRevokeDialog = false },
+            onDismissRequest = { showRevokeDialog = false; onSaveStatusReset() },
             title = { Text(stringResource(R.string.group_revoke_title)) },
             text = { Text(stringResource(R.string.group_revoke_body)) },
             confirmButton = {
@@ -195,7 +196,7 @@ internal fun GroupHubStage(
     }
     memberToRemove?.let { user ->
         AlertDialog(
-            onDismissRequest = { memberToRemove = null },
+            onDismissRequest = { memberToRemove = null; onSaveStatusReset() },
             title = { Text(stringResource(R.string.group_remove_member_title)) },
             text = { Text(stringResource(R.string.group_remove_member_body, userDisplayName(user))) },
             confirmButton = {

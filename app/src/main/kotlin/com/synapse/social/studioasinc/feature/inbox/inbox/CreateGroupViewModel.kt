@@ -259,9 +259,9 @@ class CreateGroupViewModel @Inject constructor(
     fun regenerateInvite() {
         val chatId = _createdChatId.value ?: return
         if (_isUpdatingInvite.value) return
-        _saveStatus.value = GroupHubSaveStatus.Saving
+        _isUpdatingInvite.value = true
         viewModelScope.launch {
-            _isUpdatingInvite.value = true
+            _saveStatus.value = GroupHubSaveStatus.Saving
             _error.value = null
             groupCreationRepository.rotateGroupInviteCode(chatId).onSuccess {
                 _inviteCode.value = it
