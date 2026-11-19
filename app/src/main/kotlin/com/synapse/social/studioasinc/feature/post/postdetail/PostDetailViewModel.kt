@@ -498,18 +498,17 @@ class PostDetailViewModel @Inject constructor(
         _uiState.update { it.copy(reportPostSuccess = false, reportPostError = null) }
     }
 
-    fun deletePost(postId: String) {
-        viewModelScope.launch {
-            _uiState.update { it.copy(deleteSuccess = false, deleteError = null) }
-            postDetailRepository.deletePost(postId)
-                .onSuccess {
-                    _uiState.update { it.copy(deleteSuccess = true) }
+    suspend fun deletePost(postId: String): Result<Unit> {
+        _uiState.update { it.copy(deleteSuccess = false, deleteError = null) }
+        return postDetailRepository.deletePost(postId).also { result ->
+            result.onSuccess {
+                _uiState.update { it.copy(deleteSuccess = true) }
+            }
+            result.onFailure { error ->
+                _uiState.update {
+                    it.copy(deleteError = error.message ?: "Failed to delete post")
                 }
-                .onFailure { error ->
-                    _uiState.update {
-                        it.copy(deleteError = error.message ?: "Failed to delete post")
-                    }
-                }
+            }
         }
     }
 

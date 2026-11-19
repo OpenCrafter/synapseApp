@@ -50,6 +50,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -545,12 +546,10 @@ class ProfileViewModel @Inject constructor(
         }
     }
 
-    fun deletePost(postId: String) {
-        viewModelScope.launch {
-            deletePostUseCase(postId).collect { result ->
-                result.onSuccess {
-                    PostEventBus.emit(PostEvent.Deleted(postId))
-                }
+    suspend fun deletePost(postId: String): Result<Unit> {
+        return deletePostUseCase(postId).first().also { result ->
+            result.onSuccess {
+                PostEventBus.emit(PostEvent.Deleted(postId))
             }
         }
     }

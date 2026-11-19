@@ -117,8 +117,11 @@ fun HashtagFeedScreen(
                 onDismiss = { selectedPost = null },
                 onEdit = { onNavigateToEditPost(post.id); selectedPost = null },
                 onDelete = {
-                    viewModel.deletePost(post)
-                    selectedPost = null
+                    val result = viewModel.deletePost(post)
+                    if (result.isSuccess) {
+                        selectedPost = null
+                    }
+                    result
                 },
                 onShare = {
                     PostShareUtils.sharePost(context, post.id)
