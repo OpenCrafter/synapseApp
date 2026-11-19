@@ -1751,6 +1751,8 @@ Please explain the following message from %3$s in detail, considering the contex
     <string name="disappearing_mode_off">Off</string>
     <string name="disappearing_mode_24_hours">24 hours</string>
     <string name="disappearing_mode_7_days">7 days</string>
+    <string name="disappearing_mode_90_days">90 days</string>
+    <string name="disappearing_mode_save_failed">Failed to save disappearing mode. Please try again.</string>
     <string name="selected_count_title">%1$d selected</string>
     <string name="upload_complete">Upload complete</string>
     <string name="notification_upload_progress">%1$d%%</string>
