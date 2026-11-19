@@ -747,9 +747,14 @@ private fun InboxScreenContent(
                 Button(
                     enabled = newFolderName.isNotBlank(),
                     onClick = {
-                        viewModel.createFolderAndAssign(newFolderName, selectedChatIds)
-                        showCreateFolderDialog = false
-                        newFolderName = ""
+                        viewModel.createFolderAndAssign(newFolderName, selectedChatIds) { success ->
+                            if (success) {
+                                showCreateFolderDialog = false
+                                newFolderName = ""
+                            }
+                            // On failure the dialog stays open so the user can retry;
+                            // the error is surfaced via the existing error snackbar.
+                        }
                     }
                 ) { Text(stringResource(R.string.inbox_folder_save)) }
             },
