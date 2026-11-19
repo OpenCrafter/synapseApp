@@ -45,7 +45,9 @@ data class StoryViewerState(
     val replyText: String = "",
     val isReplying: Boolean = false,
     val showOptionsSheet: Boolean = false,
-    val showDeleteConfirmation: Boolean = false
+    val showDeleteConfirmation: Boolean = false,
+    val isDeletingStory: Boolean = false,
+    val deleteStoryError: String? = null
 )
 
 @HiltViewModel
@@ -374,10 +376,20 @@ class StoryViewerViewModel @Inject constructor(
 
     fun confirmDeleteStory(storyId: String) {
         viewModelScope.launch {
+            _uiState.update { it.copy(isDeletingStory = true, deleteStoryError = null) }
             val result = storyRepository.deleteStory(storyId)
             if (result.isSuccess) {
-                _uiState.update { it.copy(showDeleteConfirmation = false) }
+                _uiState.update { it.copy(showDeleteConfirmation = false, isDeletingStory = false) }
                 nextStory()
+            } else {
+                // Keep the confirmation dialog open on failure so the user sees the inline
+                // error and can retry, instead of a silent failure with no feedback.
+                _uiState.update {
+                    it.copy(
+                        isDeletingStory = false,
+                        deleteStoryError = result.exceptionOrNull()?.message ?: "Failed to delete story"
+                    )
+                }
             }
         }
     }
