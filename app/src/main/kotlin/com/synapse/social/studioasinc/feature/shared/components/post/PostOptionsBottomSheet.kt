@@ -239,7 +239,7 @@ private fun buildOptions(
     commentsDisabled: Boolean,
     post: Post,
     onEdit: () -> Unit,
-    onDelete: suspend () -> Result<Unit>,
+    onDelete: () -> Unit,
     onAddToThread: () -> Unit,
     onToggleComments: () -> Unit,
     onReport: () -> Unit,
