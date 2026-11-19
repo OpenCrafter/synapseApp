@@ -10,6 +10,13 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
 
+sealed class AutoDownloadRuleStatus {
+    object Idle : AutoDownloadRuleStatus()
+    object Saving : AutoDownloadRuleStatus()
+    data class Success(val networkType: String) : AutoDownloadRuleStatus()
+    data class Failure(val error: String) : AutoDownloadRuleStatus()
+}
+
 class StorageDataViewModel(
     private val settingsRepository: SettingsRepository
 ) : ViewModel() {
@@ -26,6 +33,9 @@ class StorageDataViewModel(
 
     private val _error = MutableStateFlow<String?>(null)
     val error: StateFlow<String?> = _error.asStateFlow()
+
+    private val _autoDownloadRuleStatus = MutableStateFlow<AutoDownloadRuleStatus>(AutoDownloadRuleStatus.Idle)
+    val autoDownloadRuleStatus: StateFlow<AutoDownloadRuleStatus> = _autoDownloadRuleStatus.asStateFlow()
 
     private val _cacheClearedMessage = MutableStateFlow<String?>(null)
 
@@ -68,9 +78,19 @@ class StorageDataViewModel(
     }
 
     fun setAutoDownloadRule(networkType: String, mediaTypes: Set<MediaType>) {
+        _autoDownloadRuleStatus.value = AutoDownloadRuleStatus.Saving
         viewModelScope.launch {
-            settingsRepository.setAutoDownloadRule(networkType, mediaTypes)
+            try {
+                settingsRepository.setAutoDownloadRule(networkType, mediaTypes)
+                _autoDownloadRuleStatus.value = AutoDownloadRuleStatus.Success(networkType)
+            } catch (e: Exception) {
+                _autoDownloadRuleStatus.value = AutoDownloadRuleStatus.Failure(e.message ?: "Failed to save auto-download rule")
+            }
         }
+    }
+
+    fun clearAutoDownloadRuleStatus() {
+        _autoDownloadRuleStatus.value = AutoDownloadRuleStatus.Idle
     }
 
     private fun loadStorageSettings() {

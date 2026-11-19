@@ -28,11 +28,34 @@ fun StorageDataScreen(
     val autoDownloadRules by viewModel.autoDownloadRules.collectAsState()
     val useLessDataCalls by viewModel.useLessDataCalls.collectAsState()
     val showMediaQualitySheet by viewModel.showMediaQualitySheet.collectAsState()
+    val autoDownloadRuleStatus by viewModel.autoDownloadRuleStatus.collectAsState()
+
+    val snackbarHostState = remember { SnackbarHostState() }
 
 
     var showMobileDialog by remember { mutableStateOf(false) }
     var showWifiDialog by remember { mutableStateOf(false) }
     var showRoamingDialog by remember { mutableStateOf(false) }
+
+    // Dismiss each auto-download rule dialog only once the save result is known. On failure the
+    // dialog stays open and an error snackbar is shown so the user can retry.
+    LaunchedEffect(autoDownloadRuleStatus) {
+        when (val status = autoDownloadRuleStatus) {
+            is AutoDownloadRuleStatus.Success -> {
+                when (status.networkType) {
+                    "mobile" -> showMobileDialog = false
+                    "wifi" -> showWifiDialog = false
+                    "roaming" -> showRoamingDialog = false
+                }
+                viewModel.clearAutoDownloadRuleStatus()
+            }
+            is AutoDownloadRuleStatus.Failure -> {
+                snackbarHostState.showSnackbar(status.error)
+                viewModel.clearAutoDownloadRuleStatus()
+            }
+            else -> {}
+        }
+    }
 
     StorageDataContent(
         mediaUploadQuality = mediaUploadQuality,
@@ -53,6 +76,7 @@ fun StorageDataScreen(
         showMediaQualitySheet = showMediaQualitySheet,
         mediaUploadQuality = mediaUploadQuality,
         autoDownloadRules = autoDownloadRules,
+        autoDownloadRuleStatus = autoDownloadRuleStatus,
         showMobileDialog = showMobileDialog,
         showWifiDialog = showWifiDialog,
         showRoamingDialog = showRoamingDialog,
@@ -86,6 +110,7 @@ private fun StorageDataContent(
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         containerColor = AppColors.screenBackground,
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         topBar = {
             LargeTopAppBar(
                 title = { Text(stringResource(R.string.settings_storage_data_title)) },
@@ -174,6 +199,7 @@ private fun StorageDataScreenDialogs(
     showMediaQualitySheet: Boolean,
     mediaUploadQuality: MediaUploadQuality,
     autoDownloadRules: AutoDownloadRules,
+    autoDownloadRuleStatus: AutoDownloadRuleStatus,
     showMobileDialog: Boolean,
     showWifiDialog: Boolean,
     showRoamingDialog: Boolean,
@@ -184,6 +210,8 @@ private fun StorageDataScreenDialogs(
     onDismissWifiDialog: () -> Unit,
     onDismissRoamingDialog: () -> Unit
 ) {
+    val isSaving = autoDownloadRuleStatus is AutoDownloadRuleStatus.Saving
+
     if (showMediaQualitySheet) {
         MediaQualityBottomSheet(
             onDismissRequest = onCloseMediaQualitySheet,
@@ -201,9 +229,9 @@ private fun StorageDataScreenDialogs(
             selectedTypes = autoDownloadRules.mobileData,
             onConfirm = {
                 onSetAutoDownloadRule("mobile", it)
-                onDismissMobileDialog()
             },
-            onDismiss = onDismissMobileDialog
+            onDismiss = onDismissMobileDialog,
+            isSaving = isSaving
         )
     }
 
@@ -213,9 +241,9 @@ private fun StorageDataScreenDialogs(
             selectedTypes = autoDownloadRules.wifi,
             onConfirm = {
                 onSetAutoDownloadRule("wifi", it)
-                onDismissWifiDialog()
             },
-            onDismiss = onDismissWifiDialog
+            onDismiss = onDismissWifiDialog,
+            isSaving = isSaving
         )
     }
 
@@ -225,9 +253,9 @@ private fun StorageDataScreenDialogs(
             selectedTypes = autoDownloadRules.roaming,
             onConfirm = {
                 onSetAutoDownloadRule("roaming", it)
-                onDismissRoamingDialog()
             },
-            onDismiss = onDismissRoamingDialog
+            onDismiss = onDismissRoamingDialog,
+            isSaving = isSaving
         )
     }
 }

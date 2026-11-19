@@ -53,12 +53,13 @@ fun AutoDownloadDialog(
     title: String,
     selectedTypes: Set<MediaType>,
     onConfirm: (Set<MediaType>) -> Unit,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    isSaving: Boolean = false
 ) {
     val tempSelection = remember(selectedTypes) { mutableStateListOf(*selectedTypes.toTypedArray()) }
 
     AlertDialog(
-        onDismissRequest = onDismiss,
+        onDismissRequest = { if (!isSaving) onDismiss() },
         title = { Text(title) },
         text = {
             Column {
@@ -87,12 +88,12 @@ fun AutoDownloadDialog(
             }
         },
         confirmButton = {
-            TextButton(onClick = { onConfirm(tempSelection.toSet()) }) {
+            TextButton(onClick = { onConfirm(tempSelection.toSet()) }, enabled = !isSaving) {
                 Text(stringResource(R.string.ok))
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) {
+            TextButton(onClick = onDismiss, enabled = !isSaving) {
                 Text(stringResource(R.string.cancel))
             }
         }
