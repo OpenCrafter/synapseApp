@@ -451,10 +451,11 @@ class SearchViewModel @Inject constructor(
                         )
                     }
                 }.onFailure { err ->
+                    // Keep the dialog open on failure so the user can see the error and retry
+                    // without re-selecting the reason. Close only on success.
                     updateState {
                         it.copy(
-                            isReportDialogShowing = false,
-                            reportDialogPost = null,
+                            isReportDialogShowing = true,
                             reportError = err.message ?: "Failed to report post"
                         )
                     }
@@ -464,7 +465,7 @@ class SearchViewModel @Inject constructor(
     }
 
     fun dismissReportDialog() {
-        updateState { it.copy(isReportDialogShowing = false, reportDialogPost = null) }
+        updateState { it.copy(isReportDialogShowing = false, reportDialogPost = null, reportError = null) }
     }
 
     fun clearReportStatus() {
