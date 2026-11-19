@@ -135,6 +135,23 @@ private val messageSyncUseCase: MessageSyncUseCase = MessageSyncUseCase(getMessa
         }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
+    // ===== Create folder save status =====
+    // Tracks the async folder creation/persistence result so the UI can keep the
+    // confirmation dialog open until the result is known.
+    sealed class CreateFolderSaveStatus {
+        object Idle : CreateFolderSaveStatus()
+        object Saving : CreateFolderSaveStatus()
+        data class Success(val folder: ChatFolder) : CreateFolderSaveStatus()
+        data class Failure(val message: String) : CreateFolderSaveStatus()
+    }
+
+    private val _createFolderSaveStatus = MutableStateFlow<CreateFolderSaveStatus>(CreateFolderSaveStatus.Idle)
+    val createFolderSaveStatus: StateFlow<CreateFolderSaveStatus> = _createFolderSaveStatus.asStateFlow()
+
+    fun resetCreateFolderSaveStatus() {
+        _createFolderSaveStatus.value = CreateFolderSaveStatus.Idle
+    }
+
     // ===== ChatUiState: consolidated UI state =====
     private val _uiState = MutableStateFlow(ChatUiState())
     val uiState: StateFlow<ChatUiState> = _uiState.asStateFlow()
@@ -1326,6 +1343,7 @@ private val messageSyncUseCase: MessageSyncUseCase = MessageSyncUseCase(getMessa
         val cleanName = name.trim()
         val chatId = currentChatId ?: return
         if (cleanName.isBlank()) return
+        _createFolderSaveStatus.value = CreateFolderSaveStatus.Saving
         viewModelScope.launch {
             val newFolder = ChatFolder(
                 id = UUID.randomUUID().toString(),
@@ -1346,15 +1364,22 @@ private val messageSyncUseCase: MessageSyncUseCase = MessageSyncUseCase(getMessa
                     }
                 )
             }
-            persistChatFolders(leaving + newFolder)
+            val saved = persistChatFolders(leaving + newFolder)
+            if (saved) {
+                _createFolderSaveStatus.value = CreateFolderSaveStatus.Success(newFolder)
+            } else {
+                _createFolderSaveStatus.value = CreateFolderSaveStatus.Failure("Failed to save chat folder")
+            }
         }
     }
 
-    private suspend fun persistChatFolders(folders: List<ChatFolder>) {
-        try {
+    private suspend fun persistChatFolders(folders: List<ChatFolder>): Boolean {
+        return try {
             settingsRepository.setChatFoldersJson(Json.encodeToString(folders))
+            true
         } catch (throwable: Exception) {
             Napier.w("Failed to save chat folder: " + throwable.message, tag = "ChatViewModel")
+            false
         }
     }
 
