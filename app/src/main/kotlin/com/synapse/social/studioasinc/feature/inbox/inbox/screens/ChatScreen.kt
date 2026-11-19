@@ -1132,6 +1132,27 @@ val currentUserId = currentUserIdState ?: ""
             )
         }
         val chatFolders by viewModel.chatFolders.collectAsState()
+        val createFolderSaveStatus by viewModel.createFolderSaveStatus.collectAsState()
+
+        // Dismiss the create folder dialog only when the async save succeeds.
+        // On failure the dialog stays open so the user can see the error and retry.
+        LaunchedEffect(createFolderSaveStatus) {
+            when (createFolderSaveStatus) {
+                is ChatViewModel.CreateFolderSaveStatus.Success -> {
+                    showCreateFolderDialog = false
+                    newFolderName = ""
+                    viewModel.resetCreateFolderSaveStatus()
+                }
+                is ChatViewModel.CreateFolderSaveStatus.Failure -> {
+                    // Keep dialog open; error is surfaced via snackbar below
+                    snackbarHostState.showSnackbar(
+                        message = context.getString(R.string.chat_folder_save_failed)
+                    )
+                }
+                ChatViewModel.CreateFolderSaveStatus.Idle -> Unit
+                ChatViewModel.CreateFolderSaveStatus.Saving -> Unit
+            }
+        }
 
         if (showChatFolderSheet) {
             val currentChatId = resolvedChatId ?: chatId
@@ -1155,6 +1176,7 @@ val currentUserId = currentUserIdState ?: ""
                 onDismissRequest = {
                     showCreateFolderDialog = false
                     newFolderName = ""
+                    viewModel.resetCreateFolderSaveStatus()
                 },
                 title = { Text(stringResource(R.string.inbox_folder_create)) },
                 text = {
@@ -1167,11 +1189,12 @@ val currentUserId = currentUserIdState ?: ""
                 },
                 confirmButton = {
                     TextButton(
-                        enabled = newFolderName.isNotBlank(),
+                        enabled = newFolderName.isNotBlank() && createFolderSaveStatus !is ChatViewModel.CreateFolderSaveStatus.Saving,
                         onClick = {
                             viewModel.createFolderAndAssignCurrentChat(newFolderName)
-                            showCreateFolderDialog = false
-                            newFolderName = ""
+                            // Do not dismiss here: dismissal is gated on createFolderSaveStatus
+                            // becoming Success (via the LaunchedEffect above). On Failure the
+                            // dialog stays open so the user can retry.
                         }
                     ) { Text(stringResource(R.string.inbox_folder_save)) }
                 },
