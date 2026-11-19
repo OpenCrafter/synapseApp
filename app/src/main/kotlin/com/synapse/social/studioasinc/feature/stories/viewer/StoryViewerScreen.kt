@@ -36,12 +36,11 @@ import coil3.compose.AsyncImage
 import com.synapse.social.studioasinc.domain.model.Story
 import com.synapse.social.studioasinc.domain.model.StoryMediaType
 import com.synapse.social.studioasinc.domain.model.User
-import com.synapse.social.studioasinc.feature.shared.components.ExpressiveLoadingIndicator
+import com.synapse.social.studioasinc.ui.components.ExpressiveLoadingIndicator
 import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 import kotlinx.coroutines.delay
 import java.time.Duration
 import java.time.Instant
-import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 import com.synapse.social.studioasinc.feature.stories.management.StoryOptionsSheet
 import com.synapse.social.studioasinc.feature.stories.management.StoryReactionsSheet
