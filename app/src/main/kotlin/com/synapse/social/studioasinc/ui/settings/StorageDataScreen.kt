@@ -29,6 +29,7 @@ fun StorageDataScreen(
     val useLessDataCalls by viewModel.useLessDataCalls.collectAsState()
     val showMediaQualitySheet by viewModel.showMediaQualitySheet.collectAsState()
     val autoDownloadSaveStatus by viewModel.autoDownloadSaveStatus.collectAsState()
+    val snackbarHostState = remember { SnackbarHostState() }
 
 
     var showMobileDialog by remember { mutableStateOf(false) }
@@ -43,9 +44,14 @@ fun StorageDataScreen(
                 showMobileDialog = false
                 showWifiDialog = false
                 showRoamingDialog = false
+                // Reset to Idle so a subsequently opened dialog is not dismissed
+                // immediately by a stale terminal state.
+                viewModel.resetAutoDownloadSaveStatus()
             }
             is StorageDataViewModel.AutoDownloadSaveStatus.Failure -> {
-                // Keep the dialog open so the user can retry.
+                // Keep the dialog open and surface the error so the user can retry.
+                snackbarHostState.showSnackbar(autoDownloadSaveStatus.error)
+                viewModel.resetAutoDownloadSaveStatus()
             }
             StorageDataViewModel.AutoDownloadSaveStatus.Idle, StorageDataViewModel.AutoDownloadSaveStatus.Saving -> Unit
         }
@@ -63,13 +69,15 @@ fun StorageDataScreen(
         onOpenMobileDialog = { showMobileDialog = true },
         onOpenWifiDialog = { showWifiDialog = true },
         onOpenRoamingDialog = { showRoamingDialog = true },
-        onOpenMediaQualitySheet = { viewModel.openMediaQualitySheet() }
+        onOpenMediaQualitySheet = { viewModel.openMediaQualitySheet() },
+        snackbarHostState = snackbarHostState
     )
 
     StorageDataScreenDialogs(
         showMediaQualitySheet = showMediaQualitySheet,
         mediaUploadQuality = mediaUploadQuality,
         autoDownloadRules = autoDownloadRules,
+        autoDownloadSaveStatus = autoDownloadSaveStatus,
         showMobileDialog = showMobileDialog,
         showWifiDialog = showWifiDialog,
         showRoamingDialog = showRoamingDialog,
@@ -97,13 +105,15 @@ private fun StorageDataContent(
     onOpenMobileDialog: () -> Unit,
     onOpenWifiDialog: () -> Unit,
     onOpenRoamingDialog: () -> Unit,
-    onOpenMediaQualitySheet: () -> Unit
+    onOpenMediaQualitySheet: () -> Unit,
+    snackbarHostState: SnackbarHostState
 ) {
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
 
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         containerColor = AppColors.screenBackground,
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             LargeTopAppBar(
                 title = { Text(stringResource(R.string.settings_storage_data_title)) },

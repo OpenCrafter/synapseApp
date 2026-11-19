@@ -89,6 +89,10 @@ class StorageDataViewModel(
         }
     }
 
+    fun resetAutoDownloadSaveStatus() {
+        _autoDownloadSaveStatus.value = AutoDownloadSaveStatus.Idle
+    }
+
     private fun loadStorageSettings() {
         viewModelScope.launch {
             try {
