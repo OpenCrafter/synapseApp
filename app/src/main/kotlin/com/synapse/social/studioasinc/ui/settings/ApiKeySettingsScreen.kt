@@ -281,7 +281,8 @@ fun ApiKeySettingsScreen(
                 viewModel.clearAddApiKeyStatus()
             }
             is AddApiKeyStatus.Failure -> {
-                viewModel.clearAddApiKeyStatus()
+                // Keep the Failure state (and its error) visible until the user retries
+                // (which sets Adding) or dismisses the dialog (which clears the status via onDismiss).
             }
             else -> {}
         }
@@ -295,7 +296,7 @@ fun ApiKeySettingsScreen(
                 viewModel.addApiKey(provider, name ?: "", key, limit)
             },
             isAdding = addApiKeyStatus is AddApiKeyStatus.Adding,
-            error = error
+            error = (addApiKeyStatus as? AddApiKeyStatus.Failure)?.error
         )
     }
 }

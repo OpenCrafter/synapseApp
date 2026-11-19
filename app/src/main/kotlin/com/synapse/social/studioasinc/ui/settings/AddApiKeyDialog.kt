@@ -150,7 +150,7 @@ fun AddApiKeyDialog(
                 horizontalArrangement = Arrangement.End,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                TextButton(onClick = onDismiss) {
+                TextButton(onClick = { if (!isAdding) onDismiss() }) {
                     Text(stringResource(R.string.settings_cancel))
                 }
                 Spacer(modifier = Modifier.width(Spacing.space16))
