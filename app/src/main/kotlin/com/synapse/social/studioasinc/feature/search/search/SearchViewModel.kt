@@ -61,6 +61,7 @@ data class SearchUiState(
     val blockError: String? = null,
     val isReportDialogShowing: Boolean = false,
     val reportDialogPost: com.synapse.social.studioasinc.domain.model.Post? = null,
+    val isReportSubmitting: Boolean = false,
     val reportSuccess: Boolean = false,
     val reportError: String? = null,
     val isSummarizing: Boolean = false,
@@ -439,20 +440,27 @@ class SearchViewModel @Inject constructor(
 
     fun submitReport(reason: String) {
         val post = currentState.reportDialogPost ?: return
+        // Clear any previous failure state and mark submission as in-flight so the dialog
+        // shows a loading indicator instead of appearing stuck.
+        updateState { it.copy(isReportSubmitting = true, reportError = null) }
         viewModelScope.launch {
             reportPostUseCase(post.id, reason, null).collect { result ->
                 result.onSuccess {
                     updateState {
                         it.copy(
                             isReportDialogShowing = false,
+                            isReportSubmitting = false,
                             reportDialogPost = null,
                             reportSuccess = true
                         )
                     }
                 }.onFailure { err ->
+                    // Keep the report dialog open on failure so the user sees the inline error
+                    // and can retry, instead of silently dismissing the dialog and losing the
+                    // selected reason.
                     updateState {
                         it.copy(
-                            isReportDialogShowing = false,
+                            isReportSubmitting = false,
                             reportDialogPost = null,
                             reportError = err.message ?: "Failed to report post"
                         )
@@ -463,7 +471,7 @@ class SearchViewModel @Inject constructor(
     }
 
     fun dismissReportDialog() {
-        updateState { it.copy(isReportDialogShowing = false, reportDialogPost = null) }
+        updateState { it.copy(isReportDialogShowing = false, reportDialogPost = null, reportError = null) }
     }
 
     fun clearReportStatus() {
