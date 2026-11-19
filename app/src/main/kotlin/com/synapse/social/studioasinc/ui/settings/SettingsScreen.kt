@@ -16,7 +16,6 @@ import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -53,10 +52,9 @@ fun SettingsScreen(
     val snackbarHostState = remember { SnackbarHostState() }
 
     LaunchedEffect(error) {
-        if (error != null) {
-            snackbarHostState.showSnackbar(message = error)
-            viewModel.clearError()
-        }
+        val message = error ?: return@LaunchedEffect
+        snackbarHostState.showSnackbar(message = message)
+        viewModel.clearError()
     }
 
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
@@ -65,10 +63,7 @@ fun SettingsScreen(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         containerColor = AppColors.screenBackground,
         snackbarHost = {
-            SnackbarHost(
-                hostState = snackbarHostState,
-                modifier = Modifier.align(Alignment.BottomCenter)
-            )
+            SnackbarHost(hostState = snackbarHostState)
         },
         topBar = {
             LargeTopAppBar(

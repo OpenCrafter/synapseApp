@@ -35,11 +35,21 @@ class SettingsViewModel @Inject constructor(
     private val _isResettingE2EE = MutableStateFlow(false)
     val isResettingE2EE: StateFlow<Boolean> = _isResettingE2EE.asStateFlow()
 
+    private val _error = MutableStateFlow<String?>(null)
+    val error: StateFlow<String?> = _error.asStateFlow()
+
+    fun clearError() {
+        _error.value = null
+    }
+
     fun resetE2EE() {
         viewModelScope.launch {
             _isResettingE2EE.value = true
             try {
                 resetE2EUseCase()
+                    .onFailure { e ->
+                        _error.value = e.message ?: e.toString()
+                    }
             } finally {
                 _isResettingE2EE.value = false
             }
