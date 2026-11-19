@@ -145,7 +145,7 @@ private val messageSyncUseCase: MessageSyncUseCase = MessageSyncUseCase(getMessa
         data class Failure(val message: String) : CreateFolderSaveStatus()
     }
 
-    private val _createFolderSaveStatus = MutableStateFlow(CreateFolderSaveStatus.Idle)
+    private val _createFolderSaveStatus = MutableStateFlow<CreateFolderSaveStatus>(CreateFolderSaveStatus.Idle)
     val createFolderSaveStatus: StateFlow<CreateFolderSaveStatus> = _createFolderSaveStatus.asStateFlow()
 
     fun resetCreateFolderSaveStatus() {

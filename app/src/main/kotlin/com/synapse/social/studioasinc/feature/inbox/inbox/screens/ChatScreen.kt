@@ -112,6 +112,7 @@ import kotlinx.coroutines.withContext
     var newFolderName by rememberSaveable(chatId) { mutableStateOf("") }
     var showBlockDialog by rememberSaveable(chatId) { mutableStateOf(false) }
     var showClearChatDialog by rememberSaveable(chatId) { mutableStateOf(false) }
+    val snackbarHostState = remember { SnackbarHostState() }
 
     // Initialize the ViewModel with the chat ID
     LaunchedEffect(chatId, participantId) {
