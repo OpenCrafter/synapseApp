@@ -119,6 +119,7 @@ fun HashtagFeedScreen(
                 onDelete = {
                     viewModel.deletePost(post)
                     selectedPost = null
+                    Result.success(Unit)
                 },
                 onShare = {
                     PostShareUtils.sharePost(context, post.id)

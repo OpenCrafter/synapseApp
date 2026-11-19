@@ -38,7 +38,7 @@ fun PostOptionsBottomSheet(
     commentsDisabled: Boolean = false,
     onDismiss: () -> Unit,
     onEdit: () -> Unit,
-    onDelete: () -> Unit,
+    onDelete: suspend () -> Result<Unit>,
     onAddToThread: (() -> Unit)? = null,
     onShare: () -> Unit,
     onCopyLink: () -> Unit,
@@ -158,8 +158,12 @@ fun PostOptionsBottomSheet(
                 TextButton(
                     onClick = {
                         showDeleteDialog = false
-                        onDelete()
-                        onDismiss()
+                        scope.launch {
+                            val result = onDelete()
+                            if (result.isSuccess) {
+                                onDismiss()
+                            }
+                        }
                     }
                 ) {
                     Text(stringResource(R.string.action_delete), color = MaterialTheme.colorScheme.error)
@@ -235,7 +239,7 @@ private fun buildOptions(
     commentsDisabled: Boolean,
     post: Post,
     onEdit: () -> Unit,
-    onDelete: () -> Unit,
+    onDelete: suspend () -> Result<Unit>,
     onAddToThread: () -> Unit,
     onToggleComments: () -> Unit,
     onReport: () -> Unit,
