@@ -15,7 +15,8 @@ import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 fun ReportUserDialog(
     username: String,
     onDismiss: () -> Unit,
-    onReport: (String) -> Unit
+    onReport: (String) -> Unit,
+    isLoading: Boolean = false
 ) {
     var selectedReason by remember { mutableStateOf<String?>(null) }
 
@@ -62,16 +63,18 @@ fun ReportUserDialog(
         confirmButton = {
             TextButton(
                 onClick = {
+                    // Do not dismiss the dialog here: reportUser is async. Keep the dialog
+                    // open until the report result is known. On success the screen dismisses
+                    // the dialog; on failure it stays open so the user can retry.
                     selectedReason?.let { onReport(it) }
-                    onDismiss()
                 },
-                enabled = selectedReason != null
+                enabled = selectedReason != null && !isLoading
             ) {
                 Text(stringResource(R.string.action_report))
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) {
+            TextButton(onClick = onDismiss, enabled = !isLoading) {
                 Text(stringResource(R.string.cancel))
             }
         }

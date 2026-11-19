@@ -7,6 +7,7 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.res.stringResource
 import kotlinx.coroutines.launch
@@ -193,13 +194,24 @@ internal fun ReportSection(
     state: ProfileScreenState,
     viewModel: ProfileViewModel
 ) {
+    // Dismiss the report dialog only when reportUserSuccess is observed, mirroring
+    // the block-success dismissal convention. On failure reportUserError is set but
+    // reportUserSuccess stays false, so the dialog remains open for retry.
+    LaunchedEffect(state.reportUserSuccess) {
+        if (state.reportUserSuccess) {
+            viewModel.hideReportDialog()
+            viewModel.clearReportStatus()
+        }
+    }
+
     if (state.showReportDialog) {
         val profile = (state.profileState as? ProfileUiState.Success)?.profile
         profile?.let {
             ReportUserDialog(
                 username = it.username,
                 onDismiss = { viewModel.hideReportDialog() },
-                onReport = { reason -> viewModel.reportUser(it.id, reason) }
+                onReport = { reason -> viewModel.reportUser(it.id, reason) },
+                isLoading = state.reportUserLoading
             )
         }
     }

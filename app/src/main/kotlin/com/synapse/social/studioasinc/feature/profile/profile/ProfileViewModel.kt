@@ -80,6 +80,9 @@ data class ProfileScreenState(
     val savedPostIds: Set<String> = emptySet(),
     val showViewAsSheet: Boolean = false,
     val showReportDialog: Boolean = false,
+    val reportUserLoading: Boolean = false,
+    val reportUserSuccess: Boolean = false,
+    val reportUserError: String? = null,
     val viewAsMode: ViewAsMode? = null,
     val viewAsUserName: String? = null,
     val hasStory: Boolean = false,
@@ -653,8 +656,21 @@ class ProfileViewModel @Inject constructor(
 
     fun reportUser(reportedUserId: String, reason: String) {
         viewModelScope.launch {
-            reportUserUseCase(_state.value.currentUserId, reportedUserId, reason).collect {}
+            _state.update { it.copy(reportUserLoading = true, reportUserSuccess = false, reportUserError = null) }
+            reportUserUseCase(_state.value.currentUserId, reportedUserId, reason).collect { result ->
+                if (result.isSuccess) {
+                    _state.update { it.copy(reportUserLoading = false, reportUserSuccess = true) }
+                } else {
+                    _state.update {
+                        it.copy(reportUserLoading = false, reportUserError = result.exceptionOrNull()?.message ?: "Failed to report user")
+                    }
+                }
+            }
         }
+    }
+
+    fun clearReportStatus() {
+        _state.update { it.copy(reportUserSuccess = false, reportUserError = null) }
     }
 
     fun muteUser(mutedUserId: String) {
