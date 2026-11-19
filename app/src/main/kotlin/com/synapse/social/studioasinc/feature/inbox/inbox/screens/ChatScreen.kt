@@ -48,6 +48,7 @@ import com.synapse.social.studioasinc.core.media.VoicePlayerManager
 import com.synapse.social.studioasinc.feature.auth.ui.util.AnimationUtil
 import com.synapse.social.studioasinc.feature.call.CallLaunchRequest
 import com.synapse.social.studioasinc.feature.inbox.inbox.ChatViewModel
+import com.synapse.social.studioasinc.feature.inbox.inbox.ChatSettingsDelegate
 import com.synapse.social.studioasinc.feature.inbox.inbox.components.*
 import com.synapse.social.studioasinc.feature.inbox.inbox.models.ChatListItem
 import com.synapse.social.studioasinc.feature.inbox.inbox.voice.VoiceAction
@@ -508,6 +509,8 @@ val currentUserId = currentUserIdState ?: ""
     val glassBackdrop = if (glassSurfaceSupported) contentBackdrop else null
     val inListBackdrop = if (glassSurfaceSupported) backgroundBackdrop else null
 
+    val snackbarHostState = remember { SnackbarHostState() }
+
     Scaffold(
         topBar = {
             if (isSearchActive) {
@@ -518,6 +521,7 @@ val currentUserId = currentUserIdState ?: ""
                 )
             }
         },
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         // Edge-to-edge: the conversation owns the whole window, so the header is an overlay instead
         // of a Scaffold top bar that would reserve layout space above the timeline.
         contentWindowInsets = WindowInsets(0, 0, 0, 0)

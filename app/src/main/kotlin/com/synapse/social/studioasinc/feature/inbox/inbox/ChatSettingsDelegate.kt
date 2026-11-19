@@ -4,6 +4,7 @@ import com.synapse.social.studioasinc.core.util.ChatLockManager
 import com.synapse.social.studioasinc.shared.domain.model.chat.DisappearingMode
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 
 import com.synapse.social.studioasinc.shared.domain.usecase.chat.SetDisappearingModeUseCase
 import kotlinx.coroutines.CoroutineScope
@@ -27,7 +28,7 @@ class ChatSettingsDelegate(
         data class Failure(val message: String) : DisappearingModeSaveStatus()
     }
 
-    private val _disappearingModeSaveStatus = MutableStateFlow(DisappearingModeSaveStatus.Idle)
+    private val _disappearingModeSaveStatus = MutableStateFlow<DisappearingModeSaveStatus>(DisappearingModeSaveStatus.Idle)
     val disappearingModeSaveStatus: StateFlow<DisappearingModeSaveStatus> = _disappearingModeSaveStatus.asStateFlow()
 
     fun resetDisappearingModeSaveStatus() {

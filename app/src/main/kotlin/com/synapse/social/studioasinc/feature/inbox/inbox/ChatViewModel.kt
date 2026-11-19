@@ -1167,6 +1167,12 @@ private val messageSyncUseCase: MessageSyncUseCase = MessageSyncUseCase(getMessa
         settingsDelegate.setDisappearingMode(mode)
     }
 
+    val disappearingModeSaveStatus = settingsDelegate.disappearingModeSaveStatus
+
+    fun resetDisappearingModeSaveStatus() {
+        settingsDelegate.resetDisappearingModeSaveStatus()
+    }
+
     fun toggleMuteNotifications() {
         val chatId = currentChatId ?: return
         if (_isMuteUpdating.value) return
