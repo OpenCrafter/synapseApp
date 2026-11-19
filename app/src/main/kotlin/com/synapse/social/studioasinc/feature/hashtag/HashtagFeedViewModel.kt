@@ -190,7 +190,7 @@ class HashtagFeedViewModel @Inject constructor(
     }
 
     suspend fun toggleComments(post: Post): Result<Unit> {
-        val result = togglePostCommentsUseCase(post.id).first()
+        val result = togglePostCommentsUseCase(post.id).single()
         result.onSuccess {
             val toggled = if (post.postDisableReplies == "true") "false" else "true"
             _uiState.update { state ->
