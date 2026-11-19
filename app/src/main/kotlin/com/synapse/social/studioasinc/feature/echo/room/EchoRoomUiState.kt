@@ -56,7 +56,10 @@ data class EchoRoomUiState(
     /** The member whose host actions are on screen. */
     val participantMenu: String? = null,
     val busy: Boolean = false,
+    /** General-purpose live-room error (audio, connection, etc.). */
     val error: EchoErrorKind? = null,
+    /** Error scoped to the end-room operation, shown only in the end confirmation dialog. */
+    val endRoomError: EchoErrorKind? = null,
     val closeRequested: Boolean = false
 ) {
     val roomId: String? get() = detail?.room?.id
