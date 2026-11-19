@@ -481,7 +481,21 @@ class PostDetailViewModel @Inject constructor(
 
     fun reportPost(reason: String) {
         val postId = currentPostId ?: return
-        viewModelScope.launch { reportRepository.createReport(postId, reason, null) }
+        viewModelScope.launch {
+            _uiState.update { it.copy(reportPostSuccess = false, reportPostError = null) }
+            val result = reportRepository.createReport(postId, reason, null)
+            if (result.isSuccess) {
+                _uiState.update { it.copy(reportPostSuccess = true) }
+            } else {
+                _uiState.update {
+                    it.copy(reportPostError = result.exceptionOrNull()?.message ?: "Failed to submit report")
+                }
+            }
+        }
+    }
+
+    fun clearReportPostStatus() {
+        _uiState.update { it.copy(reportPostSuccess = false, reportPostError = null) }
     }
 
     fun deletePost(postId: String) {
