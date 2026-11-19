@@ -170,13 +170,22 @@ fun EchoRoomScreen(
         AlertDialog(
             onDismissRequest = { confirmEnd = false },
             title = { Text(stringResource(R.string.echo_room_end_confirm_title)) },
-            text = { Text(stringResource(R.string.echo_room_end_confirm_body)) },
+            text = {
+                Column {
+                    Text(stringResource(R.string.echo_room_end_confirm_body))
+                    state.error?.let { error ->
+                        Text(
+                            text = stringResource(error.messageRes()),
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                    }
+                }
+            },
             confirmButton = {
                 TextButton(
-                    onClick = {
-                        confirmEnd = false
-                        viewModel.endRoomForEveryone()
-                    }
+                    onClick = { viewModel.endRoomForEveryone() },
+                    enabled = !state.busy
                 ) {
                     Text(
                         text = stringResource(R.string.echo_room_end_room),
@@ -190,6 +199,15 @@ fun EchoRoomScreen(
                 }
             }
         )
+    }
+
+    // Dismiss the end-room confirmation only once the async end-room operation
+    // has finished (phase ENDED). On failure the dialog stays open so the host
+    // can see the error and retry.
+    LaunchedEffect(state.phase) {
+        if (state.phase == EchoRoomPhase.ENDED) {
+            confirmEnd = false
+        }
     }
 
     val menuParticipant = state.participantMenu?.let(state::participant)
