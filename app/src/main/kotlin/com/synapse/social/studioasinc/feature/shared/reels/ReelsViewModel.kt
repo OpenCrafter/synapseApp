@@ -25,6 +25,8 @@ data class ReelsUiState(
     val isLoading: Boolean = false,
     val isLoadMoreLoading: Boolean = false,
     val isEndReached: Boolean = false,
+    val isReportingReel: Boolean = false,
+    val isBlockingCreator: Boolean = false,
     val error: String? = null
 )
 
@@ -161,23 +163,41 @@ class ReelsViewModel @Inject constructor(
     }
 
     fun reportReel(reelId: String, reason: String, onResult: (Boolean) -> Unit = {}) {
+        // Guard against rapid re-tap: the bottom sheet stays open while the async
+        // request is in flight, so without this check a second tap would fire a
+        // duplicate concurrent report request.
+        if (_uiState.value.isReportingReel) {
+            onResult(false)
+            return
+        }
+        _uiState.update { it.copy(isReportingReel = true) }
         viewModelScope.launch {
             reelRepository.reportReel(reelId, reason).onFailure { e ->
-                _uiState.update { it.copy(error = "Failed to report: ${e.message}") }
+                _uiState.update { it.copy(error = "Failed to report: ${e.message}", isReportingReel = false) }
                 onResult(false)
             }.onSuccess {
+                _uiState.update { it.copy(isReportingReel = false) }
                 onResult(true)
             }
         }
     }
 
     fun blockCreator(creatorId: String, onResult: (Boolean) -> Unit = {}) {
+        // Guard against rapid re-tap: the bottom sheet stays open while the async
+        // request is in flight, so without this check a second tap would fire a
+        // duplicate concurrent block request.
+        if (_uiState.value.isBlockingCreator) {
+            onResult(false)
+            return
+        }
+        _uiState.update { it.copy(isBlockingCreator = true) }
         viewModelScope.launch {
             reelRepository.blockCreator(creatorId).onSuccess {
                 loadReels()
+                _uiState.update { it.copy(isBlockingCreator = false) }
                 onResult(true)
             }.onFailure { e ->
-                _uiState.update { it.copy(error = "Failed to block: ${e.message}") }
+                _uiState.update { it.copy(error = "Failed to block: ${e.message}", isBlockingCreator = false) }
                 onResult(false)
             }
         }
