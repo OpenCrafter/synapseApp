@@ -1038,11 +1038,36 @@ val currentUserId = currentUserIdState ?: ""
         }
 
         val disappearingMode by viewModel.disappearingMode.collectAsState()
+        val disappearingModeSaveStatus by viewModel.disappearingModeSaveStatus.collectAsState()
+
+        // Dismiss the disappearing mode dialog only when the async save succeeds.
+        // On failure the dialog stays open so the user can see the error and retry.
+        LaunchedEffect(disappearingModeSaveStatus) {
+            when (disappearingModeSaveStatus) {
+                is ChatSettingsDelegate.DisappearingModeSaveStatus.Success -> {
+                    showDisappearingModeDialog = false
+                    viewModel.resetDisappearingModeSaveStatus()
+                }
+                is ChatSettingsDelegate.DisappearingModeSaveStatus.Failure -> {
+                    // Keep dialog open; error is surfaced via snackbar below
+                    snackbarHostState.showSnackbar(
+                        message = context.getString(R.string.disappearing_mode_save_failed)
+                    )
+                }
+                ChatSettingsDelegate.DisappearingModeSaveStatus.Idle -> Unit
+                ChatSettingsDelegate.DisappearingModeSaveStatus.Saving -> Unit
+            }
+        }
+
         if (showDisappearingModeDialog) {
             com.synapse.social.studioasinc.feature.inbox.inbox.components.DisappearingModeDialog(
                 currentMode = disappearingMode,
+                isSaving = disappearingModeSaveStatus is ChatSettingsDelegate.DisappearingModeSaveStatus.Saving,
                 onModeSelected = { viewModel.setDisappearingMode(it) },
-                onDismissRequest = { showDisappearingModeDialog = false }
+                onDismissRequest = {
+                    showDisappearingModeDialog = false
+                    viewModel.resetDisappearingModeSaveStatus()
+                }
             )
         }
 
