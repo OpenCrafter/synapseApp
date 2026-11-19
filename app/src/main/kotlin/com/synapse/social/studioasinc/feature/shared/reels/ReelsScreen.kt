@@ -130,8 +130,18 @@ fun ReelsScreen(
         val reel = reels.find { it.id == reelId }
         MoreActionsBottomSheet(
             onDismiss = { showMoreActionsForReelId = null },
-            onReport = { viewModel.reportReel(reelId, "Inappropriate content") },
-            onBlock = { reel?.let { viewModel.blockCreator(it.creatorId) } },
+            onReport = { viewModel.reportReel(reelId, "Inappropriate content") { success ->
+                // Dismiss only when the async report succeeds. On failure the sheet
+                // stays open so the user can retry; the error is surfaced through
+                // the ViewModel error state.
+                if (success) showMoreActionsForReelId = null
+            } },
+            onBlock = { reel?.let { viewModel.blockCreator(it.creatorId) { success ->
+                // Dismiss only when the async block succeeds. On failure the sheet
+                // stays open so the user can retry; the error is surfaced through
+                // the ViewModel error state.
+                if (success) showMoreActionsForReelId = null
+            } } },
             onDownload = { reel?.let { viewModel.downloadReel(it.videoUrl) } }
         )
     }
