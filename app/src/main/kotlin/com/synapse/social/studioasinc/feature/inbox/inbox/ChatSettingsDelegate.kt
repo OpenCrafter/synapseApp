@@ -48,6 +48,7 @@ class ChatSettingsDelegate(
     }
 
     fun setDisappearingMode(mode: DisappearingMode) {
+        val previousMode = _disappearingMode.value
         _disappearingMode.value = mode
         val chatId = currentChatIdProvider() ?: return
         _disappearingModeSaveStatus.value = DisappearingModeSaveStatus.Saving
@@ -56,6 +57,9 @@ class ChatSettingsDelegate(
             if (result.isSuccess) {
                 _disappearingModeSaveStatus.value = DisappearingModeSaveStatus.Success
             } else {
+                // Roll back the optimistic mode update so the dialog does not
+                // show the failed selection as the active mode.
+                _disappearingMode.value = previousMode
                 _disappearingModeSaveStatus.value = DisappearingModeSaveStatus.Failure(result.exceptionOrNull()?.message ?: "Failed to save disappearing mode")
             }
         }
