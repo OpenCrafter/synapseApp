@@ -107,7 +107,7 @@ import kotlinx.coroutines.withContext
     val reducedMotion = AnimationUtil.rememberReducedMotion()
     var showEncryptionSheet by rememberSaveable(chatId) { mutableStateOf(false) }
     var showReportDialog by rememberSaveable(chatId) { mutableStateOf(false) }
-    var isReporting by remember { mutableStateOf(false) }
+    var isReporting by rememberSaveable(chatId) { mutableStateOf(false) }
     var showDeleteChatDialog by rememberSaveable(chatId) { mutableStateOf(false) }
     var showChatFolderSheet by rememberSaveable(chatId) { mutableStateOf(false) }
     var showCreateFolderDialog by rememberSaveable(chatId) { mutableStateOf(false) }
