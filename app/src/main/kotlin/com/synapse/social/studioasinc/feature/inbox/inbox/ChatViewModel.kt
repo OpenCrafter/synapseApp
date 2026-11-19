@@ -1306,10 +1306,10 @@ private val messageSyncUseCase: MessageSyncUseCase = MessageSyncUseCase(getMessa
         }
     }
 
-    fun createFolderAndAssignCurrentChat(name: String) {
+    fun createFolderAndAssignCurrentChat(name: String, onResult: (Boolean) -> Unit) {
         val cleanName = name.trim()
-        val chatId = currentChatId ?: return
-        if (cleanName.isBlank()) return
+        val chatId = currentChatId ?: return onResult(false)
+        if (cleanName.isBlank()) return onResult(false)
         viewModelScope.launch {
             val newFolder = ChatFolder(
                 id = UUID.randomUUID().toString(),
@@ -1330,15 +1330,21 @@ private val messageSyncUseCase: MessageSyncUseCase = MessageSyncUseCase(getMessa
                     }
                 )
             }
-            persistChatFolders(leaving + newFolder)
+            val success = persistChatFolders(leaving + newFolder)
+            if (!success) {
+                _error.value = "Failed to create folder"
+            }
+            onResult(success)
         }
     }
 
-    private suspend fun persistChatFolders(folders: List<ChatFolder>) {
-        try {
+    private suspend fun persistChatFolders(folders: List<ChatFolder>): Boolean {
+        return try {
             settingsRepository.setChatFoldersJson(Json.encodeToString(folders))
+            true
         } catch (throwable: Exception) {
             Napier.w("Failed to save chat folder: " + throwable.message, tag = "ChatViewModel")
+            false
         }
     }
 

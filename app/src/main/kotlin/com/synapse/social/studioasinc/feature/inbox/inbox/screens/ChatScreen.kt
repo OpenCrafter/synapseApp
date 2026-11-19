@@ -1176,9 +1176,16 @@ onSuccess = {
                     TextButton(
                         enabled = newFolderName.isNotBlank(),
                         onClick = {
-                            viewModel.createFolderAndAssignCurrentChat(newFolderName)
-                            showCreateFolderDialog = false
-                            newFolderName = ""
+                            // Do not dismiss the dialog here: createFolderAndAssignCurrentChat is
+                            // async. Keep the dialog open until the result is known so a failed
+                            // folder creation is not mistaken for success. On failure the dialog
+                            // stays open for retry and the error is surfaced via viewModel.error.
+                            viewModel.createFolderAndAssignCurrentChat(newFolderName) { success ->
+                                if (success) {
+                                    showCreateFolderDialog = false
+                                    newFolderName = ""
+                                }
+                            }
                         }
                     ) { Text(stringResource(R.string.inbox_folder_save)) }
                 },
