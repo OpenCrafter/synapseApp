@@ -510,8 +510,6 @@ val currentUserId = currentUserIdState ?: ""
     val glassBackdrop = if (glassSurfaceSupported) contentBackdrop else null
     val inListBackdrop = if (glassSurfaceSupported) backgroundBackdrop else null
 
-    val snackbarHostState = remember { SnackbarHostState() }
-
     Scaffold(
         topBar = {
             if (isSearchActive) {
@@ -525,7 +523,6 @@ val currentUserId = currentUserIdState ?: ""
         snackbarHost = { SnackbarHost(snackbarHostState) },
         // Edge-to-edge: the conversation owns the whole window, so the header is an overlay instead
         // of a Scaffold top bar that would reserve layout space above the timeline.
-        snackbarHost = { SnackbarHost(snackbarHostState) },
         contentWindowInsets = WindowInsets(0, 0, 0, 0)
     ) { paddingValues ->
         Box(
