@@ -137,6 +137,10 @@ fun ProfileScreen(
             else -> null
         }
         if (removalMessage != null) {
+            // Dismiss the dialog only on successful removal; on failure it stays open so the user can retry.
+            if (state.profilePhotoRemoved || state.coverPhotoRemoved) {
+                removePhotoTarget = null
+            }
             snackbarHostState.showSnackbar(message = removalMessage)
             viewModel.clearPhotoRemovalStatus()
         }
@@ -271,7 +275,8 @@ fun ProfileScreen(
                     ProfilePhotoType.COVER -> viewModel.removeCoverPhoto()
                     null -> Unit
                 }
-                removePhotoTarget = null
+                // Do not dismiss here; the dialog closes only after the async removal result
+                // is known (handled in the LaunchedEffect below).
             },
             onDismiss = { removePhotoTarget = null }
         )
