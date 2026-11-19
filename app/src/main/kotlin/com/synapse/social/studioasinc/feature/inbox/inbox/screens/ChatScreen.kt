@@ -1262,18 +1262,22 @@ val currentUserId = currentUserIdState ?: ""
                 confirmButton = {
                     TextButton(
                         onClick = {
-                            showDeleteChatDialog = false
                             viewModel.deleteCurrentChat { result ->
-                                Toast.makeText(
-                                    context,
-                                    if (result.isSuccess) {
-                                        R.string.chat_menu_delete_chat_success
-                                    } else {
-                                        R.string.chat_menu_delete_chat_error
-                                    },
-                                    Toast.LENGTH_SHORT
-                                ).show()
-                                if (result.isSuccess) onNavigateBack()
+                                if (result.isSuccess) {
+                                    showDeleteChatDialog = false
+                                    onNavigateBack()
+                                    Toast.makeText(
+                                        context,
+                                        R.string.chat_menu_delete_chat_success,
+                                        Toast.LENGTH_SHORT
+                                    ).show()
+                                } else {
+                                    Toast.makeText(
+                                        context,
+                                        R.string.chat_menu_delete_chat_error,
+                                        Toast.LENGTH_SHORT
+                                    ).show()
+                                }
                             }
                         }
                     ) { Text(stringResource(R.string.action_ok)) }
