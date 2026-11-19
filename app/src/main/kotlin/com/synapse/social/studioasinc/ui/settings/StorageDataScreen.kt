@@ -65,6 +65,7 @@ fun StorageDataScreen(
         onNavigateToStorageManage = { navController?.navigate("settings_storage_manage") },
         onNavigateToNetworkUsage = { navController?.navigate("settings_network_usage") },
         onNavigateToProxy = null,
+        snackbarHostState = snackbarHostState,
         onUseLessDataCallsChanged = { viewModel.setUseLessDataCalls(it) },
         onOpenMobileDialog = { showMobileDialog = true },
         onOpenWifiDialog = { showWifiDialog = true },
@@ -103,7 +104,8 @@ private fun StorageDataContent(
     onOpenMobileDialog: () -> Unit,
     onOpenWifiDialog: () -> Unit,
     onOpenRoamingDialog: () -> Unit,
-    onOpenMediaQualitySheet: () -> Unit
+    onOpenMediaQualitySheet: () -> Unit,
+    snackbarHostState: SnackbarHostState
 ) {
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
 
