@@ -521,6 +521,7 @@ val currentUserId = currentUserIdState ?: ""
         },
         // Edge-to-edge: the conversation owns the whole window, so the header is an overlay instead
         // of a Scaffold top bar that would reserve layout space above the timeline.
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         contentWindowInsets = WindowInsets(0, 0, 0, 0)
     ) { paddingValues ->
         Box(
@@ -1204,6 +1205,7 @@ val currentUserId = currentUserIdState ?: ""
                         onClick = {
                             showCreateFolderDialog = false
                             newFolderName = ""
+                            viewModel.resetCreateFolderSaveStatus()
                         }
                     ) { Text(stringResource(R.string.action_cancel)) }
                 }
