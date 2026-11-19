@@ -236,7 +236,8 @@ fun ProfileAppearanceScreen(
                 text = { Text(text = stringResource(R.string.dialog_remove_background_body)) },
                 confirmButton = {
                     TextButton(
-                        onClick = { viewModel.onEvent(ProfileAppearanceEvent.ConfirmRemoveCover) }
+                        onClick = { viewModel.onEvent(ProfileAppearanceEvent.ConfirmRemoveCover) },
+                        enabled = !uiState.isSaving
                     ) {
                         Text(text = stringResource(R.string.remove))
                     }
