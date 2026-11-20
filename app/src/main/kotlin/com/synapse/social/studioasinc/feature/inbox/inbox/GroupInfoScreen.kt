@@ -511,18 +511,25 @@ fun GroupInfoScreen(
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clickable {
-                                    viewModel.setDisappearingMode(mode)
-                                    showDisappearingDialog = false
-                                }
+                                .clickable(
+                                    onClick = {
+                                        viewModel.setDisappearingMode(mode) { success ->
+                                            if (success) showDisappearingDialog = false
+                                            // On failure the dialog stays open so the user can retry;
+                                            // the failure is surfaced via errorRes / snackbar.
+                                        }
+                                    },
+                                    enabled = !uiState.isUpdatingDisappearingMode
+                                )
                                 .padding(vertical = Spacing.space4),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             RadioButton(
                                 selected = mode == currentMode,
                                 onClick = {
-                                    viewModel.setDisappearingMode(mode)
-                                    showDisappearingDialog = false
+                                    viewModel.setDisappearingMode(mode) { success ->
+                                        if (success) showDisappearingDialog = false
+                                    }
                                 }
                             )
                             Spacer(Modifier.width(Spacing.space8))
