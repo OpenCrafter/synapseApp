@@ -219,7 +219,7 @@ class ProfileAppearanceViewModel @Inject constructor(
     }
 
     private fun removeCover() {
-        _uiState.update { it.copy(showRemoveCoverDialog = false, isSaving = true) }
+        _uiState.update { it.copy(isSaving = true) }
         viewModelScope.launch {
             val userId = repository.getCurrentUserId()
             if (userId == null) {
@@ -234,6 +234,7 @@ class ProfileAppearanceViewModel @Inject constructor(
                     _uiState.update {
                         it.copy(
                             isSaving = false,
+                            showRemoveCoverDialog = false,
                             coverUrl = null,
                             pendingCoverUri = null,
                             hasPendingChanges = false,
