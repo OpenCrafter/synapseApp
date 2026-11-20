@@ -453,6 +453,7 @@ fun FeedScreen(
     }
     }
 }
+}
 
 @Composable
 private fun FeedCommentItem(
