@@ -583,7 +583,9 @@ private fun PostDetailContent(
                                 onCommentClick = { onPostComment(mergedPost) },
                                 onShareClick = { onPostShare(mergedPost) },
                                 onRepostClick = { onPostRepost(mergedPost) },
-                                onBookmarkClick = { onPostBookmark(mergedPost) },
+                                onBookmarkClick = {
+                                    if (!uiState.isBookmarking) onPostBookmark(mergedPost)
+                                },
                                 onUserClick = { mergedPost.authorUid?.let { onUserClick(it) } },
                                 onPostClick = { },
                                 onMediaClick = { _, index -> onPostMediaClick(index) },
