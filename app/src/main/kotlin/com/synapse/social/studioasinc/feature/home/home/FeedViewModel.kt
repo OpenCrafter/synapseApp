@@ -218,6 +218,10 @@ class FeedViewModel @Inject constructor(
                 result.onFailure {
                     cacheModifiedPost(post)
                     PostEventBus.emit(PostEvent.Updated(post))
+                    // Surface the failure so the user is not left with a silent revert.
+                    updateState {
+                        it.copy(error = application.getString(R.string.error_bookmark_failed))
+                    }
                 }
             }
         }
