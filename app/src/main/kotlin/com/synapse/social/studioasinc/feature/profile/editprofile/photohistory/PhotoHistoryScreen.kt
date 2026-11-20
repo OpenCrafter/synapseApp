@@ -75,7 +75,7 @@ fun PhotoHistoryScreen(
             text = {
                 Column {
                     Text(stringResource(R.string.delete_photo_body))
-                    uiState.error?.let { error ->
+                    uiState.deleteError?.let { error ->
                         Text(
                             text = error,
                             color = MaterialTheme.colorScheme.error,

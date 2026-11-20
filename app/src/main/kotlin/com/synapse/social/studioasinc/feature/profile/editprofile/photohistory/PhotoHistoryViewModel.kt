@@ -19,7 +19,9 @@ data class PhotoHistoryUiState(
     val currentPhotoUrl: String? = null,
     val photoType: PhotoType = PhotoType.PROFILE,
     /** True while a history item delete operation is in flight. */
-    val isDeleting: Boolean = false
+    val isDeleting: Boolean = false,
+    /** Error from the most recent delete attempt, shown in the confirmation dialog. */
+    val deleteError: String? = null
 )
 
 sealed class PhotoHistoryEvent {
@@ -46,12 +48,13 @@ class PhotoHistoryViewModel @Inject constructor(
         }
     }
 
-    private fun loadHistory(type: PhotoType) {
+    private fun loadHistory(type: PhotoType, onComplete: () -> Unit = {}) {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, error = null, photoType = type) }
             val userId = repository.getCurrentUserId()
             if (userId == null) {
                  _uiState.update { it.copy(isLoading = false, error = "User not logged in") }
+                 onComplete()
                  return@launch
             }
 
@@ -73,6 +76,7 @@ class PhotoHistoryViewModel @Inject constructor(
                         }
                     }
                 )
+                onComplete()
             }
         }
     }
@@ -123,11 +127,11 @@ class PhotoHistoryViewModel @Inject constructor(
 
     private fun deleteItem(item: HistoryItem) {
         viewModelScope.launch {
-            _uiState.update { it.copy(isDeleting = true, error = null) }
+            _uiState.update { it.copy(isDeleting = true, deleteError = null) }
             val type = _uiState.value.photoType
             val userId = repository.getCurrentUserId()
             if (userId == null) {
-                 _uiState.update { it.copy(isDeleting = false, error = "User not logged in") }
+                 _uiState.update { it.copy(isDeleting = false, deleteError = "User not logged in") }
                  return@launch
             }
 
@@ -137,7 +141,14 @@ class PhotoHistoryViewModel @Inject constructor(
                     PhotoType.PROFILE -> updateData["avatar"] = null
                     PhotoType.COVER -> updateData["profile_cover_image"] = null
                  }
-                 repository.updateProfile(userId, updateData)
+                 val updateResult = repository.updateProfile(userId, updateData)
+                 if (updateResult.isFailure) {
+                     _uiState.update { it.copy(
+                         isDeleting = false,
+                         deleteError = "Failed to update profile: ${updateResult.exceptionOrNull()?.message ?: "unknown error"}"
+                     )}
+                     return@launch
+                 }
                  _uiState.update { it.copy(currentPhotoUrl = null) }
             }
 
@@ -148,11 +159,14 @@ class PhotoHistoryViewModel @Inject constructor(
 
             result.fold(
                 onSuccess = {
-                    loadHistory(type)
-                    _uiState.update { it.copy(isDeleting = false) }
+                    // Keep isDeleting true until the refreshed history arrives so the delete
+                    // button stays disabled and the dialog cannot re-open a duplicate request.
+                    loadHistory(type) {
+                        _uiState.update { it.copy(isDeleting = false, deleteError = null) }
+                    }
                 },
                 onFailure = { error ->
-                    _uiState.update { it.copy(isDeleting = false, error = "Failed to delete item: ${error.message}") }
+                    _uiState.update { it.copy(isDeleting = false, deleteError = "Failed to delete item: ${error.message}") }
                 }
             )
         }
