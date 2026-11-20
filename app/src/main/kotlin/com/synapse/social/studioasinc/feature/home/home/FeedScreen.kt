@@ -452,6 +452,7 @@ fun FeedScreen(
         )
     }
     }
+    }
 }
 
 @Composable
