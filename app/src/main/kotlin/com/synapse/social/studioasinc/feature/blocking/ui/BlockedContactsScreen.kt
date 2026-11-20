@@ -130,8 +130,7 @@ fun BlockedContactsScreen(
             },
             onDismiss = {
                 userToUnblock = null
-            },
-            isLoading = viewModel.isUnblocking
+            }
         )
     }
     
