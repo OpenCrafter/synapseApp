@@ -52,6 +52,7 @@ fun PostOptionsBottomSheet(
     onShareToChat: (() -> Unit)? = null
 ) {
     var showDeleteDialog by remember { mutableStateOf(false) }
+    var isDeleting by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
 
     val onToggleCommentsAction: () -> Unit = {
@@ -156,10 +157,13 @@ fun PostOptionsBottomSheet(
             text = { Text(stringResource(R.string.delete_post_body)) },
             confirmButton = {
                 TextButton(
+                    enabled = !isDeleting,
                     onClick = {
                         // Do not dismiss the confirmation dialog until the delete result is known.
                         // Dismissing upfront closes the dialog before the async delete completes, so a
                         // failed delete leaves the user with no dialog to retry from and no clear outcome.
+                        if (isDeleting) return@onClick
+                        isDeleting = true
                         scope.launch {
                             val result = onDelete()
                             if (result.isSuccess) {
@@ -169,6 +173,7 @@ fun PostOptionsBottomSheet(
                             // On failure the dialog stays open so the user can retry; the screen's
                             // existing error handling (e.g. the deletePostError snackbar) surfaces the
                             // failure while the dialog remains available for another attempt.
+                            isDeleting = false
                         }
                     }
                 ) {
