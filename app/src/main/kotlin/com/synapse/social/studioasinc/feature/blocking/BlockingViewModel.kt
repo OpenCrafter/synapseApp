@@ -40,6 +40,15 @@ class BlockingViewModel @Inject constructor(
     private val _refreshFailed = MutableStateFlow(false)
     val refreshFailed: StateFlow<Boolean> = _refreshFailed.asStateFlow()
     
+    // In-flight guards so a rapid re-tap on Block/Unblock cannot launch a second
+    // concurrent repository call while the first is still in flight. Set before the
+    // coroutine launches to avoid a check-then-launch race; cleared on both success
+    // and failure so the user can retry after a failed attempt.
+    private val _isBlocking = MutableStateFlow(false)
+    val isBlocking: StateFlow<Boolean> = _isBlocking.asStateFlow()
+    private val _isUnblocking = MutableStateFlow(false)
+    val isUnblocking: StateFlow<Boolean> = _isUnblocking.asStateFlow()
+    
     /**
      * Blocks a user by their ID.
      * Updates UI state to Loading, then to BlockSuccess or Error based on result.
@@ -53,19 +62,26 @@ class BlockingViewModel @Inject constructor(
      * @param userId The ID of the user to block
      */
     fun blockUser(userId: String) {
-        viewModelScope.launch {
-            _uiState.value = BlockingUiState.Loading
+        if (_isBlocking.value) return
+        _isBlocking.value = true
 
-            val result = blockUserUseCase(userId)
-            if (result.isSuccess) {
-                // Refresh first: the newly blocked account is already listed when the confirmation
-                // appears, and a list-load failure is surfaced through refreshFailed.
-                refreshBlockedUsers()
-                _uiState.value = BlockingUiState.BlockSuccess
-            } else {
-                _uiState.value = BlockingUiState.Error(
-                    message = result.exceptionOrNull()?.message ?: "Failed to block user"
-                )
+        viewModelScope.launch {
+            try {
+                _uiState.value = BlockingUiState.Loading
+
+                val result = blockUserUseCase(userId)
+                if (result.isSuccess) {
+                    // Refresh first: the newly blocked account is already listed when the confirmation
+                    // appears, and a list-load failure is surfaced through refreshFailed.
+                    refreshBlockedUsers()
+                    _uiState.value = BlockingUiState.BlockSuccess
+                } else {
+                    _uiState.value = BlockingUiState.Error(
+                        message = result.exceptionOrNull()?.message ?: "Failed to block user"
+                    )
+                }
+            } finally {
+                _isBlocking.value = false
             }
         }
     }
@@ -78,21 +94,28 @@ class BlockingViewModel @Inject constructor(
      * @param userId The ID of the user to unblock
      */
     fun unblockUser(userId: String) {
-        viewModelScope.launch {
-            _uiState.value = BlockingUiState.Loading
-            
-            val result = unblockUserUseCase(userId)
-            result.onSuccess {
-                _uiState.value = BlockingUiState.UnblockSuccess
-            }.onFailure { error ->
-                _uiState.value = BlockingUiState.Error(
-                    message = error.message ?: "Failed to unblock user"
-                )
-            }
+        if (_isUnblocking.value) return
+        _isUnblocking.value = true
 
-            if (result.isSuccess) {
-                // Refresh the data without replacing UnblockSuccess with Loading/Idle.
-                refreshBlockedUsers()
+        viewModelScope.launch {
+            try {
+                _uiState.value = BlockingUiState.Loading
+                
+                val result = unblockUserUseCase(userId)
+                result.onSuccess {
+                    _uiState.value = BlockingUiState.UnblockSuccess
+                }.onFailure { error ->
+                    _uiState.value = BlockingUiState.Error(
+                        message = error.message ?: "Failed to unblock user"
+                    )
+                }
+
+                if (result.isSuccess) {
+                    // Refresh the data without replacing UnblockSuccess with Loading/Idle.
+                    refreshBlockedUsers()
+                }
+            } finally {
+                _isUnblocking.value = false
             }
         }
     }
