@@ -120,13 +120,17 @@ class NotificationSettingsViewModel @Inject constructor(
         updatePreferences { it.copy(reactionNotificationsEnabled = enabled) }
     }
 
-    fun setQuietHours(start: String, end: String) {
-        updatePreferences { it.copy(quietHoursStart = start, quietHoursEnd = end) }
+    fun setQuietHours(start: String, end: String, onResult: (Boolean) -> Unit) {
+        updatePreferences(updateBlock = { it.copy(quietHoursStart = start, quietHoursEnd = end) }, onCompleted = onResult)
     }
 
-    private fun updatePreferences(updateBlock: (NotificationPreferences) -> NotificationPreferences) {
+    private fun updatePreferences(
+        updateBlock: (NotificationPreferences) -> NotificationPreferences,
+        onCompleted: (Boolean) -> Unit = {}
+    ) {
         if (!preferencesLoaded) {
             _error.value = "Notification preferences are not ready yet"
+            onCompleted(false)
             return
         }
 
@@ -146,13 +150,17 @@ class NotificationSettingsViewModel @Inject constructor(
                         persistedPreferences = preferencesToPersist
                         updateOneSignalTags(preferencesToPersist)
                     }
-                    if (latestPreferenceUpdateVersion.get() == versionBeingPersisted) _error.value = null
+                    if (latestPreferenceUpdateVersion.get() == versionBeingPersisted) {
+                        _error.value = null
+                        onCompleted(true)
+                    }
                 }
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
                 android.util.Log.e("NotificationSettingsViewModel", "Failed to update preferences", e)
                 _error.value = "Failed to sync preferences"
+                onCompleted(false)
                 preferencesUpdateMutex.withLock {
                     if (latestPreferenceUpdateVersion.get() == requestVersion) {
                         _notificationPreferences.value = persistedPreferences

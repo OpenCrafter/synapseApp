@@ -70,9 +70,13 @@ fun NotificationSettingsScreen(
             initialTime = notificationPreferences.quietHoursStart,
             onDismiss = { showStartTimePicker = false },
             onConfirm = { time ->
-                viewModel.setQuietHours(time, notificationPreferences.quietHoursEnd)
-                showStartTimePicker = false
-                showEndTimePicker = true
+                viewModel.setQuietHours(time, notificationPreferences.quietHoursEnd) { success ->
+                    if (success) {
+                        showStartTimePicker = false
+                        showEndTimePicker = true
+                    }
+                    // On failure the dialog stays open so the user can retry; the error is shown via the snackbar.
+                }
             },
             confirmText = stringResource(R.string.settings_next_button)
         )
@@ -84,8 +88,10 @@ fun NotificationSettingsScreen(
             initialTime = notificationPreferences.quietHoursEnd,
             onDismiss = { showEndTimePicker = false },
             onConfirm = { time ->
-                viewModel.setQuietHours(notificationPreferences.quietHoursStart, time)
-                showEndTimePicker = false
+                viewModel.setQuietHours(notificationPreferences.quietHoursStart, time) { success ->
+                    if (success) showEndTimePicker = false
+                    // On failure the dialog stays open so the user can retry; the error is shown via the snackbar.
+                }
             },
             confirmText = stringResource(R.string.settings_done_button)
         )
