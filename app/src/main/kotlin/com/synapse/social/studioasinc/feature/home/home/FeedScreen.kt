@@ -465,6 +465,8 @@ private fun FeedCommentItem(
     onOptionsClick: (Post) -> Unit,
     onMediaClick: ((List<String>, Int) -> Unit) = { _, _ -> }
 ) {
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
     // Memoize mapped state to prevent re-mapping on every scroll frame
     val commentState = remember(feedItem) {
         PostUiMapper.toPostCardState(feedItem)
