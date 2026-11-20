@@ -1056,6 +1056,9 @@ onSuccess = {
                     snackbarHostState.showSnackbar(
                         message = stringResource(R.string.disappearing_mode_save_failed)
                     )
+                    // Reset to Idle so a subsequent consecutive failure re-triggers
+                    // this LaunchedEffect and the user gets feedback on every retry.
+                    viewModel.resetDisappearingModeSaveStatus()
                 }
                 ChatSettingsDelegate.DisappearingModeSaveStatus.Idle -> Unit
                 ChatSettingsDelegate.DisappearingModeSaveStatus.Saving -> Unit
