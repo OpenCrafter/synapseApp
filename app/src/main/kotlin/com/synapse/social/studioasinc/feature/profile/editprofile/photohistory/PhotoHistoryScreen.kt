@@ -70,26 +70,51 @@ fun PhotoHistoryScreen(
 
     if (itemToDelete != null) {
         AlertDialog(
-            onDismissRequest = { itemToDelete = null },
+            onDismissRequest = { if (!uiState.isDeleting) itemToDelete = null },
             title = { Text(stringResource(R.string.delete_photo_title)) },
-            text = { Text(stringResource(R.string.delete_photo_body)) },
+            text = {
+                Column {
+                    Text(stringResource(R.string.delete_photo_body))
+                    uiState.deleteError?.let { error ->
+                        Text(
+                            text = error,
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                    }
+                }
+            },
             confirmButton = {
                 TextButton(
                     onClick = {
                         itemToDelete?.let { viewModel.onEvent(PhotoHistoryEvent.DeleteItem(it)) }
-                        itemToDelete = null
                     },
+                    enabled = !uiState.isDeleting && itemToDelete != null,
                     colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
                 ) {
                     Text(stringResource(R.string.action_delete))
                 }
             },
             dismissButton = {
-                TextButton(onClick = { itemToDelete = null }) {
+                TextButton(
+                    onClick = { if (!uiState.isDeleting) itemToDelete = null },
+                    enabled = !uiState.isDeleting
+                ) {
                     Text(stringResource(R.string.cancel))
                 }
             }
         )
+    }
+
+    // Dismiss the delete confirmation only once the delete has completed
+    // successfully (the item is removed from the refreshed history). On failure
+    // the item stays in the list, the error is shown above, and the dialog
+    // stays open so the user can retry.
+    LaunchedEffect(uiState.items, itemToDelete) {
+        val currentItemToDelete = itemToDelete
+        if (currentItemToDelete != null && uiState.items.none { it.id == currentItemToDelete.id }) {
+            itemToDelete = null
+        }
     }
 
     Scaffold(
