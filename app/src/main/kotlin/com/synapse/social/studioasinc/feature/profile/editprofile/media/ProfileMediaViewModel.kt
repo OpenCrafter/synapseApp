@@ -297,40 +297,68 @@ class ProfileMediaViewModel @Inject constructor(
     }
 
     private fun removeAvatar() {
-        _uiState.update { it.copy(isRemovingAvatar = true) }
+        _uiState.update { it.copy(removingAvatar = true, error = null) }
         viewModelScope.launch {
             val userId = repository.getCurrentUserId() ?: run {
-                _uiState.update { it.copy(isRemovingAvatar = false) }
+                _uiState.update {
+                    it.copy(removingAvatar = false, error = "Failed to remove profile photo: user not signed in")
+                }
                 return@launch
             }
             val updateData = mapOf<String, Any?>("avatar" to null)
             val result = repository.updateProfile(userId, updateData)
             result.fold(
                 onSuccess = {
-                    _uiState.update { it.copy(avatarUrl = null, avatarUploadState = UploadState.Idle, isRemovingAvatar = false, showRemoveAvatarDialog = false) }
+                    _uiState.update {
+                        it.copy(
+                            showRemoveAvatarDialog = false,
+                            removingAvatar = false,
+                            avatarUrl = null,
+                            avatarUploadState = UploadState.Idle
+                        )
+                    }
                 },
                 onFailure = { error ->
-                    _uiState.update { it.copy(isRemovingAvatar = false, error = "Failed to remove profile photo: ${error.message}") }
+                    _uiState.update {
+                        it.copy(
+                            removingAvatar = false,
+                            error = "Failed to remove profile photo: ${error.message}"
+                        )
+                    }
                 }
             )
         }
     }
 
     private fun removeCover() {
-        _uiState.update { it.copy(isRemovingCover = true) }
+        _uiState.update { it.copy(removingCover = true, error = null) }
         viewModelScope.launch {
             val userId = repository.getCurrentUserId() ?: run {
-                _uiState.update { it.copy(isRemovingCover = false) }
+                _uiState.update {
+                    it.copy(removingCover = false, error = "Failed to remove cover photo: user not signed in")
+                }
                 return@launch
             }
             val updateData = mapOf<String, Any?>("profile_cover_image" to null)
             val result = repository.updateProfile(userId, updateData)
             result.fold(
                 onSuccess = {
-                    _uiState.update { it.copy(coverUrl = null, coverUploadState = UploadState.Idle, isRemovingCover = false, showRemoveCoverDialog = false) }
+                    _uiState.update {
+                        it.copy(
+                            showRemoveCoverDialog = false,
+                            removingCover = false,
+                            coverUrl = null,
+                            coverUploadState = UploadState.Idle
+                        )
+                    }
                 },
                 onFailure = { error ->
-                    _uiState.update { it.copy(isRemovingCover = false, error = "Failed to remove cover photo: ${error.message}") }
+                    _uiState.update {
+                        it.copy(
+                            removingCover = false,
+                            error = "Failed to remove cover photo: ${error.message}"
+                        )
+                    }
                 }
             )
         }

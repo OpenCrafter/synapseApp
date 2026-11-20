@@ -14,6 +14,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import com.synapse.social.studioasinc.R
+import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 import com.synapse.social.studioasinc.feature.shared.theme.AppShapes
 
@@ -22,7 +23,8 @@ import com.synapse.social.studioasinc.feature.shared.theme.AppShapes
 fun AddApiKeyDialog(
     availableProviders: List<String>,
     onDismiss: () -> Unit,
-    onAdd: (String, String, String?, Int?) -> Unit
+    onAdd: (String, String, String?, Int?) -> Unit,
+    isLoading: Boolean = false
 ) {
     var selectedProvider by remember { mutableStateOf(availableProviders.firstOrNull() ?: "openai") }
     var apiKey by remember { mutableStateOf("") }
@@ -36,7 +38,7 @@ fun AddApiKeyDialog(
     )
 
     ModalBottomSheet(
-        onDismissRequest = onDismiss,
+        onDismissRequest = { if (!isLoading) onDismiss() },
         sheetState = sheetState,
         dragHandle = { BottomSheetDefaults.DragHandle() },
         containerColor = MaterialTheme.colorScheme.surface
@@ -144,16 +146,25 @@ fun AddApiKeyDialog(
                 Spacer(modifier = Modifier.width(Spacing.space16))
                 Button(
                     onClick = {
-                        onAdd(
-                            selectedProvider,
-                            apiKey,
-                            keyName.takeIf { it.isNotBlank() },
-                            usageLimit.toIntOrNull()
-                        )
+                        if (!isLoading) {
+                            onAdd(
+                                selectedProvider,
+                                apiKey,
+                                keyName.takeIf { it.isNotBlank() },
+                                usageLimit.toIntOrNull()
+                            )
+                        }
                     },
-                    enabled = apiKey.isNotBlank()
+                    enabled = apiKey.isNotBlank() && !isLoading
                 ) {
-                    Text(stringResource(R.string.action_save_api_key))
+                    if (isLoading) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(Sizes.IconSemiMedium),
+                            strokeWidth = Sizes.BorderDefault
+                        )
+                    } else {
+                        Text(stringResource(R.string.action_save_api_key))
+                    }
                 }
             }
         }

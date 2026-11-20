@@ -38,6 +38,16 @@ class StorageDataViewModel(
     val useLessDataCalls = settingsRepository.useLessDataCalls
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
 
+    sealed class AutoDownloadSaveStatus {
+        object Idle : AutoDownloadSaveStatus()
+        object Saving : AutoDownloadSaveStatus()
+        object Success : AutoDownloadSaveStatus()
+        data class Failure(val error: String) : AutoDownloadSaveStatus()
+    }
+
+    private val _autoDownloadSaveStatus = MutableStateFlow<AutoDownloadSaveStatus>(AutoDownloadSaveStatus.Idle)
+    val autoDownloadSaveStatus: StateFlow<AutoDownloadSaveStatus> = _autoDownloadSaveStatus.asStateFlow()
+
     private val _showMediaQualitySheet = MutableStateFlow(false)
     val showMediaQualitySheet: StateFlow<Boolean> = _showMediaQualitySheet.asStateFlow()
 
@@ -69,8 +79,18 @@ class StorageDataViewModel(
 
     fun setAutoDownloadRule(networkType: String, mediaTypes: Set<MediaType>) {
         viewModelScope.launch {
-            settingsRepository.setAutoDownloadRule(networkType, mediaTypes)
+            _autoDownloadSaveStatus.value = AutoDownloadSaveStatus.Saving
+            try {
+                settingsRepository.setAutoDownloadRule(networkType, mediaTypes)
+                _autoDownloadSaveStatus.value = AutoDownloadSaveStatus.Success
+            } catch (e: Exception) {
+                _autoDownloadSaveStatus.value = AutoDownloadSaveStatus.Failure(e.message ?: "Failed to save auto-download rule")
+            }
         }
+    }
+
+    fun resetAutoDownloadSaveStatus() {
+        _autoDownloadSaveStatus.value = AutoDownloadSaveStatus.Idle
     }
 
     private fun loadStorageSettings() {

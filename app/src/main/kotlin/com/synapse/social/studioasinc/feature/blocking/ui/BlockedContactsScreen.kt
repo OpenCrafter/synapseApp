@@ -130,7 +130,8 @@ fun BlockedContactsScreen(
             },
             onDismiss = {
                 userToUnblock = null
-            }
+            },
+            isLoading = uiState is BlockingUiState.Loading
         )
     }
     
@@ -154,6 +155,7 @@ fun BlockedContactsScreen(
                     message = unblockSuccessMessage,
                     duration = SnackbarDuration.Short
                 )
+                userToUnblock = null
                 viewModel.resetState()
             }
             is BlockingUiState.Error -> {
@@ -161,6 +163,7 @@ fun BlockedContactsScreen(
                     message = state.message,
                     duration = SnackbarDuration.Long
                 )
+                userToUnblock = null
                 viewModel.resetState()
             }
             else -> {}

@@ -315,21 +315,31 @@ class InboxViewModel @Inject constructor(
         }
     }
 
-    fun createFolderAndAssign(name: String, chatIds: Set<String>) {
+    fun createFolderAndAssign(name: String, chatIds: Set<String>, onResult: (Boolean) -> Unit = {}) {
         val cleanName = name.trim()
-        if (cleanName.isBlank() || chatIds.isEmpty()) return
+        if (cleanName.isBlank() || chatIds.isEmpty()) {
+            onResult(false)
+            return
+        }
         viewModelScope.launch {
             val newFolder = ChatFolder(id = UUID.randomUUID().toString(), name = cleanName, includedChatIds = chatIds.toList())
-            persistFolders(chatFolders.value + newFolder)
-            _selectedFolderId.value = newFolder.id
+            val saved = persistFolders(chatFolders.value + newFolder)
+            if (saved) {
+                _selectedFolderId.value = newFolder.id
+            }
+            // Gate the result on whether persistence succeeded so the caller can keep the
+            // confirmation dialog open on failure and let the user retry.
+            onResult(saved)
         }
     }
 
-    private suspend fun persistFolders(folders: List<ChatFolder>) {
-        try {
+    private suspend fun persistFolders(folders: List<ChatFolder>): Boolean {
+        return try {
             settingsRepository.setChatFoldersJson(Json.encodeToString(folders))
+            true
         } catch (throwable: Exception) {
             _error.value = "Failed to save folder: ${throwable.message.orEmpty()}"
+            false
         }
     }
 
@@ -398,24 +408,25 @@ class InboxViewModel @Inject constructor(
 
     fun deleteConversation(chatId: String) = deleteConversations(setOf(chatId))
 
-    fun deleteConversations(chatIds: Set<String>, onDeleted: (Boolean, Set<String>) -> Unit = { _, _ -> }) {
-        if (chatIds.isEmpty()) return
+    fun deleteConversations(chatIds: Set<String>, onResult: (Boolean) -> Unit = {}) {
+        if (chatIds.isEmpty()) {
+            onResult(true)
+            return
+        }
         viewModelScope.launch {
-            val deleted = mutableSetOf<String>()
             var failures = 0
             chatIds.forEach { chatId ->
                 chatRepository.deleteConversation(chatId)
                     .onSuccess {
-                        deleted += chatId
                         _conversations.value = _conversations.value.filterNot { it.chatId == chatId }
                     }
                     .onFailure { failures++ }
             }
             if (failures > 0) {
                 _error.value = "Failed to delete $failures conversation(s)."
-                onDeleted(false, deleted)
+                onResult(false)
             } else {
-                onDeleted(true, deleted)
+                onResult(true)
             }
         }
     }

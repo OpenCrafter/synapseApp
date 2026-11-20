@@ -32,7 +32,8 @@ fun ChatReportDialog(
     isGroupChat: Boolean,
     targetName: String?,
     onDismiss: () -> Unit,
-    onReport: (String) -> Unit
+    onReport: (String) -> Unit,
+    isLoading: Boolean = false
 ) {
     val context = LocalContext.current
     val reasonResIds = remember {
@@ -102,13 +103,13 @@ fun ChatReportDialog(
                     // retry.
                     selectedReasonRes?.let { onReport(context.getString(it)) }
                 },
-                enabled = selectedReasonRes != null
+                enabled = selectedReasonRes != null && !isLoading
             ) {
                 Text(stringResource(R.string.action_report))
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) {
+            TextButton(onClick = onDismiss, enabled = !isLoading) {
                 Text(stringResource(R.string.action_cancel))
             }
         }

@@ -747,9 +747,14 @@ private fun InboxScreenContent(
                 Button(
                     enabled = newFolderName.isNotBlank(),
                     onClick = {
-                        viewModel.createFolderAndAssign(newFolderName, selectedChatIds)
-                        showCreateFolderDialog = false
-                        newFolderName = ""
+                        viewModel.createFolderAndAssign(newFolderName, selectedChatIds) { success ->
+                            if (success) {
+                                showCreateFolderDialog = false
+                                newFolderName = ""
+                            }
+                            // On failure the dialog stays open so the user can retry;
+                            // the error is surfaced via the existing error snackbar.
+                        }
                     }
                 ) { Text(stringResource(R.string.inbox_folder_save)) }
             },
@@ -764,20 +769,14 @@ private fun InboxScreenContent(
             text = { Text(stringResource(R.string.inbox_delete_message, selectedChatIds.size)) },
             confirmButton = {
                 TextButton(onClick = {
-                    viewModel.deleteConversations(selectedChatIds) { success, deletedIds ->
-                        // Remove successfully deleted IDs from the selection so a retry only
-                        // targets conversations that actually failed, avoiding duplicate delete
-                        // API calls for conversations that are already gone.
-                        selectedChatIds = selectedChatIds - deletedIds
+                    viewModel.deleteConversations(selectedChatIds) { success ->
                         if (success) {
                             showDeleteDialog = false
                             returnToInbox()
-                        } else {
-                            // Delete failed for some conversations: keep them selected for retry.
-                            // The dialog stays open so the user can retry; the failure is surfaced
-                            // via the error snackbar from the ViewModel.
-                            if (selectedChatIds.isEmpty()) returnToInbox()
                         }
+                        // On failure the dialog stays open so the user can retry;
+                        // the error is surfaced via the existing error snackbar.
+                    }
                     }
                 }) { Text(stringResource(R.string.inbox_delete_confirm), color = MaterialTheme.colorScheme.error) }
             },

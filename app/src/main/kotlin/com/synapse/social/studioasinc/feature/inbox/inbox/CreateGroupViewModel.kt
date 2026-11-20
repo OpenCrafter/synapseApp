@@ -26,6 +26,14 @@ enum class GroupCreationError {
     LOAD_REQUESTS_FAILED, UPDATE_MEMBER_FAILED, PRESELECTED_MEMBERS_FAILED
 }
 
+/** Save status for GroupHubStage async actions (rotate invite code, remove member). */
+sealed class GroupHubSaveStatus {
+    object Idle : GroupHubSaveStatus()
+    object Saving : GroupHubSaveStatus()
+    data class Success(val message: String = "Done") : GroupHubSaveStatus()
+    data class Failure(val error: String) : GroupHubSaveStatus()
+}
+
 @HiltViewModel
 class CreateGroupViewModel @Inject constructor(
     private val chatRepository: ChatRepository,
@@ -80,6 +88,13 @@ class CreateGroupViewModel @Inject constructor(
     val isLoadingRequests: StateFlow<Boolean> = _isLoadingRequests.asStateFlow()
     private val _isUpdatingInvite = MutableStateFlow(false)
     val isUpdatingInvite: StateFlow<Boolean> = _isUpdatingInvite.asStateFlow()
+
+    private val _saveStatus = MutableStateFlow<GroupHubSaveStatus>(GroupHubSaveStatus.Idle)
+    val saveStatus: StateFlow<GroupHubSaveStatus> = _saveStatus.asStateFlow()
+
+    fun clearSaveStatus() {
+        _saveStatus.value = GroupHubSaveStatus.Idle
+    }
 
     val currentUserId: String? get() = chatRepository.getCurrentUserId()
 
@@ -241,14 +256,20 @@ class CreateGroupViewModel @Inject constructor(
         viewModelScope.launch { loadPendingRequests(chatId) }
     }
 
-    fun regenerateInvite(onResult: (Boolean) -> Unit) {
-        val chatId = _createdChatId.value ?: return onResult(false)
-        if (_isUpdatingInvite.value) return onResult(false)
+    fun regenerateInvite() {
+        val chatId = _createdChatId.value ?: return
+        if (_isUpdatingInvite.value) return
+        _isUpdatingInvite.value = true
         viewModelScope.launch {
-            _isUpdatingInvite.value = true
+            _saveStatus.value = GroupHubSaveStatus.Saving
             _error.value = null
-            groupCreationRepository.rotateGroupInviteCode(chatId).onSuccess { _inviteCode.value = it; onResult(true) }
-                .onFailure { _error.value = GroupCreationError.INVITE_UNAVAILABLE; onResult(false) }
+            groupCreationRepository.rotateGroupInviteCode(chatId).onSuccess {
+                _inviteCode.value = it
+                _saveStatus.value = GroupHubSaveStatus.Success()
+            }.onFailure { error ->
+                _error.value = GroupCreationError.INVITE_UNAVAILABLE
+                _saveStatus.value = GroupHubSaveStatus.Failure(error.message ?: "Failed to rotate invite code")
+            }
             _isUpdatingInvite.value = false
         }
     }
@@ -282,16 +303,17 @@ class CreateGroupViewModel @Inject constructor(
         }
     }
 
-    fun removeGroupMember(userId: String, onResult: (Boolean) -> Unit) {
-        val chatId = _createdChatId.value ?: return onResult(false)
+    fun removeGroupMember(userId: String) {
+        val chatId = _createdChatId.value ?: return
+        _saveStatus.value = GroupHubSaveStatus.Saving
         viewModelScope.launch {
-            val result = chatRepository.removeGroupMember(chatId, userId)
-            if (result.isSuccess) {
+            chatRepository.removeGroupMember(chatId, userId).onSuccess {
                 loadGroupMembers(chatId)
-                onResult(true)
-            } else {
+                _saveStatus.value = GroupHubSaveStatus.Success()
+            }.onFailure { error ->
                 _error.value = GroupCreationError.UPDATE_MEMBER_FAILED
-                onResult(false)
+                _saveStatus.value = GroupHubSaveStatus.Failure(error.message ?: "Failed to remove member")
+            }
             }
         }
     }

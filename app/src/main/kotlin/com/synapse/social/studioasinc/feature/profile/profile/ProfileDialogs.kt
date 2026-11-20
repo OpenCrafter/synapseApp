@@ -210,7 +210,8 @@ internal fun ReportSection(
             ReportUserDialog(
                 username = it.username,
                 onDismiss = { viewModel.hideReportDialog() },
-                onReport = { reason -> viewModel.reportUser(it.id, reason) }
+                onReport = { reason -> viewModel.reportUser(it.id, reason) },
+                isLoading = state.reportUserLoading
             )
         }
     }

@@ -17,7 +17,8 @@ import com.synapse.social.studioasinc.shared.domain.model.chat.DisappearingMode
 fun DisappearingModeDialog(
     currentMode: DisappearingMode,
     onModeSelected: (DisappearingMode) -> Unit,
-    onDismissRequest: () -> Unit
+    onDismissRequest: () -> Unit,
+    isSaving: Boolean = false
 ) {
     AlertDialog(
         onDismissRequest = onDismissRequest,
@@ -40,9 +41,11 @@ fun DisappearingModeDialog(
                         RadioButton(
                             selected = currentMode == mode,
                             onClick = {
-                                onModeSelected(mode)
-                                onDismissRequest()
-                            }
+                                if (!isSaving) {
+                                    onModeSelected(mode)
+                                }
+                            },
+                            enabled = !isSaving
                         )
                         Spacer(modifier = Modifier.width(Spacing.space8))
                         Text(label)

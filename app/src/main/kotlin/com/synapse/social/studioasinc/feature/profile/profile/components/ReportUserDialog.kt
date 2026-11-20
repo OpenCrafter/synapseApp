@@ -15,7 +15,8 @@ import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 fun ReportUserDialog(
     username: String,
     onDismiss: () -> Unit,
-    onReport: (String) -> Unit
+    onReport: (String) -> Unit,
+    isLoading: Boolean = false
 ) {
     var selectedReason by remember { mutableStateOf<String?>(null) }
 
@@ -68,13 +69,13 @@ fun ReportUserDialog(
                     // dialog stays open so the user can see the error and retry.
                     selectedReason?.let { onReport(it) }
                 },
-                enabled = selectedReason != null
+                enabled = selectedReason != null && !isLoading
             ) {
                 Text(stringResource(R.string.action_report))
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) {
+            TextButton(onClick = onDismiss, enabled = !isLoading) {
                 Text(stringResource(R.string.cancel))
             }
         }

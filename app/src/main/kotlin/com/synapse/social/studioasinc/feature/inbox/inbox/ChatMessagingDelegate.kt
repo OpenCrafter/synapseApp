@@ -374,12 +374,14 @@ class ChatMessagingDelegate(
         onSuccess: () -> Unit = {}
     ) {
         viewModelScope.launch {
-            deleteMessageForMeUseCase(messageId).onSuccess {
-                removeMessages(setOf(messageId))
-                onSuccess()
-            }.onFailure { e ->
-                onError(e.message ?: "Failed to delete message")
-            }
+            deleteMessageForMeUseCase(messageId)
+                .onSuccess {
+                    removeMessages(setOf(messageId))
+                    onSuccess()
+                }
+                .onFailure { e ->
+                    onError(e.message ?: "Failed to delete message")
+                }
         }
     }
 

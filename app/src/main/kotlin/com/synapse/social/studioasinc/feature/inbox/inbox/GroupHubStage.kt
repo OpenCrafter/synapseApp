@@ -128,6 +128,7 @@ internal fun GroupHubStage(
     requests: List<GroupJoinRequest>,
     requestsLoading: Boolean,
     inviteUpdating: Boolean,
+    saveStatus: GroupHubSaveStatus,
     currentUserId: String?,
     error: GroupCreationError?,
     onRegenerateInvite: ((Boolean) -> Unit) -> Unit,
@@ -135,8 +136,9 @@ internal fun GroupHubStage(
     onApproveRequest: (String) -> Unit,
     onDeclineRequest: (String) -> Unit,
     onChangeRole: (String, Boolean) -> Unit,
-    onRemoveMember: (String, (Boolean) -> Unit) -> Unit,
-    onClearError: () -> Unit
+    onRemoveMember: (String) -> Unit,
+    onClearError: () -> Unit,
+    onSaveStatusReset: () -> Unit
 ) {
     val context = LocalContext.current
     val clipboard = LocalClipboard.current
@@ -147,13 +149,36 @@ internal fun GroupHubStage(
     var memberToRemove by remember { mutableStateOf<User?>(null) }
     val inviteLink = inviteCode?.let { GroupInviteLinks.httpsLink(it) }
 
+    // Dismiss confirmation dialogs and surface feedback once the async save result is known.
+    LaunchedEffect(saveStatus) {
+        when (saveStatus) {
+            is GroupHubSaveStatus.Success -> {
+                showRevokeDialog = false
+                memberToRemove = null
+                onSaveStatusReset()
+            }
+            is GroupHubSaveStatus.Failure -> {
+                // Keep dialogs open so the user can retry after a failed async operation.
+            }
+            else -> {}
+        }
+    }
+
     if (showRevokeDialog) {
         AlertDialog(
-            onDismissRequest = { showRevokeDialog = false },
+            onDismissRequest = { showRevokeDialog = false; onSaveStatusReset() },
             title = { Text(stringResource(R.string.group_revoke_title)) },
             text = { Text(stringResource(R.string.group_revoke_body)) },
             confirmButton = {
-                TextButton(onClick = { onRegenerateInvite { success -> if (success) showRevokeDialog = false } }) {
+                TextButton(
+                    onClick = {
+                        if (saveStatus is GroupHubSaveStatus.Idle
+                            || saveStatus is GroupHubSaveStatus.Failure) {
+                            onRegenerateInvite()
+                        }
+                    },
+                    enabled = saveStatus !is GroupHubSaveStatus.Saving
+                ) {
                     Text(stringResource(R.string.group_revoke_confirm))
                 }
             },
@@ -171,11 +196,19 @@ internal fun GroupHubStage(
     }
     memberToRemove?.let { user ->
         AlertDialog(
-            onDismissRequest = { memberToRemove = null },
+            onDismissRequest = { memberToRemove = null; onSaveStatusReset() },
             title = { Text(stringResource(R.string.group_remove_member_title)) },
             text = { Text(stringResource(R.string.group_remove_member_body, userDisplayName(user))) },
             confirmButton = {
-                TextButton(onClick = { onRemoveMember(user.uid) { success -> if (success) memberToRemove = null } }) {
+                TextButton(
+                    onClick = {
+                        if (saveStatus is GroupHubSaveStatus.Idle
+                            || saveStatus is GroupHubSaveStatus.Failure) {
+                            onRemoveMember(user.uid)
+                        }
+                    },
+                    enabled = saveStatus !is GroupHubSaveStatus.Saving
+                ) {
                     Text(stringResource(R.string.remove_member), color = MaterialTheme.colorScheme.error)
                 }
             },

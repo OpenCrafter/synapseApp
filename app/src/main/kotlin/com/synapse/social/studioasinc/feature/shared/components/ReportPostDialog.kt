@@ -15,7 +15,8 @@ import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 fun ReportPostDialog(
     onDismiss: () -> Unit,
     onConfirm: (String) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    error: String? = null
 ) {
     var selectedReason by remember { mutableStateOf("") }
 
@@ -39,6 +40,14 @@ fun ReportPostDialog(
                     style = MaterialTheme.typography.bodyMedium,
                     modifier = Modifier.padding(bottom = Spacing.space8)
                 )
+                error?.let {
+                    Text(
+                        text = it,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.error,
+                        modifier = Modifier.padding(bottom = Spacing.space16)
+                    )
+                }
 
                 reasons.forEach { reason ->
                     Row(

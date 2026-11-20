@@ -25,6 +25,8 @@ data class ReelsUiState(
     val isLoading: Boolean = false,
     val isLoadMoreLoading: Boolean = false,
     val isEndReached: Boolean = false,
+    val isReportingReel: Boolean = false,
+    val isBlockingCreator: Boolean = false,
     val error: String? = null
 )
 
@@ -170,9 +172,9 @@ class ReelsViewModel @Inject constructor(
     suspend fun blockCreator(creatorId: String): Result<Unit> {
         return reelRepository.blockCreator(creatorId)
             .onSuccess {
-
                 loadReels()
-            }.onFailure { e ->
+            }
+            .onFailure { e ->
                 _uiState.update { it.copy(error = "Failed to block: ${e.message}") }
             }
     }

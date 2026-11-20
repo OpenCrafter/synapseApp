@@ -31,6 +31,10 @@ private val ContentNotificationTypes = listOf(
     NotificationCategory.SHARES to R.string.settings_notification_shares_title
 )
 
+private enum class QuietHoursStep {
+    START, END
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NotificationSettingsScreen(
@@ -40,9 +44,14 @@ fun NotificationSettingsScreen(
     val notificationPreferences by viewModel.notificationPreferences.collectAsState()
     val soundPreferences by viewModel.soundPreferences.collectAsState()
     val error by viewModel.error.collectAsState()
+    val quietHoursSaveStatus by viewModel.quietHoursSaveStatus.collectAsState()
 
     var showStartTimePicker by remember { mutableStateOf(false) }
     var showEndTimePicker by remember { mutableStateOf(false) }
+    // Tracks which quiet-hours step is awaiting its async save result so the dialog
+    // is only dismissed/advanced once the result is known.
+    var quietHoursAwaiting by remember { mutableStateOf<QuietHoursStep?>(null) }
+    var quietHoursDialogError by remember { mutableStateOf<String?>(null) }
 
     NotificationSettingsContent(
         notificationPreferences = notificationPreferences,
@@ -70,11 +79,13 @@ fun NotificationSettingsScreen(
             initialTime = notificationPreferences.quietHoursStart,
             onDismiss = { showStartTimePicker = false },
             onConfirm = { time ->
+                quietHoursDialogError = null
+                quietHoursAwaiting = QuietHoursStep.START
                 viewModel.setQuietHours(time, notificationPreferences.quietHoursEnd)
-                showStartTimePicker = false
-                showEndTimePicker = true
             },
-            confirmText = stringResource(R.string.settings_next_button)
+            confirmText = stringResource(R.string.settings_next_button),
+            isSaving = quietHoursSaveStatus is QuietHoursSaveStatus.Saving,
+            error = quietHoursDialogError
         )
     }
 
@@ -84,11 +95,45 @@ fun NotificationSettingsScreen(
             initialTime = notificationPreferences.quietHoursEnd,
             onDismiss = { showEndTimePicker = false },
             onConfirm = { time ->
+                quietHoursDialogError = null
+                quietHoursAwaiting = QuietHoursStep.END
                 viewModel.setQuietHours(notificationPreferences.quietHoursStart, time)
-                showEndTimePicker = false
             },
-            confirmText = stringResource(R.string.settings_done_button)
+            confirmText = stringResource(R.string.settings_done_button),
+            isSaving = quietHoursSaveStatus is QuietHoursSaveStatus.Saving,
+            error = quietHoursDialogError
         )
+    }
+
+    // Only dismiss or advance the quiet-hours dialog once the async save result is known.
+    // On success the dialog closes (or advances to the end step). On failure the dialog stays
+    // open with an in-dialog error so the user can retry, mirroring the fix pattern used for
+    // ChatFolders, Inbox delete, Word Effects, Avatar, Passkeys, Group Info, API Key and Story.
+    LaunchedEffect(quietHoursSaveStatus, quietHoursAwaiting) {
+        when (val status = quietHoursSaveStatus) {
+            is QuietHoursSaveStatus.Success -> {
+                when (val step = quietHoursAwaiting) {
+                    QuietHoursStep.START -> {
+                        showStartTimePicker = false
+                        showEndTimePicker = true
+                    }
+                    QuietHoursStep.END -> {
+                        showStartTimePicker = false
+                        showEndTimePicker = false
+                    }
+                    null -> {}
+                }
+                quietHoursDialogError = null
+                quietHoursAwaiting = null
+                viewModel.clearQuietHoursSaveStatus()
+            }
+            is QuietHoursSaveStatus.Failure -> {
+                quietHoursDialogError = status.error
+                quietHoursAwaiting = null
+                viewModel.clearQuietHoursSaveStatus()
+            }
+            else -> {}
+        }
     }
 }
 
@@ -370,7 +415,9 @@ private fun QuietHoursTimePickerDialog(
     initialTime: String,
     onDismiss: () -> Unit,
     onConfirm: (String) -> Unit,
-    confirmText: String
+    confirmText: String,
+    isSaving: Boolean = false,
+    error: String? = null
 ) {
     val state = rememberTimePickerState(
         initialHour = initialTime.split(":").getOrNull(0)?.toIntOrNull() ?: 0,
@@ -385,6 +432,14 @@ private fun QuietHoursTimePickerDialog(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(title, style = MaterialTheme.typography.titleMedium)
+                error?.let {
+                    Text(
+                        text = it,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.error
+                    )
+                    Spacer(modifier = Modifier.height(Spacing.space8))
+                }
                 Spacer(modifier = Modifier.height(Spacing.space16))
                 TimePicker(state = state)
                 Row(
@@ -392,12 +447,15 @@ private fun QuietHoursTimePickerDialog(
                     horizontalArrangement = Arrangement.End
                 ) {
                     TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) }
-                    TextButton(onClick = {
-                        val time = "${state.hour.toString().padStart(2, '0')}:${
-                            state.minute.toString().padStart(2, '0')
-                        }"
-                        onConfirm(time)
-                    }) { Text(confirmText) }
+                    TextButton(
+                        onClick = {
+                            val time = "${state.hour.toString().padStart(2, '0')}:${
+                                state.minute.toString().padStart(2, '0')
+                            }"
+                            onConfirm(time)
+                        },
+                        enabled = !isSaving
+                    ) { Text(confirmText) }
                 }
             }
         }

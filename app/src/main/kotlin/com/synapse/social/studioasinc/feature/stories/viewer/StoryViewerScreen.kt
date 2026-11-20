@@ -369,12 +369,27 @@ fun StoryViewerScreen(
 
                 if (uiState.showDeleteConfirmation) {
                     AlertDialog(
-                        onDismissRequest = { viewModel.hideDeleteConfirmation() },
+                        // Do not dismiss the dialog via backdrop while a delete is in flight,
+                        // otherwise the story progress timer resumes and can double-advance the story.
+                        onDismissRequest = { if (!uiState.isDeleting) viewModel.hideDeleteConfirmation() },
                         title = { Text(stringResource(R.string.story_delete_title)) },
-                        text = { Text(stringResource(R.string.story_delete_body)) },
+                        text = {
+                            Column(modifier = Modifier.fillMaxWidth()) {
+                                val deleteError = uiState.deleteError
+                                if (deleteError != null) {
+                                    Text(
+                                        text = deleteError,
+                                        color = MaterialTheme.colorScheme.error
+                                    )
+                                } else {
+                                    Text(stringResource(R.string.story_delete_body))
+                                }
+                            }
+                        },
                         confirmButton = {
                             TextButton(
                                 onClick = { currentStory.id?.let { viewModel.confirmDeleteStory(it) } },
+                                enabled = !uiState.isDeleting,
                                 colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
                             ) {
                                 Text(stringResource(R.string.m_delete))

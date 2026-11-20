@@ -43,7 +43,6 @@ fun HashtagFeedScreen(
     var selectedMediaUrls by remember { mutableStateOf<List<String>>(emptyList()) }
     var selectedMediaIndex by remember { mutableIntStateOf(0) }
     var selectedPost by remember { mutableStateOf<Post?>(null) }
-    val scope = rememberCoroutineScope()
     val context = LocalContext.current
     val postLinkLabel = stringResource(R.string.clip_label_post_link)
 
@@ -117,7 +116,13 @@ fun HashtagFeedScreen(
                 commentsDisabled = post.postDisableReplies == "true",
                 onDismiss = { selectedPost = null },
                 onEdit = { onNavigateToEditPost(post.id); selectedPost = null },
-                onDelete = { viewModel.deletePost(post) },
+                onDelete = {
+                    val result = viewModel.deletePost(post)
+                    if (result.isSuccess) {
+                        selectedPost = null
+                    }
+                    result
+                },
                 onShare = {
                     PostShareUtils.sharePost(context, post.id)
                     selectedPost = null
@@ -141,7 +146,13 @@ fun HashtagFeedScreen(
                     }
                     result
                 },
-                onReport = { viewModel.reportPost(post.id) },
+                onReport = {
+                    val result = viewModel.reportPost(post.id)
+                    if (result.isSuccess) {
+                        selectedPost = null
+                    }
+                    result
+                },
                 onBlock = {
                     val result = viewModel.blockUser(post.authorUid)
                     if (result.isSuccess) {

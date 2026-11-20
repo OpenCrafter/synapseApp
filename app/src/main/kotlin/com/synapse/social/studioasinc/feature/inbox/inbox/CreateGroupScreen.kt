@@ -290,6 +290,7 @@ fun CreateGroupScreen(
                     requests = viewModel.pendingRequests.collectAsStateWithLifecycle().value,
                     requestsLoading = viewModel.isLoadingRequests.collectAsStateWithLifecycle().value,
                     inviteUpdating = viewModel.isUpdatingInvite.collectAsStateWithLifecycle().value,
+                    saveStatus = viewModel.saveStatus.collectAsStateWithLifecycle().value,
                     currentUserId = viewModel.currentUserId,
                     error = error,
                     onRegenerateInvite = { callback -> viewModel.regenerateInvite(callback) },
@@ -297,8 +298,9 @@ fun CreateGroupScreen(
                     onApproveRequest = viewModel::approveRequest,
                     onDeclineRequest = viewModel::declineRequest,
                     onChangeRole = viewModel::changeMemberRole,
-                    onRemoveMember = { userId, callback -> viewModel.removeGroupMember(userId, callback) },
-                    onClearError = viewModel::clearError
+                    onRemoveMember = viewModel::removeGroupMember,
+                    onClearError = viewModel::clearError,
+                    onSaveStatusReset = viewModel::clearSaveStatus
                 )
             }
         }

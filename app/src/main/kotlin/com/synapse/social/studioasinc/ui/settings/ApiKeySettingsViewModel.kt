@@ -50,14 +50,22 @@ class ApiKeySettingsViewModel @Inject constructor(
         }
     }
 
-    fun addApiKey(provider: String, keyName: String?, apiKey: String, usageLimit: Int?) {
+    fun addApiKey(
+        provider: String,
+        keyName: String?,
+        apiKey: String,
+        usageLimit: Int?,
+        onResult: (Boolean) -> Unit = { }
+    ) {
         if (apiKey.isBlank()) {
             _error.value = "API Key cannot be empty"
+            onResult(false)
             return
         }
 
         if (usageLimit != null && usageLimit <= 0) {
             _error.value = "Usage limit must be a positive number"
+            onResult(false)
             return
         }
 
@@ -67,11 +75,14 @@ class ApiKeySettingsViewModel @Inject constructor(
                 val result = apiKeySettingsService.storeApiKey(provider, apiKey, keyName, usageLimit)
                 if (result.isSuccess) {
                     _apiKeys.value = apiKeySettingsService.getUserApiKeys()
+                    onResult(true)
                 } else {
                     _error.value = result.exceptionOrNull()?.message ?: "Failed to add API key"
+                    onResult(false)
                 }
             } catch (e: Exception) {
                 _error.value = "An error occurred while adding API key"
+                onResult(false)
             } finally {
                 _isLoading.value = false
             }

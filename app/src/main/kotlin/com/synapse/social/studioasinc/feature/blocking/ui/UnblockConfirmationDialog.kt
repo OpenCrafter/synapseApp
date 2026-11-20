@@ -11,19 +11,21 @@ import com.synapse.social.studioasinc.R
 
 /**
  * Confirmation dialog for unblocking a user.
- * 
+ *
  * Displays an AlertDialog asking the user to confirm the unblock action.
  * Uses theme-compliant styling and string resources for all text.
- * 
+ *
  * Validates Requirements 4.2, 8.4
- * 
+ *
  * @param onConfirm Callback when user confirms the unblock action
  * @param onDismiss Callback when user dismisses the dialog
+ * @param isLoading When true, the confirm button is disabled while the async unblock is in flight
  */
 @Composable
 fun UnblockConfirmationDialog(
     onConfirm: () -> Unit,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    isLoading: Boolean = false
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -42,7 +44,7 @@ fun UnblockConfirmationDialog(
             )
         },
         confirmButton = {
-            TextButton(onClick = onConfirm) {
+            TextButton(onClick = onConfirm, enabled = !isLoading) {
                 Text(
                     text = stringResource(R.string.unblock),
                     style = MaterialTheme.typography.labelLarge,

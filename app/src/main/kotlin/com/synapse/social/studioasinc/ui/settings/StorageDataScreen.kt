@@ -28,11 +28,35 @@ fun StorageDataScreen(
     val autoDownloadRules by viewModel.autoDownloadRules.collectAsState()
     val useLessDataCalls by viewModel.useLessDataCalls.collectAsState()
     val showMediaQualitySheet by viewModel.showMediaQualitySheet.collectAsState()
+    val autoDownloadSaveStatus by viewModel.autoDownloadSaveStatus.collectAsState()
+    val snackbarHostState = remember { SnackbarHostState() }
 
 
     var showMobileDialog by remember { mutableStateOf(false) }
     var showWifiDialog by remember { mutableStateOf(false) }
     var showRoamingDialog by remember { mutableStateOf(false) }
+
+    // Keep each auto-download confirmation dialog open until the async save result is known.
+    // On success the dialog closes; on failure it stays open so the user can retry.
+    LaunchedEffect(autoDownloadSaveStatus) {
+        when (autoDownloadSaveStatus) {
+            is StorageDataViewModel.AutoDownloadSaveStatus.Success -> {
+                showMobileDialog = false
+                showWifiDialog = false
+                showRoamingDialog = false
+                // Reset to Idle so a subsequently opened dialog is not dismissed
+                // immediately by a stale terminal state.
+                viewModel.resetAutoDownloadSaveStatus()
+            }
+            is StorageDataViewModel.AutoDownloadSaveStatus.Failure -> {
+                // Keep the dialog open and surface the error so the user can retry.
+                val failure = autoDownloadSaveStatus as StorageDataViewModel.AutoDownloadSaveStatus.Failure
+                snackbarHostState.showSnackbar(failure.error)
+                viewModel.resetAutoDownloadSaveStatus()
+            }
+            StorageDataViewModel.AutoDownloadSaveStatus.Idle, StorageDataViewModel.AutoDownloadSaveStatus.Saving -> Unit
+        }
+    }
 
     StorageDataContent(
         mediaUploadQuality = mediaUploadQuality,
@@ -46,13 +70,15 @@ fun StorageDataScreen(
         onOpenMobileDialog = { showMobileDialog = true },
         onOpenWifiDialog = { showWifiDialog = true },
         onOpenRoamingDialog = { showRoamingDialog = true },
-        onOpenMediaQualitySheet = { viewModel.openMediaQualitySheet() }
+        onOpenMediaQualitySheet = { viewModel.openMediaQualitySheet() },
+        snackbarHostState = snackbarHostState
     )
 
     StorageDataScreenDialogs(
         showMediaQualitySheet = showMediaQualitySheet,
         mediaUploadQuality = mediaUploadQuality,
         autoDownloadRules = autoDownloadRules,
+        autoDownloadSaveStatus = autoDownloadSaveStatus,
         showMobileDialog = showMobileDialog,
         showWifiDialog = showWifiDialog,
         showRoamingDialog = showRoamingDialog,
@@ -79,13 +105,15 @@ private fun StorageDataContent(
     onOpenMobileDialog: () -> Unit,
     onOpenWifiDialog: () -> Unit,
     onOpenRoamingDialog: () -> Unit,
-    onOpenMediaQualitySheet: () -> Unit
+    onOpenMediaQualitySheet: () -> Unit,
+    snackbarHostState: SnackbarHostState
 ) {
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
 
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         containerColor = AppColors.screenBackground,
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             LargeTopAppBar(
                 title = { Text(stringResource(R.string.settings_storage_data_title)) },
@@ -182,7 +210,8 @@ private fun StorageDataScreenDialogs(
     onSetAutoDownloadRule: (String, Set<MediaType>) -> Unit,
     onDismissMobileDialog: () -> Unit,
     onDismissWifiDialog: () -> Unit,
-    onDismissRoamingDialog: () -> Unit
+    onDismissRoamingDialog: () -> Unit,
+    autoDownloadSaveStatus: StorageDataViewModel.AutoDownloadSaveStatus
 ) {
     if (showMediaQualitySheet) {
         MediaQualityBottomSheet(
@@ -201,9 +230,9 @@ private fun StorageDataScreenDialogs(
             selectedTypes = autoDownloadRules.mobileData,
             onConfirm = {
                 onSetAutoDownloadRule("mobile", it)
-                onDismissMobileDialog()
             },
-            onDismiss = onDismissMobileDialog
+            onDismiss = onDismissMobileDialog,
+            enabled = autoDownloadSaveStatus !is StorageDataViewModel.AutoDownloadSaveStatus.Saving
         )
     }
 
@@ -213,9 +242,9 @@ private fun StorageDataScreenDialogs(
             selectedTypes = autoDownloadRules.wifi,
             onConfirm = {
                 onSetAutoDownloadRule("wifi", it)
-                onDismissWifiDialog()
             },
-            onDismiss = onDismissWifiDialog
+            onDismiss = onDismissWifiDialog,
+            enabled = autoDownloadSaveStatus !is StorageDataViewModel.AutoDownloadSaveStatus.Saving
         )
     }
 
@@ -225,9 +254,9 @@ private fun StorageDataScreenDialogs(
             selectedTypes = autoDownloadRules.roaming,
             onConfirm = {
                 onSetAutoDownloadRule("roaming", it)
-                onDismissRoamingDialog()
             },
-            onDismiss = onDismissRoamingDialog
+            onDismiss = onDismissRoamingDialog,
+            enabled = autoDownloadSaveStatus !is StorageDataViewModel.AutoDownloadSaveStatus.Saving
         )
     }
 }

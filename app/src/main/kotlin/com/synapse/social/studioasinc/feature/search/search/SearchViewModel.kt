@@ -439,6 +439,9 @@ class SearchViewModel @Inject constructor(
 
     fun submitReport(reason: String) {
         val post = currentState.reportDialogPost ?: return
+        // Clear any stale error from a previous failed attempt so a retry
+        // does not misleadingly show an old failure while the new request is in flight.
+        updateState { it.copy(reportError = null) }
         viewModelScope.launch {
             reportPostUseCase(post.id, reason, null).collect { result ->
                 result.onSuccess {
@@ -450,10 +453,11 @@ class SearchViewModel @Inject constructor(
                         )
                     }
                 }.onFailure { err ->
+                    // Keep the dialog open on failure so the user can see the error and retry
+                    // without re-selecting the reason. Close only on success.
                     updateState {
                         it.copy(
-                            isReportDialogShowing = false,
-                            reportDialogPost = null,
+                            isReportDialogShowing = true,
                             reportError = err.message ?: "Failed to report post"
                         )
                     }
@@ -463,7 +467,7 @@ class SearchViewModel @Inject constructor(
     }
 
     fun dismissReportDialog() {
-        updateState { it.copy(isReportDialogShowing = false, reportDialogPost = null) }
+        updateState { it.copy(isReportDialogShowing = false, reportDialogPost = null, reportError = null) }
     }
 
     fun clearReportStatus() {

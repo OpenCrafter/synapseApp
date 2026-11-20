@@ -482,27 +482,41 @@ class PostDetailViewModel @Inject constructor(
         }
     }
 
-    fun reportPost(reason: String, onResult: (Result<Unit>) -> Unit) {
-        val postId = currentPostId ?: return onResult(Result.failure(IllegalStateException("No post ID")))
+    fun reportPost(reason: String) {
+        val postId = currentPostId ?: return
         viewModelScope.launch {
+            _uiState.update { it.copy(reportPostSuccess = false, reportPostError = null) }
             val result = reportRepository.createReport(postId, reason, null)
-            onResult(result)
+            if (result.isSuccess) {
+                _uiState.update { it.copy(reportPostSuccess = true) }
+            } else {
+                _uiState.update {
+                    it.copy(reportPostError = result.exceptionOrNull()?.message ?: "Failed to submit report")
+                }
+            }
         }
     }
 
+    fun clearReportPostStatus() {
+        _uiState.update { it.copy(reportPostSuccess = false, reportPostError = null) }
+    }
+
     suspend fun deletePost(postId: String): Result<Unit> {
-        _uiState.update { it.copy(deletePostSuccess = false, deletePostError = null) }
+        _uiState.update { it.copy(deleteSuccess = false, deleteError = null) }
         return postDetailRepository.deletePost(postId).also { result ->
             result.onSuccess {
-                _uiState.update { it.copy(deletePostSuccess = true) }
-            }.onFailure { e ->
-                _uiState.update { it.copy(deletePostError = e.message ?: "Failed to delete post") }
+                _uiState.update { it.copy(deleteSuccess = true) }
+            }
+            result.onFailure { error ->
+                _uiState.update {
+                    it.copy(deleteError = error.message ?: "Failed to delete post")
+                }
             }
         }
     }
 
     fun clearDeletePostStatus() {
-        _uiState.update { it.copy(deletePostSuccess = false, deletePostError = null) }
+        _uiState.update { it.copy(deleteSuccess = false, deleteError = null) }
     }
 
     suspend fun toggleComments(): Result<Unit> {

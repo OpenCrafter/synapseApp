@@ -51,6 +51,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -81,6 +82,9 @@ data class ProfileScreenState(
     val savedPostIds: Set<String> = emptySet(),
     val showViewAsSheet: Boolean = false,
     val showReportDialog: Boolean = false,
+    val reportUserLoading: Boolean = false,
+    val reportUserSuccess: Boolean = false,
+    val reportUserError: String? = null,
     val viewAsMode: ViewAsMode? = null,
     val viewAsUserName: String? = null,
     val hasStory: Boolean = false,
@@ -92,6 +96,8 @@ data class ProfileScreenState(
     val blockError: String? = null,
     val reportUserSuccess: Boolean = false,
     val reportUserError: String? = null,
+    val reportPostSuccess: Boolean = false,
+    val reportPostError: String? = null,
     val isSummarizing: Boolean = false,
     val postSummary: String? = null,
     val summaryError: String? = null,
@@ -555,7 +561,10 @@ class ProfileViewModel @Inject constructor(
         return reportPostUseCase(postId, reason, null).first()
     }
 
-    // UI Helpers
+    fun clearReportPostStatus() {
+        _state.update { it.copy(reportPostSuccess = false, reportPostError = null) }
+    }
+
     fun showViewAsSheet() { _state.update { it.copy(showViewAsSheet = true) } }
     fun hideViewAsSheet() { _state.update { it.copy(showViewAsSheet = false) } }
     fun showReportDialog() { _state.update { it.copy(showReportDialog = true) } }
@@ -656,18 +665,21 @@ class ProfileViewModel @Inject constructor(
 
     fun reportUser(reportedUserId: String, reason: String) {
         viewModelScope.launch {
-            _state.update { it.copy(reportUserSuccess = false, reportUserError = null) }
-
+            _state.update { it.copy(reportUserLoading = true, reportUserSuccess = false, reportUserError = null) }
             reportUserUseCase(_state.value.currentUserId, reportedUserId, reason).collect { result ->
-                result.onSuccess {
-                    _state.update { it.copy(reportUserSuccess = true) }
-                }.onFailure { error ->
+                if (result.isSuccess) {
+                    _state.update { it.copy(reportUserLoading = false, reportUserSuccess = true) }
+                } else {
                     _state.update {
-                        it.copy(reportUserError = error.message ?: "Failed to report user")
+                        it.copy(reportUserLoading = false, reportUserError = result.exceptionOrNull()?.message ?: "Failed to report user")
                     }
                 }
             }
         }
+    }
+
+    fun clearReportStatus() {
+        _state.update { it.copy(reportUserSuccess = false, reportUserError = null) }
     }
 
     fun muteUser(mutedUserId: String) {

@@ -18,7 +18,11 @@ data class ProfileMediaUiState(
     val isRemovingCover: Boolean = false,
     val showRemoveAvatarDialog: Boolean = false,
     val showRemoveCoverDialog: Boolean = false,
-    val showShareToFeedDialog: Boolean = false
+    val showShareToFeedDialog: Boolean = false,
+    /** True while an avatar removal is in flight, so the confirmation dialog stays open. */
+    val removingAvatar: Boolean = false,
+    /** True while a cover removal is in flight, so the confirmation dialog stays open. */
+    val removingCover: Boolean = false
 )
 
 sealed class ProfileMediaEvent {
