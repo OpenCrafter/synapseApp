@@ -520,9 +520,9 @@ class EchoRoomViewModel @Inject constructor(
 
     fun endRoomForEveryone() {
         val state = _uiState.value
-        if (closed || state.phase != EchoRoomPhase.LIVE || !state.isHost) return
+        if (closed || state.phase != EchoRoomPhase.LIVE || !state.isHost || state.busy) return
+        _uiState.update { it.copy(busy = true, error = null) }
         viewModelScope.launch {
-            _uiState.update { it.copy(busy = true, error = null) }
             endRoom(roomId)
                 .onSuccess { finishEnded() }
                 .onFailure { error ->
