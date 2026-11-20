@@ -778,7 +778,7 @@ private fun InboxScreenContent(
                         // the error is surfaced via the existing error snackbar.
                     }
                     }
-                }) { Text(stringResource(R.string.inbox_delete_confirm), color = MaterialTheme.colorScheme.error) }
+                ) { Text(stringResource(R.string.inbox_delete_confirm), color = MaterialTheme.colorScheme.error) }
             },
             dismissButton = { TextButton(onClick = { showDeleteDialog = false }) { Text(stringResource(R.string.inbox_cancel)) } }
         )

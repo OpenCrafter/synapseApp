@@ -162,8 +162,6 @@ fun PostDetailScreen(
             viewModel.clearReportPostStatus()
         }
     }
-        }
-    }
 
     // Handle comment submission completion: clear input, show errors, reset sending state
     LaunchedEffect(uiState.commentSubmitted) {

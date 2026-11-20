@@ -1281,7 +1281,6 @@ val currentUserId = currentUserIdState ?: ""
                                     ).show()
                                 }
                                 }
-                            }
                         }
                     ) { Text(stringResource(R.string.action_ok)) }
                 },

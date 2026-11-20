@@ -317,4 +317,3 @@ class CreateGroupViewModel @Inject constructor(
             }
         }
     }
-}

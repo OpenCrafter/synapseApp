@@ -521,8 +521,6 @@ class GroupInfoViewModel @Inject constructor(
                 }
         }
     }
-        }
-    }
 
     fun promoteToAdmin(userId: String) {
         val chatId = currentChatId ?: return

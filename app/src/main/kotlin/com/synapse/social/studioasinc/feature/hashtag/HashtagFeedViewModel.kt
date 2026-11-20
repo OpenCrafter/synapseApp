@@ -190,7 +190,6 @@ class HashtagFeedViewModel @Inject constructor(
     }
 
     suspend fun toggleComments(post: Post): Result<Unit> {
-    suspend fun toggleComments(post: Post): Result<Unit> {
         val result = togglePostCommentsUseCase(post.id).single()
         result.onSuccess {
             val toggled = if (post.postDisableReplies == "true") "false" else "true"
@@ -214,7 +213,6 @@ class HashtagFeedViewModel @Inject constructor(
             _uiState.update { it.copy(error = error.message ?: "Failed to block user") }
         }
         return result
-    }
     }
 
     suspend fun reportPost(postId: String): Result<Unit> {
