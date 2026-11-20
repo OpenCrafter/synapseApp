@@ -521,6 +521,9 @@ class EchoRoomViewModel @Inject constructor(
     fun endRoomForEveryone() {
         val state = _uiState.value
         if (closed || state.phase != EchoRoomPhase.LIVE || !state.isHost || state.busy) return
+        // Mark the room busy before launching so a rapid second tap sees `busy == true` and the
+        // confirm button (`enabled = !state.busy`) is disabled immediately. Setting it inside the
+        // coroutine would leave a dispatch-delay window where duplicate `endRoom()` calls slip through.
         _uiState.update { it.copy(busy = true, error = null) }
         viewModelScope.launch {
             endRoom(roomId)
