@@ -1045,6 +1045,7 @@ onSuccess = {
 
         // Dismiss the disappearing mode dialog only when the async save succeeds.
         // On failure the dialog stays open so the user can see the error and retry.
+        val disappearingModeSaveFailedMessage = stringResource(R.string.disappearing_mode_save_failed)
         LaunchedEffect(disappearingModeSaveStatus) {
             when (disappearingModeSaveStatus) {
                 is ChatSettingsDelegate.DisappearingModeSaveStatus.Success -> {
@@ -1054,7 +1055,7 @@ onSuccess = {
                 is ChatSettingsDelegate.DisappearingModeSaveStatus.Failure -> {
                     // Keep dialog open; error is surfaced via snackbar below
                     snackbarHostState.showSnackbar(
-                        message = stringResource(R.string.disappearing_mode_save_failed)
+                        message = disappearingModeSaveFailedMessage
                     )
                 }
                 ChatSettingsDelegate.DisappearingModeSaveStatus.Idle -> Unit
