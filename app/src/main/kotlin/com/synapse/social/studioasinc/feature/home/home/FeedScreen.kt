@@ -370,7 +370,6 @@ fun FeedScreen(
                 }
             }
         }
-    }
     SnackbarHost(
         hostState = snackbarHostState,
         modifier = Modifier.align(Alignment.BottomCenter)
@@ -451,6 +450,7 @@ fun FeedScreen(
             onDismiss = { postToShare = null },
             onShareExternal = { PostShareUtils.sharePost(context, post.id) }
         )
+    }
     }
 }
 
