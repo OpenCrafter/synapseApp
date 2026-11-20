@@ -370,13 +370,10 @@ fun FeedScreen(
                 }
             }
         }
-    }
     SnackbarHost(
         hostState = snackbarHostState,
         modifier = Modifier.align(Alignment.BottomCenter)
     )
-
-    }
 
     if (showMediaViewer && selectedMediaUrls.isNotEmpty()) {
         MediaViewer(
@@ -454,6 +451,8 @@ fun FeedScreen(
             onShareExternal = { PostShareUtils.sharePost(context, post.id) }
         )
     }
+    }
+}
 }
 
 @Composable
