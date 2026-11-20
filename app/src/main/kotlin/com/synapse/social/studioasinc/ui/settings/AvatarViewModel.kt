@@ -52,12 +52,18 @@ class AvatarViewModel @Inject constructor(
                                     currentAvatarUrl = profile.avatar
                                 )
                             },
-                            onFailure = { }
+                            onFailure = { error ->
+                                _uiState.value = _uiState.value.copy(
+                                    error = error.message ?: "Failed to load avatar"
+                                )
+                            }
                         )
                     }
                 }
             } catch (e: Exception) {
-                // Silently fail
+                _uiState.value = _uiState.value.copy(
+                    error = e.message ?: "Failed to load avatar"
+                )
             }
         }
     }
