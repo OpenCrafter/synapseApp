@@ -531,6 +531,12 @@ private val messageSyncUseCase: MessageSyncUseCase = MessageSyncUseCase(getMessa
         currentChatIdProvider = { currentChatId }
     )
 
+    val disappearingModeSaveStatus: StateFlow<ChatSettingsDelegate.DisappearingModeSaveStatus> = settingsDelegate.disappearingModeSaveStatus
+
+    fun resetDisappearingModeSaveStatus() {
+        settingsDelegate.resetDisappearingModeSaveStatus()
+    }
+
     init {
         viewModelScope.launch {
             authRepository.sessionStatus.collect { status ->

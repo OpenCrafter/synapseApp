@@ -48,6 +48,7 @@ import com.synapse.social.studioasinc.core.media.VoicePlayerManager
 import com.synapse.social.studioasinc.feature.auth.ui.util.AnimationUtil
 import com.synapse.social.studioasinc.feature.call.CallLaunchRequest
 import com.synapse.social.studioasinc.feature.inbox.inbox.ChatViewModel
+import com.synapse.social.studioasinc.feature.inbox.inbox.ChatSettingsDelegate
 import com.synapse.social.studioasinc.feature.inbox.inbox.components.*
 import com.synapse.social.studioasinc.feature.inbox.inbox.models.ChatListItem
 import com.synapse.social.studioasinc.feature.inbox.inbox.voice.VoiceAction
@@ -112,6 +113,7 @@ import kotlinx.coroutines.withContext
     var newFolderName by rememberSaveable(chatId) { mutableStateOf("") }
     var showBlockDialog by rememberSaveable(chatId) { mutableStateOf(false) }
     var showClearChatDialog by rememberSaveable(chatId) { mutableStateOf(false) }
+    val snackbarHostState = remember { SnackbarHostState() }
 
     // Initialize the ViewModel with the chat ID
     LaunchedEffect(chatId, participantId) {
@@ -520,7 +522,8 @@ val currentUserId = currentUserIdState ?: ""
         },
         // Edge-to-edge: the conversation owns the whole window, so the header is an overlay instead
         // of a Scaffold top bar that would reserve layout space above the timeline.
-        contentWindowInsets = WindowInsets(0, 0, 0, 0)
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
+        snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { paddingValues ->
         Box(
             modifier = Modifier
@@ -1038,11 +1041,36 @@ onSuccess = {
         }
 
         val disappearingMode by viewModel.disappearingMode.collectAsState()
+        val disappearingModeSaveStatus by viewModel.disappearingModeSaveStatus.collectAsState()
+
+        // Dismiss the disappearing mode dialog only when the async save succeeds.
+        // On failure the dialog stays open so the user can see the error and retry.
+        LaunchedEffect(disappearingModeSaveStatus) {
+            when (disappearingModeSaveStatus) {
+                is ChatSettingsDelegate.DisappearingModeSaveStatus.Success -> {
+                    showDisappearingModeDialog = false
+                    viewModel.resetDisappearingModeSaveStatus()
+                }
+                is ChatSettingsDelegate.DisappearingModeSaveStatus.Failure -> {
+                    // Keep dialog open; error is surfaced via snackbar below
+                    snackbarHostState.showSnackbar(
+                        message = stringResource(R.string.disappearing_mode_save_failed)
+                    )
+                }
+                ChatSettingsDelegate.DisappearingModeSaveStatus.Idle -> Unit
+                ChatSettingsDelegate.DisappearingModeSaveStatus.Saving -> Unit
+            }
+        }
+
         if (showDisappearingModeDialog) {
             com.synapse.social.studioasinc.feature.inbox.inbox.components.DisappearingModeDialog(
                 currentMode = disappearingMode,
+                isSaving = disappearingModeSaveStatus is ChatSettingsDelegate.DisappearingModeSaveStatus.Saving,
                 onModeSelected = { viewModel.setDisappearingMode(it) },
-                onDismissRequest = { showDisappearingModeDialog = false }
+                onDismissRequest = {
+                    showDisappearingModeDialog = false
+                    viewModel.resetDisappearingModeSaveStatus()
+                }
             )
         }
 
