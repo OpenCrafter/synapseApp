@@ -376,8 +376,6 @@ fun FeedScreen(
         modifier = Modifier.align(Alignment.BottomCenter)
     )
 
-    }
-
     if (showMediaViewer && selectedMediaUrls.isNotEmpty()) {
         MediaViewer(
             mediaUrls = selectedMediaUrls,
