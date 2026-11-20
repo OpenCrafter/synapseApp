@@ -398,7 +398,7 @@ fun FeedScreen(
             },
             onReshare = { viewModel.resharePost(post) },
             onCopyLink = { PostShareUtils.copyPostLink(context, post.id) },
-            onBookmark = { viewModel.bookmarkPost(post) },
+            onBookmark = { if (!uiState.inFlightBookmarkIds.contains(post.id)) viewModel.bookmarkPost(post) },
             onToggleComments = { val result = viewModel.toggleComments(post); if (result.isSuccess) { selectedPost = null }; result },
             onReport = { postToReport = post; showReportDialog = true; selectedPost = null; Result.success(Unit) },
             onBlock = { val result = viewModel.blockUser(post.authorUid); if (result.isSuccess) { selectedPost = null }; result },
@@ -465,6 +465,8 @@ private fun FeedCommentItem(
     onOptionsClick: (Post) -> Unit,
     onMediaClick: ((List<String>, Int) -> Unit) = { _, _ -> }
 ) {
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
     // Memoize mapped state to prevent re-mapping on every scroll frame
     val commentState = remember(feedItem) {
         PostUiMapper.toPostCardState(feedItem)
@@ -476,7 +478,13 @@ private fun FeedCommentItem(
     val onShareClick = remember(feedItem.id, context) { { PostShareUtils.shareComment(context, feedItem.content) } }
     val onRepostClick = remember(commentState.post) { { viewModel.resharePost(commentState.post) } }
     val onQuoteClick = remember(commentState.post) { { viewModel.quotePost(commentState.post, "") } }
-    val onBookmarkClick = remember(commentState.post) { { viewModel.bookmarkPost(commentState.post) } }
+    val onBookmarkClick = remember(commentState.post) {
+        {
+            if (!uiState.inFlightBookmarkIds.contains(commentState.post.id)) {
+                viewModel.bookmarkPost(commentState.post)
+            }
+        }
+    }
     val onUserClickAction = remember(feedItem.userId) { { onUserClick(feedItem.userId) } }
     val onPostClick = onCommentClickAction
     val onMediaClickAction = remember(feedItem.id, commentState.mediaUrls) { { _: Post, index: Int ->
