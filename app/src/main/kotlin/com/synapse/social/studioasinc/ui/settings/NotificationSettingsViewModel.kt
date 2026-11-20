@@ -125,8 +125,8 @@ class NotificationSettingsViewModel @Inject constructor(
     }
 
     private fun updatePreferences(
-        updateBlock: (NotificationPreferences) -> NotificationPreferences,
-        onCompleted: (Boolean) -> Unit = {}
+        onCompleted: (Boolean) -> Unit = {},
+        updateBlock: (NotificationPreferences) -> NotificationPreferences
     ) {
         if (!preferencesLoaded) {
             _error.value = "Notification preferences are not ready yet"
