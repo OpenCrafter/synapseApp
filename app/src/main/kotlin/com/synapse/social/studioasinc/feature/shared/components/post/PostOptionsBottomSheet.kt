@@ -158,11 +158,11 @@ fun PostOptionsBottomSheet(
             confirmButton = {
                 TextButton(
                     enabled = !isDeleting,
-                    onClick = {
+                    onClick = click@ {
                         // Do not dismiss the confirmation dialog until the delete result is known.
                         // Dismissing upfront closes the dialog before the async delete completes, so a
                         // failed delete leaves the user with no dialog to retry from and no clear outcome.
-                        if (isDeleting) return@onClick
+                        if (isDeleting) return@click
                         isDeleting = true
                         scope.launch {
                             val result = onDelete()
