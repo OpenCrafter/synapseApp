@@ -57,7 +57,9 @@ data class FeedUiState(
     val postSummary: String? = null,
     val summaryError: String? = null,
     val reportSubmitted: Boolean = false,
-    val isBookmarking: Boolean = false
+    // Post IDs with a bookmark toggle currently in flight. Scoped per post so that a rapid tap on
+    // one post never blocks bookmark taps on a different post.
+    val inFlightBookmarkIds: Set<String> = emptySet()
 )
 
 @HiltViewModel
@@ -210,9 +212,10 @@ class FeedViewModel @Inject constructor(
     }
 
     fun bookmarkPost(post: Post) {
-        // Guard against rapid-tap duplicate requests: ignore a second tap while a toggle is in flight.
-        if (currentState.isBookmarking) return
-        updateState { it.copy(isBookmarking = true) }
+        // Guard against rapid-tap duplicate requests: ignore a second tap on the same post while its
+        // bookmark toggle is in flight. Other posts remain tappable.
+        if (currentState.inFlightBookmarkIds.contains(post.id)) return
+        updateState { it.copy(inFlightBookmarkIds = it.inFlightBookmarkIds + post.id) }
         viewModelScope.launch {
             try {
                 val optimisticPost = post.copy(isBookmarked = !post.isBookmarked)
@@ -229,8 +232,8 @@ class FeedViewModel @Inject constructor(
                     }
                 }
             } finally {
-                // Always clear the flag so the user can retry after success or failure.
-                updateState { it.copy(isBookmarking = false) }
+                // Always clear the in-flight marker so the user can retry after success or failure.
+                updateState { it.copy(inFlightBookmarkIds = it.inFlightBookmarkIds - post.id) }
             }
         }
     }
