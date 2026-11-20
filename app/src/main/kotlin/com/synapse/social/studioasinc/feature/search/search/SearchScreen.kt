@@ -350,7 +350,7 @@ fun SearchScreen(
                                                         onShare = { p -> PostShareUtils.sharePost(context, p.id) },
                                                         onRepost = viewModel::resharePost,
                                                         onQuote = { post -> onNavigateToQuotePost(post.id) },
-                                                        onBookmark = viewModel::bookmarkPost,
+                                                        onBookmark = { post -> if (!uiState.isBookmarking) viewModel.bookmarkPost(post) },
                                                         onOptionClick = { p -> selectedPost = p },
                                                         onPollVote = viewModel::votePoll,
                                                                  onUserClick = { userId -> onNavigateToProfile(userId) },
@@ -468,7 +468,7 @@ fun SearchScreen(
                                                                 onShare = { p -> PostShareUtils.sharePost(context, p.id) },
                                                                 onRepost = viewModel::resharePost,
                                                                 onQuote = { post -> onNavigateToQuotePost(post.id) },
-                                                                onBookmark = viewModel::bookmarkPost,
+                                                                onBookmark = { post -> if (!uiState.isBookmarking) viewModel.bookmarkPost(post) },
                                                                 onOptionClick = { p -> selectedPost = p },
                                                                 onPollVote = viewModel::votePoll,
                                                                 onUserClick = { userId -> onNavigateToProfile(userId) },
@@ -521,8 +521,10 @@ onMediaClick = { post, index ->
                 selectedPost = null
             },
             onBookmark = {
-                viewModel.bookmarkPost(post)
-                selectedPost = null
+                if (!uiState.isBookmarking) {
+                    viewModel.bookmarkPost(post)
+                    selectedPost = null
+                }
             },
             onToggleComments = { val result = viewModel.toggleComments(post); if (result.isSuccess) { selectedPost = null }; result },
             onReport = { viewModel.reportPost(post) },

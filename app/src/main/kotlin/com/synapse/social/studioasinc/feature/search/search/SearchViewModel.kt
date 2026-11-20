@@ -66,7 +66,8 @@ data class SearchUiState(
     val reportError: String? = null,
     val isSummarizing: Boolean = false,
     val postSummary: String? = null,
-    val summaryError: String? = null
+    val summaryError: String? = null,
+    val isBookmarking: Boolean = false
 )
 
 @HiltViewModel
@@ -396,10 +397,18 @@ class SearchViewModel @Inject constructor(
     }
 
     fun bookmarkPost(post: com.synapse.social.studioasinc.domain.model.Post) {
+        // Guard against rapid-tap duplicate requests: ignore a second tap while a toggle is in flight.
+        if (currentState.isBookmarking) return
+        updateState { it.copy(isBookmarking = true) }
         viewModelScope.launch {
-            val userId = authRepository.getCurrentUserId() ?: return@launch
-            bookmarkPostUseCase(post.id, userId, post.isBookmarked == true).collect { result ->
-                result.onFailure { err -> updateState { it.copy(error = err.message) } }
+            try {
+                val userId = authRepository.getCurrentUserId() ?: return@launch
+                bookmarkPostUseCase(post.id, userId, post.isBookmarked == true).collect { result ->
+                    result.onFailure { err -> updateState { it.copy(error = err.message) } }
+                }
+            } finally {
+                // Always clear the flag so the user can retry after success or failure.
+                updateState { it.copy(isBookmarking = false) }
             }
         }
     }
