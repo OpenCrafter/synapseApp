@@ -293,7 +293,7 @@ fun CreateGroupScreen(
                     saveStatus = viewModel.saveStatus.collectAsStateWithLifecycle().value,
                     currentUserId = viewModel.currentUserId,
                     error = error,
-                    onRegenerateInvite = { callback -> viewModel.regenerateInvite(callback) },
+                    onRegenerateInvite = viewModel::regenerateInvite,
                     onOpenRequests = viewModel::refreshPendingRequests,
                     onApproveRequest = viewModel::approveRequest,
                     onDeclineRequest = viewModel::declineRequest,

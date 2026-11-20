@@ -126,15 +126,15 @@ fun PostDetailScreen(
     }
 
     // Handle post delete completion: navigate back only on success, surface error on failure
-    LaunchedEffect(uiState.deletePostSuccess, uiState.deletePostError) {
+    LaunchedEffect(uiState.deleteSuccess, uiState.deleteError) {
         when {
-            uiState.deletePostSuccess -> {
+            uiState.deleteSuccess -> {
                 onNavigateBack()
                 viewModel.clearDeletePostStatus()
             }
-            uiState.deletePostError != null -> {
+            uiState.deleteError != null -> {
                 snackbarHostState.showSnackbar(
-                    message = uiState.deletePostError ?: context.getString(R.string.error_unknown)
+                    message = uiState.deleteError ?: context.getString(R.string.error_unknown)
                 )
                 viewModel.clearDeletePostStatus()
             }

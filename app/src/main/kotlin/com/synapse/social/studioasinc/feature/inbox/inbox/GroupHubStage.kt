@@ -131,7 +131,7 @@ internal fun GroupHubStage(
     saveStatus: GroupHubSaveStatus,
     currentUserId: String?,
     error: GroupCreationError?,
-    onRegenerateInvite: ((Boolean) -> Unit) -> Unit,
+    onRegenerateInvite: () -> Unit,
     onOpenRequests: () -> Unit,
     onApproveRequest: (String) -> Unit,
     onDeclineRequest: (String) -> Unit,

@@ -94,8 +94,6 @@ data class ProfileScreenState(
     val isRefreshing: Boolean = false,
     val blockSuccess: Boolean = false,
     val blockError: String? = null,
-    val reportUserSuccess: Boolean = false,
-    val reportUserError: String? = null,
     val reportPostSuccess: Boolean = false,
     val reportPostError: String? = null,
     val isSummarizing: Boolean = false,
@@ -657,10 +655,6 @@ class ProfileViewModel @Inject constructor(
     
     fun clearBlockStatus() {
         _state.update { it.copy(blockSuccess = false, blockError = null) }
-    }
-
-    fun clearReportStatus() {
-        _state.update { it.copy(reportUserSuccess = false, reportUserError = null) }
     }
 
     fun reportUser(reportedUserId: String, reason: String) {
