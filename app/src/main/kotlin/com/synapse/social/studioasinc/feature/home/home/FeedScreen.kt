@@ -398,7 +398,7 @@ fun FeedScreen(
             },
             onReshare = { viewModel.resharePost(post) },
             onCopyLink = { PostShareUtils.copyPostLink(context, post.id) },
-            onBookmark = { viewModel.bookmarkPost(post) },
+            onBookmark = { if (!uiState.isBookmarking) viewModel.bookmarkPost(post) },
             onToggleComments = { val result = viewModel.toggleComments(post); if (result.isSuccess) { selectedPost = null }; result },
             onReport = { postToReport = post; showReportDialog = true; selectedPost = null; Result.success(Unit) },
             onBlock = { val result = viewModel.blockUser(post.authorUid); if (result.isSuccess) { selectedPost = null }; result },

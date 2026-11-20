@@ -56,7 +56,8 @@ data class FeedUiState(
     val isSummarizing: Boolean = false,
     val postSummary: String? = null,
     val summaryError: String? = null,
-    val reportSubmitted: Boolean = false
+    val reportSubmitted: Boolean = false,
+    val isBookmarking: Boolean = false
 )
 
 @HiltViewModel
@@ -209,21 +210,27 @@ class FeedViewModel @Inject constructor(
     }
 
     fun bookmarkPost(post: Post) {
+        // Guard against rapid-tap duplicate requests: ignore a second tap while a toggle is in flight.
+        if (currentState.isBookmarking) return
+        updateState { it.copy(isBookmarking = true) }
         viewModelScope.launch {
-            val optimisticPost = post.copy(isBookmarked = !post.isBookmarked)
-            cacheModifiedPost(optimisticPost)
-            PostEventBus.emit(PostEvent.Updated(optimisticPost))
-            val currentUserId = getCurrentUserIdUseCase() ?: return@launch
-            bookmarkPostUseCase(post.id, currentUserId, post.isBookmarked).collect { result ->
-                result.onFailure {
-                    cacheModifiedPost(post)
-                    PostEventBus.emit(PostEvent.Updated(post))
-                    // Surface the failure so the user is not left with a silent revert.
-                    // Guard against clobbering an already-displayed error, mirroring resharePost().
-                    updateState {
-                        it.copy(error = it.error ?: application.getString(R.string.error_bookmark_failed))
+            try {
+                val optimisticPost = post.copy(isBookmarked = !post.isBookmarked)
+                cacheModifiedPost(optimisticPost)
+                PostEventBus.emit(PostEvent.Updated(optimisticPost))
+                val currentUserId = getCurrentUserIdUseCase() ?: return@launch
+                bookmarkPostUseCase(post.id, currentUserId, post.isBookmarked).collect { result ->
+                    result.onFailure {
+                        cacheModifiedPost(post)
+                        PostEventBus.emit(PostEvent.Updated(post))
+                        updateState {
+                            it.copy(error = it.error ?: application.getString(R.string.error_bookmark_failed))
+                        }
                     }
                 }
+            } finally {
+                // Always clear the flag so the user can retry after success or failure.
+                updateState { it.copy(isBookmarking = false) }
             }
         }
     }
