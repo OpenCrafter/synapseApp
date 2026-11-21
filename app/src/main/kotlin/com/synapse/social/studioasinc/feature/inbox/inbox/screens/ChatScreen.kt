@@ -107,7 +107,6 @@ import kotlinx.coroutines.withContext
     val reducedMotion = AnimationUtil.rememberReducedMotion()
     var showEncryptionSheet by rememberSaveable(chatId) { mutableStateOf(false) }
     var showReportDialog by rememberSaveable(chatId) { mutableStateOf(false) }
-    var isReporting by rememberSaveable(chatId) { mutableStateOf(false) }
     var showDeleteChatDialog by rememberSaveable(chatId) { mutableStateOf(false) }
     var showChatFolderSheet by rememberSaveable(chatId) { mutableStateOf(false) }
     var showCreateFolderDialog by rememberSaveable(chatId) { mutableStateOf(false) }
@@ -521,10 +520,10 @@ val currentUserId = currentUserIdState ?: ""
                 )
             }
         },
-        snackbarHost = { SnackbarHost(snackbarHostState) },
         // Edge-to-edge: the conversation owns the whole window, so the header is an overlay instead
         // of a Scaffold top bar that would reserve layout space above the timeline.
-        contentWindowInsets = WindowInsets(0, 0, 0, 0)
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
+        snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { paddingValues ->
         Box(
             modifier = Modifier
@@ -840,8 +839,8 @@ val currentUserId = currentUserIdState ?: ""
                                 android.widget.Toast.LENGTH_LONG
                             ).show()
                         },
-                        onSuccess = {
-                            showDeleteMessageDialog = null
+onSuccess = {
+                            showDeleteSelectedDialog = false
                             android.widget.Toast.makeText(
                                 context,
                                 context.getString(R.string.message_deleted_successfully),
@@ -1046,6 +1045,7 @@ val currentUserId = currentUserIdState ?: ""
 
         // Dismiss the disappearing mode dialog only when the async save succeeds.
         // On failure the dialog stays open so the user can see the error and retry.
+        val disappearingModeSaveFailedMessage = stringResource(R.string.disappearing_mode_save_failed)
         LaunchedEffect(disappearingModeSaveStatus) {
             when (disappearingModeSaveStatus) {
                 is ChatSettingsDelegate.DisappearingModeSaveStatus.Success -> {
@@ -1055,8 +1055,11 @@ val currentUserId = currentUserIdState ?: ""
                 is ChatSettingsDelegate.DisappearingModeSaveStatus.Failure -> {
                     // Keep dialog open; error is surfaced via snackbar below
                     snackbarHostState.showSnackbar(
-                        message = context.getString(R.string.disappearing_mode_save_failed)
+                        message = disappearingModeSaveFailedMessage
                     )
+                    // Reset to Idle so a subsequent consecutive failure re-triggers
+                    // this LaunchedEffect and the user gets feedback on every retry.
+                    viewModel.resetDisappearingModeSaveStatus()
                 }
                 ChatSettingsDelegate.DisappearingModeSaveStatus.Idle -> Unit
                 ChatSettingsDelegate.DisappearingModeSaveStatus.Saving -> Unit
@@ -1081,12 +1084,10 @@ val currentUserId = currentUserIdState ?: ""
                 targetName = chatDisplayName,
                 onDismiss = { showReportDialog = false },
                 onReport = { reason ->
-                    isReporting = true
                     viewModel.reportCurrentChat(
                         participantUserId = participantId,
                         reason = reason,
                         onResult = { result ->
-                            isReporting = false
                             if (result.isSuccess) {
                                 showReportDialog = false
                             }
@@ -1097,8 +1098,7 @@ val currentUserId = currentUserIdState ?: ""
                             ).show()
                         }
                     )
-                },
-                isLoading = isReporting
+                }
             )
         }
 
@@ -1120,18 +1120,12 @@ val currentUserId = currentUserIdState ?: ""
                             viewModel.blockCurrentChatParticipant(participantId.orEmpty()) { result ->
                                 if (result.isSuccess) {
                                     showBlockDialog = false
-                                    Toast.makeText(
-                                        context,
-                                        R.string.chat_info_msg_blocked,
-                                        Toast.LENGTH_SHORT
-                                    ).show()
-                                } else {
-                                    Toast.makeText(
-                                        context,
-                                        R.string.chat_info_error_block,
-                                        Toast.LENGTH_SHORT
-                                    ).show()
                                 }
+                                Toast.makeText(
+                                    context,
+                                    if (result.isSuccess) R.string.chat_info_msg_blocked else R.string.chat_info_error_block,
+                                    Toast.LENGTH_SHORT
+                                ).show()
                             }
                         }
                     ) {
@@ -1177,27 +1171,6 @@ val currentUserId = currentUserIdState ?: ""
             )
         }
         val chatFolders by viewModel.chatFolders.collectAsState()
-        val createFolderSaveStatus by viewModel.createFolderSaveStatus.collectAsState()
-
-        // Dismiss the create folder dialog only when the async save succeeds.
-        // On failure the dialog stays open so the user can see the error and retry.
-        LaunchedEffect(createFolderSaveStatus) {
-            when (createFolderSaveStatus) {
-                is ChatViewModel.CreateFolderSaveStatus.Success -> {
-                    showCreateFolderDialog = false
-                    newFolderName = ""
-                    viewModel.resetCreateFolderSaveStatus()
-                }
-                is ChatViewModel.CreateFolderSaveStatus.Failure -> {
-                    // Keep dialog open; error is surfaced via snackbar below
-                    snackbarHostState.showSnackbar(
-                        message = context.getString(R.string.chat_folder_save_failed)
-                    )
-                }
-                ChatViewModel.CreateFolderSaveStatus.Idle -> Unit
-                ChatViewModel.CreateFolderSaveStatus.Saving -> Unit
-            }
-        }
 
         if (showChatFolderSheet) {
             val currentChatId = resolvedChatId ?: chatId
@@ -1221,7 +1194,6 @@ val currentUserId = currentUserIdState ?: ""
                 onDismissRequest = {
                     showCreateFolderDialog = false
                     newFolderName = ""
-                    viewModel.resetCreateFolderSaveStatus()
                 },
                 title = { Text(stringResource(R.string.inbox_folder_create)) },
                 text = {
@@ -1234,12 +1206,18 @@ val currentUserId = currentUserIdState ?: ""
                 },
                 confirmButton = {
                     TextButton(
-                        enabled = newFolderName.isNotBlank() && createFolderSaveStatus !is ChatViewModel.CreateFolderSaveStatus.Saving,
+                        enabled = newFolderName.isNotBlank(),
                         onClick = {
-                            viewModel.createFolderAndAssignCurrentChat(newFolderName)
-                            // Do not dismiss here: dismissal is gated on createFolderSaveStatus
-                            // becoming Success (via the LaunchedEffect above). On Failure the
-                            // dialog stays open so the user can retry.
+                            // Do not dismiss the dialog here: createFolderAndAssignCurrentChat is
+                            // async. Keep the dialog open until the result is known so a failed
+                            // folder creation is not mistaken for success. On failure the dialog
+                            // stays open for retry and the error is surfaced via viewModel.error.
+                            viewModel.createFolderAndAssignCurrentChat(newFolderName) { success ->
+                                if (success) {
+                                    showCreateFolderDialog = false
+                                    newFolderName = ""
+                                }
+                            }
                         }
                     ) { Text(stringResource(R.string.inbox_folder_save)) }
                 },
@@ -1248,7 +1226,6 @@ val currentUserId = currentUserIdState ?: ""
                         onClick = {
                             showCreateFolderDialog = false
                             newFolderName = ""
-                            viewModel.resetCreateFolderSaveStatus()
                         }
                     ) { Text(stringResource(R.string.action_cancel)) }
                 }
@@ -1265,22 +1242,20 @@ val currentUserId = currentUserIdState ?: ""
                     TextButton(
                         onClick = {
                             viewModel.deleteCurrentChat { result ->
+                                Toast.makeText(
+                                    context,
+                                    if (result.isSuccess) {
+                                        R.string.chat_menu_delete_chat_success
+                                    } else {
+                                        R.string.chat_menu_delete_chat_error
+                                    },
+                                    Toast.LENGTH_SHORT
+                                ).show()
                                 if (result.isSuccess) {
                                     showDeleteChatDialog = false
                                     onNavigateBack()
-                                    Toast.makeText(
-                                        context,
-                                        R.string.chat_menu_delete_chat_success,
-                                        Toast.LENGTH_SHORT
-                                    ).show()
-                                } else {
-                                    Toast.makeText(
-                                        context,
-                                        R.string.chat_menu_delete_chat_error,
-                                        Toast.LENGTH_SHORT
-                                    ).show()
                                 }
-                                }
+                            }
                         }
                     ) { Text(stringResource(R.string.action_ok)) }
                 },

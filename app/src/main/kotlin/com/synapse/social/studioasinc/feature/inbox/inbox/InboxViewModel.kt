@@ -318,6 +318,7 @@ class InboxViewModel @Inject constructor(
     fun createFolderAndAssign(name: String, chatIds: Set<String>, onResult: (Boolean) -> Unit = {}) {
         val cleanName = name.trim()
         if (cleanName.isBlank() || chatIds.isEmpty()) {
+            _error.value = "Please enter a folder name and select at least one conversation."
             onResult(false)
             return
         }
@@ -408,25 +409,24 @@ class InboxViewModel @Inject constructor(
 
     fun deleteConversation(chatId: String) = deleteConversations(setOf(chatId))
 
-    fun deleteConversations(chatIds: Set<String>, onResult: (Boolean) -> Unit = {}) {
-        if (chatIds.isEmpty()) {
-            onResult(true)
-            return
-        }
+    fun deleteConversations(chatIds: Set<String>, onDeleted: (Boolean, Set<String>) -> Unit = { _, _ -> }) {
+        if (chatIds.isEmpty()) return
         viewModelScope.launch {
+            val deleted = mutableSetOf<String>()
             var failures = 0
             chatIds.forEach { chatId ->
                 chatRepository.deleteConversation(chatId)
                     .onSuccess {
+                        deleted += chatId
                         _conversations.value = _conversations.value.filterNot { it.chatId == chatId }
                     }
                     .onFailure { failures++ }
             }
             if (failures > 0) {
                 _error.value = "Failed to delete $failures conversation(s)."
-                onResult(false)
+                onDeleted(false, deleted)
             } else {
-                onResult(true)
+                onDeleted(true, deleted)
             }
         }
     }

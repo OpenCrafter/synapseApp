@@ -12,6 +12,13 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+sealed class AddApiKeyStatus {
+    object Idle : AddApiKeyStatus()
+    object Adding : AddApiKeyStatus()
+    data class Success(val message: String = "API key added") : AddApiKeyStatus()
+    data class Failure(val error: String) : AddApiKeyStatus()
+}
+
 @HiltViewModel
 class ApiKeySettingsViewModel @Inject constructor(
     private val apiKeySettingsService: ApiKeySettingsService
@@ -28,6 +35,9 @@ class ApiKeySettingsViewModel @Inject constructor(
 
     private val _error = MutableStateFlow<String?>(null)
     val error: StateFlow<String?> = _error.asStateFlow()
+
+    private val _addApiKeyStatus = MutableStateFlow<AddApiKeyStatus>(AddApiKeyStatus.Idle)
+    val addApiKeyStatus: StateFlow<AddApiKeyStatus> = _addApiKeyStatus.asStateFlow()
 
     fun loadSettings() {
         viewModelScope.launch {
@@ -50,43 +60,44 @@ class ApiKeySettingsViewModel @Inject constructor(
         }
     }
 
-    fun addApiKey(
-        provider: String,
-        keyName: String?,
-        apiKey: String,
-        usageLimit: Int?,
-        onResult: (Boolean) -> Unit = { }
-    ) {
+    fun addApiKey(provider: String, keyName: String?, apiKey: String, usageLimit: Int?) {
         if (apiKey.isBlank()) {
             _error.value = "API Key cannot be empty"
-            onResult(false)
+            _addApiKeyStatus.value = AddApiKeyStatus.Failure("API Key cannot be empty")
             return
         }
 
         if (usageLimit != null && usageLimit <= 0) {
             _error.value = "Usage limit must be a positive number"
-            onResult(false)
+            _addApiKeyStatus.value = AddApiKeyStatus.Failure("Usage limit must be a positive number")
             return
         }
 
+        _addApiKeyStatus.value = AddApiKeyStatus.Adding
         viewModelScope.launch {
             _isLoading.value = true
             try {
                 val result = apiKeySettingsService.storeApiKey(provider, apiKey, keyName, usageLimit)
                 if (result.isSuccess) {
                     _apiKeys.value = apiKeySettingsService.getUserApiKeys()
-                    onResult(true)
+                    _addApiKeyStatus.value = AddApiKeyStatus.Success()
                 } else {
-                    _error.value = result.exceptionOrNull()?.message ?: "Failed to add API key"
-                    onResult(false)
+                    val msg = result.exceptionOrNull()?.message ?: "Failed to add API key"
+                    _error.value = msg
+                    _addApiKeyStatus.value = AddApiKeyStatus.Failure(msg)
                 }
             } catch (e: Exception) {
-                _error.value = "An error occurred while adding API key"
-                onResult(false)
+                val msg = "An error occurred while adding API key"
+                _error.value = msg
+                _addApiKeyStatus.value = AddApiKeyStatus.Failure(msg)
             } finally {
                 _isLoading.value = false
             }
         }
+    }
+
+    fun clearAddApiKeyStatus() {
+        _addApiKeyStatus.value = AddApiKeyStatus.Idle
     }
 
     fun deleteApiKey(keyId: String, onResult: (Boolean) -> Unit) {

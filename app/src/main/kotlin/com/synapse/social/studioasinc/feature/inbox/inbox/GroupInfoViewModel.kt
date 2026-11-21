@@ -54,6 +54,8 @@ data class GroupInfoUiState(
     val isUpdatingName: Boolean = false,
     /** True while a group description update is in flight; used to disable the confirm button and prevent double-tap. */
     val isUpdatingDescription: Boolean = false,
+    /** True while a disappearing-mode update is in flight; used to disable the confirm button and prevent double-tap. */
+    val isUpdatingDisappearingMode: Boolean = false,
     val memberSearchQuery: String = "",
     val filteredMembers: List<Pair<User, Boolean>> = emptyList(),
     /** True when the current user may edit group info: admins always, members only when the group allows it. */
@@ -334,9 +336,9 @@ class GroupInfoViewModel @Inject constructor(
         }
     }
 
-    fun setDisappearingMode(mode: DisappearingMode, onResult: () -> Unit = {}) {
+    fun setDisappearingMode(mode: DisappearingMode, onResult: (Boolean) -> Unit) {
         val chatId = currentChatId ?: return
-        _uiState.value = _uiState.value.copy(isUpdatingDisappearingMode = true, errorRes = null)
+        _uiState.value = _uiState.value.copy(isUpdatingDisappearingMode = true)
         viewModelScope.launch {
             chatRepository.setDisappearingMode(chatId, mode)
                 .onSuccess {
@@ -345,13 +347,14 @@ class GroupInfoViewModel @Inject constructor(
                         errorRes = null,
                         isUpdatingDisappearingMode = false
                     )
-                    onResult()
+                    onResult(true)
                 }
                 .onFailure {
                     _uiState.value = _uiState.value.copy(
-                        errorRes = R.string.group_error_create,
+                        errorRes = R.string.chat_info_error_update_disappearing_mode,
                         isUpdatingDisappearingMode = false
                     )
+                    onResult(false)
                 }
         }
     }

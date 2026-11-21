@@ -199,7 +199,6 @@ fun GroupInfoScreen(
     val members = uiState.members
     val isAdmin = uiState.currentUserIsAdmin
     val canEditGroupInfo = uiState.canEditGroupInfo
-    val isUpdatingDisappearingMode = uiState.isUpdatingDisappearingMode
     val isCreator = uiState.currentUserIsCreator
     val inviteCode = uiState.inviteCode
     val allowMemberInvites = groupInfo?.allowMemberInvites ?: false
@@ -512,22 +511,26 @@ fun GroupInfoScreen(
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clickable(enabled = !isUpdatingDisappearingMode) {
-                                    viewModel.setDisappearingMode(mode) {
-                                        showDisappearingDialog = false
-                                    }
-                                }
+                                .clickable(
+                                    onClick = {
+                                        viewModel.setDisappearingMode(mode) { success ->
+                                            if (success) showDisappearingDialog = false
+                                            // On failure the dialog stays open so the user can retry;
+                                            // the failure is surfaced via errorRes / snackbar.
+                                        }
+                                    },
+                                    enabled = !uiState.isUpdatingDisappearingMode
+                                )
                                 .padding(vertical = Spacing.space4),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             RadioButton(
                                 selected = mode == currentMode,
                                 onClick = {
-                                    viewModel.setDisappearingMode(mode) {
-                                        showDisappearingDialog = false
+                                    viewModel.setDisappearingMode(mode) { success ->
+                                        if (success) showDisappearingDialog = false
                                     }
-                                },
-                                enabled = !isUpdatingDisappearingMode
+                                }
                             )
                             Spacer(Modifier.width(Spacing.space8))
                             Text(disappearingLabel(mode), style = MaterialTheme.typography.bodyLarge)
@@ -552,11 +555,9 @@ fun GroupInfoScreen(
                 PressScaleTextButton(
                     onClick = {
                         viewModel.removeMember(member.uid) { success ->
-                            if (success) {
-                                memberToRemove = null
-                            }
-                            // On failure the dialog stays open so the user can retry;
-                            // the error is surfaced via the existing errorRes snackbar.
+                            if (success) memberToRemove = null
+                            // On failure the dialog stays open so the user can retry; errorRes
+                            // surfaces the failure.
                         }
                     }
                 ) {
@@ -629,12 +630,8 @@ fun GroupInfoScreen(
             confirmButton = {
                 PressScaleTextButton(
                     onClick = {
-                        viewModel.reportGroup(GROUP_REPORT_REASON) { success ->
-                            if (success) {
-                                showReportConfirmDialog = false
-                            }
-                            // On failure the dialog stays open so the user can retry;
-                            // the error is surfaced via the existing errorRes snackbar.
+                        viewModel.reportGroup(GROUP_REPORT_REASON) {
+                            showReportConfirmDialog = false
                         }
                     },
                     enabled = !uiState.isReporting
@@ -658,12 +655,8 @@ fun GroupInfoScreen(
             confirmButton = {
                 PressScaleTextButton(
                     onClick = {
-                        viewModel.rotateInviteCode { success ->
-                            if (success) {
-                                showInviteRevokeDialog = false
-                            }
-                            // On failure the dialog stays open so the user can retry;
-                            // the error is surfaced via the existing errorRes snackbar.
+                        viewModel.rotateInviteCode {
+                            showInviteRevokeDialog = false
                         }
                     },
                     enabled = !uiState.isRevokingInvite

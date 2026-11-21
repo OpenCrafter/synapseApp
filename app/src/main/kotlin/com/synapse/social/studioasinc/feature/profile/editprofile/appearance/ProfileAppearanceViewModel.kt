@@ -219,8 +219,6 @@ class ProfileAppearanceViewModel @Inject constructor(
     }
 
     private fun removeCover() {
-        // Keep showRemoveCoverDialog = true while removal is in flight so the confirmation
-        // dialog stays open until the async result is known.
         _uiState.update { it.copy(isSaving = true) }
         viewModelScope.launch {
             val userId = repository.getCurrentUserId()
@@ -246,11 +244,7 @@ class ProfileAppearanceViewModel @Inject constructor(
                 },
                 onFailure = { error ->
                     _uiState.update {
-                        it.copy(
-                            isSaving = false,
-                            error = "Failed to remove background: ${error.message}"
-                        )
-                        // Intentionally keep showRemoveCoverDialog = true so the user can retry.
+                        it.copy(isSaving = false, error = "Failed to remove background: ${error.message}")
                     }
                 }
             )

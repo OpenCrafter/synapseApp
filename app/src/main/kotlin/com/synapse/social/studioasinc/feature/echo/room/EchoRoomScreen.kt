@@ -168,12 +168,12 @@ fun EchoRoomScreen(
 
     if (confirmEnd) {
         AlertDialog(
-            onDismissRequest = { confirmEnd = false },
+            onDismissRequest = { if (!state.busy) confirmEnd = false },
             title = { Text(stringResource(R.string.echo_room_end_confirm_title)) },
             text = {
                 Column {
                     Text(stringResource(R.string.echo_room_end_confirm_body))
-                    state.error?.let { error ->
+                    state.endRoomError?.let { error ->
                         Text(
                             text = stringResource(error.messageRes()),
                             color = MaterialTheme.colorScheme.error,
@@ -194,7 +194,10 @@ fun EchoRoomScreen(
                 }
             },
             dismissButton = {
-                TextButton(onClick = { confirmEnd = false }) {
+                TextButton(
+                    onClick = { if (!state.busy) confirmEnd = false },
+                    enabled = !state.busy
+                ) {
                     Text(stringResource(R.string.action_cancel))
                 }
             }

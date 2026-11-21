@@ -136,12 +136,11 @@ fun ProfileScreen(
             state.photoRemovalError != null -> state.photoRemovalError
             else -> null
         }
-        if (state.profilePhotoRemoved || state.coverPhotoRemoved) {
-            // Dismiss the confirmation dialog only on a successful removal; on failure it stays
-            // open so the user can retry, matching the convention used elsewhere in the app.
-            removePhotoTarget = null
-        }
         if (removalMessage != null) {
+            // Dismiss the dialog only on successful removal; on failure it stays open so the user can retry.
+            if (state.profilePhotoRemoved || state.coverPhotoRemoved) {
+                removePhotoTarget = null
+            }
             snackbarHostState.showSnackbar(message = removalMessage)
             viewModel.clearPhotoRemovalStatus()
         }
@@ -276,9 +275,8 @@ fun ProfileScreen(
                     ProfilePhotoType.COVER -> viewModel.removeCoverPhoto()
                     null -> Unit
                 }
-                // Do not dismiss here: the dialog stays open until the async removal result is
-                // known (profilePhotoRemoved/coverPhotoRemoved on success, photoRemovalError on
-                // failure), handled in the effect above.
+                // Do not dismiss here; the dialog closes only after the async removal result
+                // is known (handled in the LaunchedEffect below).
             },
             onDismiss = { removePhotoTarget = null }
         )

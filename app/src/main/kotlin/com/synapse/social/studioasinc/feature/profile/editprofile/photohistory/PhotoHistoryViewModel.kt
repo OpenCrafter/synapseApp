@@ -17,7 +17,9 @@ data class PhotoHistoryUiState(
     val items: List<HistoryItem> = emptyList(),
     val error: String? = null,
     val currentPhotoUrl: String? = null,
-    val photoType: PhotoType = PhotoType.PROFILE
+    val photoType: PhotoType = PhotoType.PROFILE,
+    /** True while a history item delete operation is in flight. */
+    val isDeleting: Boolean = false
 )
 
 sealed class PhotoHistoryEvent {
@@ -121,8 +123,13 @@ class PhotoHistoryViewModel @Inject constructor(
 
     private fun deleteItem(item: HistoryItem) {
         viewModelScope.launch {
+            _uiState.update { it.copy(isDeleting = true, error = null) }
             val type = _uiState.value.photoType
-            val userId = repository.getCurrentUserId() ?: return@launch
+            val userId = repository.getCurrentUserId()
+            if (userId == null) {
+                 _uiState.update { it.copy(isDeleting = false, error = "User not logged in") }
+                 return@launch
+            }
 
             if (storageObjectKey(item.imageUrl) == storageObjectKey(_uiState.value.currentPhotoUrl)) {
                  val updateData = mutableMapOf<String, Any?>()
@@ -142,9 +149,10 @@ class PhotoHistoryViewModel @Inject constructor(
             result.fold(
                 onSuccess = {
                     loadHistory(type)
+                    _uiState.update { it.copy(isDeleting = false) }
                 },
                 onFailure = { error ->
-                    _uiState.update { it.copy(error = "Failed to delete item: ${error.message}") }
+                    _uiState.update { it.copy(isDeleting = false, error = "Failed to delete item: ${error.message}") }
                 }
             )
         }
