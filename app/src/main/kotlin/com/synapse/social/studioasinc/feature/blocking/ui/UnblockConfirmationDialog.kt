@@ -28,7 +28,7 @@ fun UnblockConfirmationDialog(
     isLoading: Boolean = false
 ) {
     AlertDialog(
-        onDismissRequest = onDismiss,
+        onDismissRequest = { if (!isLoading) onDismiss() },
         title = {
             Text(
                 text = stringResource(R.string.unblock_user_title),
@@ -53,7 +53,7 @@ fun UnblockConfirmationDialog(
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) {
+            TextButton(onClick = { if (!isLoading) onDismiss() }, enabled = !isLoading) {
                 Text(
                     text = stringResource(R.string.cancel),
                     style = MaterialTheme.typography.labelLarge,
