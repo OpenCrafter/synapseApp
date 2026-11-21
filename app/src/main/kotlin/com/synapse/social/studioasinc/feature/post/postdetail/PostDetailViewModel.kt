@@ -435,11 +435,18 @@ class PostDetailViewModel @Inject constructor(
 
     fun toggleBookmark() {
         val postId = currentPostId ?: return
+        if (_uiState.value.isBookmarking) return
+        _uiState.update { it.copy(isBookmarking = true) }
+
         viewModelScope.launch {
-            bookmarkRepository.toggleBookmark(postId, null).onSuccess {
-                postDetailRepository.getPostWithDetails(postId).onSuccess { updatedPost ->
-                     _uiState.update { it.copy(post = updatedPost) }
-                 }
+            try {
+                bookmarkRepository.toggleBookmark(postId, null).onSuccess {
+                    postDetailRepository.getPostWithDetails(postId).onSuccess { updatedPost ->
+                         _uiState.update { it.copy(post = updatedPost) }
+                      }
+                }
+            } finally {
+                _uiState.update { it.copy(isBookmarking = false) }
             }
         }
     }

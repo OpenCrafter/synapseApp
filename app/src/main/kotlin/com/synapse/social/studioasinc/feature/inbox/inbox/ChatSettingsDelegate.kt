@@ -48,9 +48,9 @@ class ChatSettingsDelegate(
     }
 
     fun setDisappearingMode(mode: DisappearingMode) {
+        val chatId = currentChatIdProvider() ?: return
         val previousMode = _disappearingMode.value
         _disappearingMode.value = mode
-        val chatId = currentChatIdProvider() ?: return
         _disappearingModeSaveStatus.value = DisappearingModeSaveStatus.Saving
         viewModelScope.launch {
             val result = setDisappearingModeUseCase(chatId, mode)

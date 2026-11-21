@@ -122,14 +122,22 @@ fun SearchScreen(
         }
     }
 
-    // Handle report success message. Failures are shown in-dialog via ReportPostDialog.error
-    // so the user can retry without losing the selected reason.
-    LaunchedEffect(uiState.reportSuccess) {
-        if (uiState.reportSuccess) {
-            snackbarHostState.showSnackbar(
-                message = context.getString(com.synapse.social.studioasinc.R.string.toast_report_submitted)
-            )
-            viewModel.clearReportStatus()
+    // Handle report success/error messages
+    LaunchedEffect(uiState.reportSuccess, uiState.reportError) {
+        when {
+            uiState.reportSuccess -> {
+                snackbarHostState.showSnackbar(
+                    message = context.getString(com.synapse.social.studioasinc.R.string.toast_report_submitted)
+                )
+                viewModel.clearReportStatus()
+            }
+            uiState.reportError != null -> {
+                snackbarHostState.showSnackbar(
+                    message = uiState.reportError ?: context.getString(com.synapse.social.studioasinc.R.string.report_error)
+                )
+                // reportError is intentionally left set so the inline error stays visible in the
+                // still-open report dialog until the user dismisses or retries.
+            }
         }
     }
 
@@ -342,7 +350,7 @@ fun SearchScreen(
                                                         onShare = { p -> PostShareUtils.sharePost(context, p.id) },
                                                         onRepost = viewModel::resharePost,
                                                         onQuote = { post -> onNavigateToQuotePost(post.id) },
-                                                        onBookmark = viewModel::bookmarkPost,
+                                                        onBookmark = { post -> if (!uiState.isBookmarking) viewModel.bookmarkPost(post) },
                                                         onOptionClick = { p -> selectedPost = p },
                                                         onPollVote = viewModel::votePoll,
                                                                  onUserClick = { userId -> onNavigateToProfile(userId) },
@@ -460,7 +468,7 @@ fun SearchScreen(
                                                                 onShare = { p -> PostShareUtils.sharePost(context, p.id) },
                                                                 onRepost = viewModel::resharePost,
                                                                 onQuote = { post -> onNavigateToQuotePost(post.id) },
-                                                                onBookmark = viewModel::bookmarkPost,
+                                                                onBookmark = { post -> if (!uiState.isBookmarking) viewModel.bookmarkPost(post) },
                                                                 onOptionClick = { p -> selectedPost = p },
                                                                 onPollVote = viewModel::votePoll,
                                                                 onUserClick = { userId -> onNavigateToProfile(userId) },
@@ -502,13 +510,7 @@ onMediaClick = { post, index ->
             commentsDisabled = viewModel.areCommentsDisabled(post),
             onDismiss = { selectedPost = null },
             onEdit = { onNavigateToEditPost(post.id) },
-            onDelete = {
-                val result = viewModel.deletePost(post)
-                if (result.isSuccess) {
-                    selectedPost = null
-                }
-                result
-            },
+            onDelete = { viewModel.deletePost(post) },
             onShare = {
                 PostShareUtils.sharePost(context, post.id)
                 selectedPost = null
@@ -519,8 +521,10 @@ onMediaClick = { post, index ->
                 selectedPost = null
             },
             onBookmark = {
-                viewModel.bookmarkPost(post)
-                selectedPost = null
+                if (!uiState.isBookmarking) {
+                    viewModel.bookmarkPost(post)
+                    selectedPost = null
+                }
             },
             onToggleComments = { val result = viewModel.toggleComments(post); if (result.isSuccess) { selectedPost = null }; result },
             onReport = { viewModel.reportPost(post) },
@@ -544,6 +548,7 @@ onMediaClick = { post, index ->
             onConfirm = { reason ->
                 viewModel.submitReport(reason)
             },
+            isLoading = uiState.isReportSubmitting,
             error = uiState.reportError
         )
     }

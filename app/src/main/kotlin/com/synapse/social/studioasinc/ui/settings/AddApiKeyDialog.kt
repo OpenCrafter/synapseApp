@@ -24,7 +24,8 @@ fun AddApiKeyDialog(
     availableProviders: List<String>,
     onDismiss: () -> Unit,
     onAdd: (String, String, String?, Int?) -> Unit,
-    isLoading: Boolean = false
+    isAdding: Boolean = false,
+    error: String? = null
 ) {
     var selectedProvider by remember { mutableStateOf(availableProviders.firstOrNull() ?: "openai") }
     var apiKey by remember { mutableStateOf("") }
@@ -38,7 +39,7 @@ fun AddApiKeyDialog(
     )
 
     ModalBottomSheet(
-        onDismissRequest = { if (!isLoading) onDismiss() },
+        onDismissRequest = { if (!isAdding) onDismiss() },
         sheetState = sheetState,
         dragHandle = { BottomSheetDefaults.DragHandle() },
         containerColor = MaterialTheme.colorScheme.surface
@@ -135,36 +136,43 @@ fun AddApiKeyDialog(
 
             Spacer(modifier = Modifier.height(Spacing.space32))
 
+            if (error != null) {
+                Text(
+                    text = error,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.error
+                )
+                Spacer(modifier = Modifier.height(Spacing.space8))
+            }
+
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.End,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                TextButton(onClick = onDismiss) {
+                TextButton(onClick = { if (!isAdding) onDismiss() }) {
                     Text(stringResource(R.string.settings_cancel))
                 }
                 Spacer(modifier = Modifier.width(Spacing.space16))
                 Button(
                     onClick = {
-                        if (!isLoading) {
-                            onAdd(
-                                selectedProvider,
-                                apiKey,
-                                keyName.takeIf { it.isNotBlank() },
-                                usageLimit.toIntOrNull()
-                            )
-                        }
+                        onAdd(
+                            selectedProvider,
+                            apiKey,
+                            keyName.takeIf { it.isNotBlank() },
+                            usageLimit.toIntOrNull()
+                        )
                     },
-                    enabled = apiKey.isNotBlank() && !isLoading
+                    enabled = apiKey.isNotBlank() && !isAdding
                 ) {
-                    if (isLoading) {
+                    if (isAdding) {
                         CircularProgressIndicator(
                             modifier = Modifier.size(Sizes.IconSemiMedium),
                             strokeWidth = Sizes.BorderDefault
                         )
-                    } else {
-                        Text(stringResource(R.string.action_save_api_key))
+                        Spacer(modifier = Modifier.width(Spacing.space8))
                     }
+                    Text(stringResource(R.string.action_save_api_key))
                 }
             }
         }
