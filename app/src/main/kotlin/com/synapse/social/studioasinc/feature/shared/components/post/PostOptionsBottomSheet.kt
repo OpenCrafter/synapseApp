@@ -57,8 +57,8 @@ fun PostOptionsBottomSheet(
 
     val onToggleCommentsAction: () -> Unit = {
         if (!isProcessing) {
+            isProcessing = true
             scope.launch {
-                isProcessing = true
                 try {
                     val result = onToggleComments()
                     if (result.isSuccess) {
@@ -73,8 +73,8 @@ fun PostOptionsBottomSheet(
     }
     val onBlockAction: () -> Unit = {
         if (!isProcessing) {
+            isProcessing = true
             scope.launch {
-                isProcessing = true
                 try {
                     val result = onBlock()
                     if (result.isSuccess) {
@@ -150,8 +150,8 @@ fun PostOptionsBottomSheet(
                 onToggleComments = onToggleCommentsAction,
                 onReport = {
                     if (!isProcessing) {
+                        isProcessing = true
                         scope.launch {
-                            isProcessing = true
                             try {
                                 val result = onReport()
                                 if (result.isSuccess) {
