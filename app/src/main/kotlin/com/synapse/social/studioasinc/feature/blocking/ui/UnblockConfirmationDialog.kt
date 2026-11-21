@@ -53,7 +53,7 @@ fun UnblockConfirmationDialog(
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) {
+            TextButton(onClick = { if (!isLoading) onDismiss() }, enabled = !isLoading) {
                 Text(
                     text = stringResource(R.string.cancel),
                     style = MaterialTheme.typography.labelLarge,
