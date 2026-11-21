@@ -53,22 +53,39 @@ fun PostOptionsBottomSheet(
 ) {
     var showDeleteDialog by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
+    var isProcessing by remember { mutableStateOf(false) }
 
     val onToggleCommentsAction: () -> Unit = {
-        scope.launch {
-            val result = onToggleComments()
-            if (result.isSuccess) {
-                onDismiss()
+        if (!isProcessing) {
+            isProcessing = true
+            scope.launch {
+                try {
+                    val result = onToggleComments()
+                    if (result.isSuccess) {
+                        onDismiss()
+                    }
+                } finally {
+                    isProcessing = false
+                }
             }
         }
+        Unit
     }
     val onBlockAction: () -> Unit = {
-        scope.launch {
-            val result = onBlock()
-            if (result.isSuccess) {
-                onDismiss()
+        if (!isProcessing) {
+            isProcessing = true
+            scope.launch {
+                try {
+                    val result = onBlock()
+                    if (result.isSuccess) {
+                        onDismiss()
+                    }
+                } finally {
+                    isProcessing = false
+                }
             }
         }
+        Unit
     }
 
     ModalBottomSheet(
@@ -131,7 +148,22 @@ fun PostOptionsBottomSheet(
                 onDelete = { showDeleteDialog = true },
                 onAddToThread = { onAddToThread?.invoke(); onDismiss() },
                 onToggleComments = onToggleCommentsAction,
-                onReport = { scope.launch { val result = onReport(); if (result.isSuccess) onDismiss() } },
+                onReport = {
+                    if (!isProcessing) {
+                        isProcessing = true
+                        scope.launch {
+                            try {
+                                val result = onReport()
+                                if (result.isSuccess) {
+                                    onDismiss()
+                                }
+                            } finally {
+                                isProcessing = false
+                            }
+                        }
+                    }
+                    Unit
+                },
                 onBlock = onBlockAction,
                 onShare = { onShare(); onDismiss() },
                 onRevokeVote = { onRevokeVote(); onDismiss() },
