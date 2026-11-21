@@ -56,7 +56,8 @@ data class FeedUiState(
     val isSummarizing: Boolean = false,
     val postSummary: String? = null,
     val summaryError: String? = null,
-    val reportSubmitted: Boolean = false
+    val reportSubmitted: Boolean = false,
+    val bookmarkBusy: Boolean = false
 )
 
 @HiltViewModel
@@ -209,19 +210,27 @@ class FeedViewModel @Inject constructor(
     }
 
     fun bookmarkPost(post: Post) {
+        if (currentState.bookmarkBusy) return
+        // Mark busy synchronously before launching so a rapid second tap sees bookmarkBusy == true
+        // and no duplicate concurrent bookmarkPostUseCase call slips through the dispatch window.
+        updateState { it.copy(bookmarkBusy = true) }
         viewModelScope.launch {
-            val optimisticPost = post.copy(isBookmarked = !post.isBookmarked)
-            cacheModifiedPost(optimisticPost)
-            PostEventBus.emit(PostEvent.Updated(optimisticPost))
-            val currentUserId = getCurrentUserIdUseCase() ?: return@launch
-            bookmarkPostUseCase(post.id, currentUserId, post.isBookmarked).collect { result ->
-                result.onFailure {
-                    cacheModifiedPost(post)
-                    PostEventBus.emit(PostEvent.Updated(post))
-                    updateState {
-                        it.copy(error = it.error ?: application.getString(R.string.error_bookmark_failed))
+            try {
+                val optimisticPost = post.copy(isBookmarked = !post.isBookmarked)
+                cacheModifiedPost(optimisticPost)
+                PostEventBus.emit(PostEvent.Updated(optimisticPost))
+                val currentUserId = getCurrentUserIdUseCase() ?: return@launch
+                bookmarkPostUseCase(post.id, currentUserId, post.isBookmarked).collect { result ->
+                    result.onFailure {
+                        cacheModifiedPost(post)
+                        PostEventBus.emit(PostEvent.Updated(post))
+                        updateState {
+                            it.copy(error = it.error ?: application.getString(R.string.error_bookmark_failed))
+                        }
                     }
                 }
+            } finally {
+                updateState { it.copy(bookmarkBusy = false) }
             }
         }
     }
