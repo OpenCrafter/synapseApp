@@ -288,13 +288,13 @@ class AccountSettingsViewModel @Inject constructor(
             accountRepository.deleteAccount()
                 .onSuccess {
                     _showDeleteAccountDialog.value = false
+                    _isLoading.value = false
                 }
                 .onFailure { e ->
                     android.util.Log.e("AccountSettingsViewModel", "Failed to delete account", e)
                     _error.value = "Failed to delete account: ${e.message}"
+                    _isLoading.value = false
                 }
-
-            _isLoading.value = false
         }
     }
 
