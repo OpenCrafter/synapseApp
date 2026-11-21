@@ -200,7 +200,7 @@ fun AvatarScreen(
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showRemoveDialog = false }) {
+                TextButton(onClick = { showRemoveDialog = false }, enabled = !isRemoving) {
                     Text(stringResource(R.string.cancel))
                 }
             }
