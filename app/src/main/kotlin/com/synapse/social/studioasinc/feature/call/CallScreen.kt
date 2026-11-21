@@ -61,6 +61,8 @@ fun CallScreen(
     viewModel: CallViewModel = hiltViewModel()
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val endError by state.endError.collectAsStateWithLifecycle()
+    val endErrorMessage = endError?.let { stringResource(R.string.call_end_error_failed) }
 
     val actions = remember(viewModel) {
         CallActions(
@@ -274,8 +276,13 @@ fun CallScreenContent(
             onConfirm = {
                 surfaceActions.onEndAndClose()
             },
-            onDismiss = { showEndDialog = false },
-            enabled = !state.isEndingCall
+            onDismiss = {
+                showEndDialog = false
+                viewModel.clearEndError()
+            },
+            enabled = !state.isEndingCall,
+            errorMessage = endErrorMessage,
+            dismissable = !state.isEndingCall
         )
     }
 }

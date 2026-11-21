@@ -2,6 +2,7 @@ package com.synapse.social.studioasinc.feature.call
 
 import com.synapse.social.studioasinc.data.call.CallSimulationAction
 import com.synapse.social.studioasinc.shared.domain.model.call.CallAudioRoute
+import com.synapse.social.studioasinc.shared.domain.model.call.CallErrorKind
 import com.synapse.social.studioasinc.shared.domain.model.call.CallMediaType
 import com.synapse.social.studioasinc.shared.domain.model.call.CallPermission
 import com.synapse.social.studioasinc.shared.domain.model.call.CallPermissionOutcome
@@ -15,6 +16,11 @@ data class CallUiState(
     val closeRequested: Boolean = false,
     /** True while the end-call request is in flight; used to disable the Confirm button and keep the dialog open. */
     val isEndingCall: Boolean = false,
+    /**
+     * The kind of the last end-call failure, or null when none. Surfaced so the user is told
+     * when ending a call fails instead of the dialog closing silently.
+     */
+    val endError: CallErrorKind? = null,
     /**
      * A call that is stopped at a permission, or null when nothing is standing in the way.
      *
