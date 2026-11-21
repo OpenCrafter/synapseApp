@@ -57,7 +57,7 @@ data class FeedUiState(
     val postSummary: String? = null,
     val summaryError: String? = null,
     val reportSubmitted: Boolean = false,
-    val bookmarkBusy: Boolean = false
+    val bookmarkBusyPostIds: Set<String> = emptySet()
 )
 
 @HiltViewModel
@@ -210,16 +210,18 @@ class FeedViewModel @Inject constructor(
     }
 
     fun bookmarkPost(post: Post) {
-        if (currentState.bookmarkBusy) return
-        // Mark busy synchronously before launching so a rapid second tap sees bookmarkBusy == true
-        // and no duplicate concurrent bookmarkPostUseCase call slips through the dispatch window.
-        updateState { it.copy(bookmarkBusy = true) }
+        if (currentState.bookmarkBusyPostIds.contains(post.id)) return
+        // Mark busy synchronously before launching so a rapid second tap on the same post
+        // sees bookmarkBusyPostIds containing post.id and no duplicate concurrent call slips through.
+        updateState { it.copy(bookmarkBusyPostIds = it.bookmarkBusyPostIds + post.id) }
         viewModelScope.launch {
             try {
+                // Resolve the user before any optimistic UI write so a missing user never leaves
+                // the feed in an out-of-synced state.
+                val currentUserId = getCurrentUserIdUseCase() ?: return@launch
                 val optimisticPost = post.copy(isBookmarked = !post.isBookmarked)
                 cacheModifiedPost(optimisticPost)
                 PostEventBus.emit(PostEvent.Updated(optimisticPost))
-                val currentUserId = getCurrentUserIdUseCase() ?: return@launch
                 bookmarkPostUseCase(post.id, currentUserId, post.isBookmarked).collect { result ->
                     result.onFailure {
                         cacheModifiedPost(post)
@@ -230,7 +232,7 @@ class FeedViewModel @Inject constructor(
                     }
                 }
             } finally {
-                updateState { it.copy(bookmarkBusy = false) }
+                updateState { it.copy(bookmarkBusyPostIds = it.bookmarkBusyPostIds - post.id) }
             }
         }
     }
