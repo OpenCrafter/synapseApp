@@ -1257,7 +1257,7 @@ val currentUserId = currentUserIdState ?: ""
                     TextButton(
                         enabled = newFolderName.isNotBlank() && createFolderSaveStatus !is ChatViewModel.CreateFolderSaveStatus.Saving,
                         onClick = {
-                            viewModel.createFolderAndAssignCurrentChat(newFolderName)
+                            viewModel.createFolderAndAssignCurrentChat(newFolderName) { }
                             // Do not dismiss here: dismissal is gated on createFolderSaveStatus
                             // becoming Success (via the LaunchedEffect above). On Failure the
                             // dialog stays open so the user can retry.

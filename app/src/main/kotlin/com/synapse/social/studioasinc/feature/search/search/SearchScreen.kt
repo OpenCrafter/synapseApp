@@ -350,7 +350,7 @@ fun SearchScreen(
                                                         onShare = { p -> PostShareUtils.sharePost(context, p.id) },
                                                         onRepost = viewModel::resharePost,
                                                         onQuote = { post -> onNavigateToQuotePost(post.id) },
-                                                        onBookmark = { post -> if (!uiState.isBookmarking) viewModel.bookmarkPost(post) },
+                                                        onBookmark = { post -> if (post.id !in uiState.bookmarkBusyPostIds) viewModel.bookmarkPost(post) },
                                                         onOptionClick = { p -> selectedPost = p },
                                                         onPollVote = viewModel::votePoll,
                                                                  onUserClick = { userId -> onNavigateToProfile(userId) },
@@ -468,7 +468,7 @@ fun SearchScreen(
                                                                 onShare = { p -> PostShareUtils.sharePost(context, p.id) },
                                                                 onRepost = viewModel::resharePost,
                                                                 onQuote = { post -> onNavigateToQuotePost(post.id) },
-                                                                onBookmark = { post -> if (!uiState.isBookmarking) viewModel.bookmarkPost(post) },
+                                                                onBookmark = { post -> if (post.id !in uiState.bookmarkBusyPostIds) viewModel.bookmarkPost(post) },
                                                                 onOptionClick = { p -> selectedPost = p },
                                                                 onPollVote = viewModel::votePoll,
                                                                 onUserClick = { userId -> onNavigateToProfile(userId) },
@@ -521,7 +521,7 @@ onMediaClick = { post, index ->
                 selectedPost = null
             },
             onBookmark = {
-                if (!uiState.isBookmarking) {
+                if (post.id !in uiState.bookmarkBusyPostIds) {
                     viewModel.bookmarkPost(post)
                     selectedPost = null
                 }

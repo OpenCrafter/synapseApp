@@ -41,6 +41,7 @@
     <string name="inbox_folder_create">Create new folder</string>
     <string name="inbox_folder_name">Folder name</string>
     <string name="inbox_folder_save">Create folder</string>
+    <string name="chat_folder_save_failed">Failed to create folder</string>
     <string name="inbox_delete_title">Delete conversations?</string>
     <string name="inbox_delete_message">Delete %1$d selected conversations from your inbox? This removes your access to them.</string>
     <string name="inbox_delete_confirm">Delete</string>

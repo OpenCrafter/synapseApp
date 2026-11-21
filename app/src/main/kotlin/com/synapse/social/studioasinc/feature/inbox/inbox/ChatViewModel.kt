@@ -135,6 +135,20 @@ private val messageSyncUseCase: MessageSyncUseCase = MessageSyncUseCase(getMessa
         }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
+    sealed class CreateFolderSaveStatus {
+        object Idle : CreateFolderSaveStatus()
+        object Saving : CreateFolderSaveStatus()
+        object Success : CreateFolderSaveStatus()
+        object Failure : CreateFolderSaveStatus()
+    }
+
+    private val _createFolderSaveStatus = MutableStateFlow<CreateFolderSaveStatus>(CreateFolderSaveStatus.Idle)
+    val createFolderSaveStatus: StateFlow<CreateFolderSaveStatus> = _createFolderSaveStatus.asStateFlow()
+
+    fun resetCreateFolderSaveStatus() {
+        _createFolderSaveStatus.value = CreateFolderSaveStatus.Idle
+    }
+
     // ===== ChatUiState: consolidated UI state =====
     private val _uiState = MutableStateFlow(ChatUiState())
     val uiState: StateFlow<ChatUiState> = _uiState.asStateFlow()
@@ -1328,8 +1342,15 @@ private val messageSyncUseCase: MessageSyncUseCase = MessageSyncUseCase(getMessa
 
     fun createFolderAndAssignCurrentChat(name: String, onResult: (Boolean) -> Unit) {
         val cleanName = name.trim()
-        val chatId = currentChatId ?: return onResult(false)
-        if (cleanName.isBlank()) return onResult(false)
+        val chatId = currentChatId ?: run {
+            _createFolderSaveStatus.value = CreateFolderSaveStatus.Failure
+            return onResult(false)
+        }
+        if (cleanName.isBlank()) run {
+            _createFolderSaveStatus.value = CreateFolderSaveStatus.Failure
+            return onResult(false)
+        }
+        _createFolderSaveStatus.value = CreateFolderSaveStatus.Saving
         viewModelScope.launch {
             val newFolder = ChatFolder(
                 id = UUID.randomUUID().toString(),
@@ -1351,6 +1372,7 @@ private val messageSyncUseCase: MessageSyncUseCase = MessageSyncUseCase(getMessa
                 )
             }
             val success = persistChatFolders(leaving + newFolder)
+            _createFolderSaveStatus.value = if (success) CreateFolderSaveStatus.Success else CreateFolderSaveStatus.Failure
             if (!success) {
                 _error.value = "Failed to create folder"
             }

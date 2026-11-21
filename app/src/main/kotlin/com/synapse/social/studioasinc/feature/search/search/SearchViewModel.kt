@@ -63,6 +63,7 @@ data class SearchUiState(
     val reportDialogPost: com.synapse.social.studioasinc.domain.model.Post? = null,
     val reportSuccess: Boolean = false,
     val reportError: String? = null,
+    val isReportSubmitting: Boolean = false,
     val isSummarizing: Boolean = false,
     val postSummary: String? = null,
     val summaryError: String? = null,
@@ -451,7 +452,7 @@ class SearchViewModel @Inject constructor(
         val post = currentState.reportDialogPost ?: return
         // Clear any stale error from a previous failed attempt so a retry
         // does not misleadingly show an old failure while the new request is in flight.
-        updateState { it.copy(reportError = null) }
+        updateState { it.copy(reportError = null, isReportSubmitting = true) }
         viewModelScope.launch {
             reportPostUseCase(post.id, reason, null).collect { result ->
                 result.onSuccess {
@@ -459,7 +460,8 @@ class SearchViewModel @Inject constructor(
                         it.copy(
                             isReportDialogShowing = false,
                             reportDialogPost = null,
-                            reportSuccess = true
+                            reportSuccess = true,
+                            isReportSubmitting = false
                         )
                     }
                 }.onFailure { err ->
@@ -468,7 +470,8 @@ class SearchViewModel @Inject constructor(
                     updateState {
                         it.copy(
                             isReportDialogShowing = true,
-                            reportError = err.message ?: "Failed to report post"
+                            reportError = err.message ?: "Failed to report post",
+                            isReportSubmitting = false
                         )
                     }
                 }
