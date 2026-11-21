@@ -49,7 +49,7 @@ fun ChatReportDialog(
     var selectedReasonRes by remember { mutableStateOf<Int?>(null) }
 
     AlertDialog(
-        onDismissRequest = onDismiss,
+        onDismissRequest = { if (!isLoading) onDismiss() },
         title = { Text(stringResource(R.string.chat_menu_report)) },
         text = {
             Column(modifier = Modifier.verticalScroll(rememberScrollState())) {

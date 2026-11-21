@@ -161,6 +161,9 @@ private val messageSyncUseCase: MessageSyncUseCase = MessageSyncUseCase(getMessa
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
 
+    private val _reportLoading = MutableStateFlow(false)
+    val reportLoading: StateFlow<Boolean> = _reportLoading.asStateFlow()
+
     private val _isRefreshing = MutableStateFlow(false)
     val isRefreshing: StateFlow<Boolean> = _isRefreshing.asStateFlow()
 
@@ -1258,18 +1261,23 @@ private val messageSyncUseCase: MessageSyncUseCase = MessageSyncUseCase(getMessa
         if (reason.isBlank()) {
             return onResult(Result.failure(IllegalArgumentException("A report reason is required")))
         }
+        _reportLoading.value = true
         viewModelScope.launch {
-            val result = if (_isGroupChat.value || participantUserId.isNullOrBlank()) {
-                reportChatUseCase(chatId, reason)
-            } else {
-                val reporterId = _currentUserId.value.orEmpty()
-                if (reporterId.isBlank()) {
-                    Result.failure(IllegalStateException("User not authenticated"))
+            try {
+                val result = if (_isGroupChat.value || participantUserId.isNullOrBlank()) {
+                    reportChatUseCase(chatId, reason)
                 } else {
-                    reportUserUseCase(reporterId, participantUserId, reason).first()
+                    val reporterId = _currentUserId.value.orEmpty()
+                    if (reporterId.isBlank()) {
+                        Result.failure(IllegalStateException("User not authenticated"))
+                    } else {
+                        reportUserUseCase(reporterId, participantUserId, reason).first()
+                    }
                 }
+                onResult(result)
+            } finally {
+                _reportLoading.value = false
             }
-            onResult(result)
         }
     }
 
