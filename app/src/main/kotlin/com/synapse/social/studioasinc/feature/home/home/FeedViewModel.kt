@@ -56,7 +56,8 @@ data class FeedUiState(
     val isSummarizing: Boolean = false,
     val postSummary: String? = null,
     val summaryError: String? = null,
-    val reportSubmitted: Boolean = false
+    val reportSubmitted: Boolean = false,
+    val bookmarkBusyPostIds: Set<String> = emptySet()
 )
 
 @HiltViewModel
@@ -209,19 +210,29 @@ class FeedViewModel @Inject constructor(
     }
 
     fun bookmarkPost(post: Post) {
+        if (currentState.bookmarkBusyPostIds.contains(post.id)) return
+        // Mark busy synchronously before launching so a rapid second tap on the same post
+        // sees bookmarkBusyPostIds containing post.id and no duplicate concurrent call slips through.
+        updateState { it.copy(bookmarkBusyPostIds = it.bookmarkBusyPostIds + post.id) }
         viewModelScope.launch {
-            val optimisticPost = post.copy(isBookmarked = !post.isBookmarked)
-            cacheModifiedPost(optimisticPost)
-            PostEventBus.emit(PostEvent.Updated(optimisticPost))
-            val currentUserId = getCurrentUserIdUseCase() ?: return@launch
-            bookmarkPostUseCase(post.id, currentUserId, post.isBookmarked).collect { result ->
-                result.onFailure {
-                    cacheModifiedPost(post)
-                    PostEventBus.emit(PostEvent.Updated(post))
-                    updateState {
-                        it.copy(error = it.error ?: application.getString(R.string.error_bookmark_failed))
+            try {
+                // Resolve the user before any optimistic UI write so a missing user never leaves
+                // the feed in an out-of-synced state.
+                val currentUserId = getCurrentUserIdUseCase() ?: return@launch
+                val optimisticPost = post.copy(isBookmarked = !post.isBookmarked)
+                cacheModifiedPost(optimisticPost)
+                PostEventBus.emit(PostEvent.Updated(optimisticPost))
+                bookmarkPostUseCase(post.id, currentUserId, post.isBookmarked).collect { result ->
+                    result.onFailure {
+                        cacheModifiedPost(post)
+                        PostEventBus.emit(PostEvent.Updated(post))
+                        updateState {
+                            it.copy(error = it.error ?: application.getString(R.string.error_bookmark_failed))
+                        }
                     }
                 }
+            } finally {
+                updateState { it.copy(bookmarkBusyPostIds = it.bookmarkBusyPostIds - post.id) }
             }
         }
     }
