@@ -656,7 +656,7 @@ fun GroupInfoScreen(
 
     if (showInviteRevokeDialog) {
         AlertDialog(
-            onDismissRequest = { showInviteRevokeDialog = false },
+            onDismissRequest = { if (!uiState.isRevokingInvite) showInviteRevokeDialog = false },
             title = { Text(stringResource(R.string.group_revoke_title)) },
             text = { Text(stringResource(R.string.group_revoke_body)) },
             confirmButton = {
