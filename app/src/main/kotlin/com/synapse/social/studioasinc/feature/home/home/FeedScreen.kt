@@ -183,9 +183,10 @@ fun FeedScreen(
 
 
 
-    val actions = remember(viewModel, context, currentOnCommentClick, currentOnUserClick) {
+    val actions = remember(viewModel, context, currentOnCommentClick, currentOnUserClick, uiState) {
         PostActionsFactory.create(
             viewModel = viewModel,
+            onLike = { post -> if (!uiState.inFlightReactionIds.contains(post.id)) viewModel.likePost(post) },
             onComment = { post -> currentOnCommentClick(post) },
             onShare = { post ->
                 postToShare = post
@@ -201,7 +202,8 @@ fun FeedScreen(
                     selectedMediaUrls = urls
                     showMediaViewer = true
                 }
-            }
+            },
+            onRepost = { post -> if (!uiState.inFlightReshareIds.contains(post.id)) viewModel.resharePost(post) },
         )
     }
 

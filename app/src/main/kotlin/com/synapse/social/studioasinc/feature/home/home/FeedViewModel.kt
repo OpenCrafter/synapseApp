@@ -59,7 +59,14 @@ data class FeedUiState(
     val reportSubmitted: Boolean = false,
     // Post IDs with a bookmark toggle currently in flight. Scoped per post so that a rapid tap on
     // one post never blocks bookmark taps on a different post.
-    val inFlightBookmarkIds: Set<String> = emptySet()
+    val inFlightBookmarkIds: Set<String> = emptySet(),
+    // Post IDs with a reaction (like/oppose) toggle currently in flight. Scoped per post so that a
+    // rapid tap on one post never blocks reaction taps on a different post. Observable via UI state
+    // so the Like button can be disabled while the toggle is in flight.
+    val inFlightReactionIds: Set<String> = emptySet(),
+    // Post IDs with a reshare (repost/unrepost) currently in flight. Scoped per post. Observable via
+    // UI state so the Repost button can be disabled while the reshare is in flight.
+    val inFlightReshareIds: Set<String> = emptySet()
 )
 
 @HiltViewModel
@@ -87,12 +94,6 @@ class FeedViewModel @Inject constructor(
     private val MAX_MODIFIED_POSTS = 100
 
     private val refreshTrigger = MutableStateFlow(0)
-
-    // Post IDs with a reaction (like/oppose) toggle currently in flight. Scoped per post so that a
-    // rapid tap on one post never blocks reaction taps on a different post.
-    private val inFlightReactionIds = mutableSetOf<String>()
-    // Post IDs with a reshare (repost/unrepost) currently in flight. Scoped per post.
-    private val inFlightReshareIds = mutableSetOf<String>()
 
     @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
     val posts: Flow<PagingData<FeedItem>> = refreshTrigger.flatMapLatest {
@@ -174,12 +175,10 @@ class FeedViewModel @Inject constructor(
     private fun performReaction(post: Post, reactionType: ReactionType) {
         // Guard against rapid-tap duplicate requests: ignore a second tap on the same post while its
         // reaction toggle is in flight. Other posts remain tappable.
-        synchronized(inFlightReactionIds) {
-            if (inFlightReactionIds.contains(post.id)) return
-            inFlightReactionIds.add(post.id)
-        }
+        if (currentState.inFlightReactionIds.contains(post.id)) return
         viewModelScope.launch {
             try {
+                updateState { it.copy(inFlightReactionIds = it.inFlightReactionIds + post.id) }
                 reactToPostUseCase(post, reactionType).collect { result ->
                     result.onSuccess { updatedPost ->
                         cacheModifiedPost(updatedPost)
@@ -190,9 +189,7 @@ class FeedViewModel @Inject constructor(
                 }
             } finally {
                 // Always clear the in-flight marker so the user can retry after success or failure.
-                synchronized(inFlightReactionIds) {
-                    inFlightReactionIds.remove(post.id)
-                }
+                updateState { it.copy(inFlightReactionIds = it.inFlightReactionIds - post.id) }
             }
         }
     }
@@ -260,12 +257,10 @@ class FeedViewModel @Inject constructor(
     fun resharePost(post: Post) {
         // Guard against rapid-tap duplicate requests: ignore a second tap on the same post while its
         // reshare is in flight. Other posts remain tappable.
-        synchronized(inFlightReshareIds) {
-            if (inFlightReshareIds.contains(post.id)) return
-            inFlightReshareIds.add(post.id)
-        }
+        if (currentState.inFlightReshareIds.contains(post.id)) return
         viewModelScope.launch {
             try {
+                updateState { it.copy(inFlightReshareIds = it.inFlightReshareIds + post.id) }
                 val isCurrentlyReshared = post.isReshared
                 val optimisticPost = post.copy(
                     isReshared = !isCurrentlyReshared,
@@ -293,9 +288,7 @@ class FeedViewModel @Inject constructor(
                 }
             } finally {
                 // Always clear the in-flight marker so the user can retry after success or failure.
-                synchronized(inFlightReshareIds) {
-                    inFlightReshareIds.remove(post.id)
-                }
+                updateState { it.copy(inFlightReshareIds = it.inFlightReshareIds - post.id) }
             }
         }
     }
