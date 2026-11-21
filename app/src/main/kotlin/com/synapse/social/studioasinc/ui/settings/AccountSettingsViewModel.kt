@@ -233,10 +233,12 @@ class AccountSettingsViewModel @Inject constructor(
                         .onSuccess {
                             android.util.Log.d("AccountSettingsViewModel", "Password changed successfully")
                             _showChangePasswordDialog.value = false
+                            _isLoading.value = false
                         }
                         .onFailure { e ->
                             android.util.Log.e("AccountSettingsViewModel", "Failed to change password", e)
                             _error.value = "Failed to change password: ${e.message}"
+                            _isLoading.value = false
                         }
                 }
                 .onFailure { e ->
@@ -247,9 +249,8 @@ class AccountSettingsViewModel @Inject constructor(
                     } else {
                         _error.value = "Failed to verify password: ${e?.message}"
                     }
+                    _isLoading.value = false
                 }
-
-            _isLoading.value = false
         }
     }
 
