@@ -112,6 +112,7 @@ import kotlinx.coroutines.withContext
     var showCreateFolderDialog by rememberSaveable(chatId) { mutableStateOf(false) }
     var newFolderName by rememberSaveable(chatId) { mutableStateOf("") }
     var showBlockDialog by rememberSaveable(chatId) { mutableStateOf(false) }
+    private var isBlocking by remember { mutableStateOf(false) }
     var showClearChatDialog by rememberSaveable(chatId) { mutableStateOf(false) }
     val snackbarHostState = remember { SnackbarHostState() }
 
@@ -1103,7 +1104,7 @@ val currentUserId = currentUserIdState ?: ""
 
         if (showBlockDialog) {
             AlertDialog(
-                onDismissRequest = { showBlockDialog = false },
+                onDismissRequest = { if (!isBlocking) showBlockDialog = false },
                 title = { Text(stringResource(R.string.chat_menu_block)) },
                 text = {
                     Text(
@@ -1116,7 +1117,9 @@ val currentUserId = currentUserIdState ?: ""
                 confirmButton = {
                     TextButton(
                         onClick = {
+                            isBlocking = true
                             viewModel.blockCurrentChatParticipant(participantId.orEmpty()) { result ->
+                                isBlocking = false
                                 if (result.isSuccess) {
                                     showBlockDialog = false
                                     Toast.makeText(
@@ -1132,13 +1135,21 @@ val currentUserId = currentUserIdState ?: ""
                                     ).show()
                                 }
                             }
-                        }
+                        },
+                        enabled = !isBlocking
                     ) {
-                        Text(stringResource(R.string.action_ok))
+                        if (isBlocking) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(Sizes.IconLarge),
+                                strokeWidth = Sizes.BorderDefault
+                            )
+                        } else {
+                            Text(stringResource(R.string.action_ok))
+                        }
                     }
                 },
                 dismissButton = {
-                    TextButton(onClick = { showBlockDialog = false }) {
+                    TextButton(onClick = { if (!isBlocking) showBlockDialog = false }, enabled = !isBlocking) {
                         Text(stringResource(R.string.action_cancel))
                     }
                 }
