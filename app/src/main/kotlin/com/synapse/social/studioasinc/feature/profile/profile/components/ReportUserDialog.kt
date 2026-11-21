@@ -32,7 +32,7 @@ fun ReportUserDialog(
     )
 
     AlertDialog(
-        onDismissRequest = onDismiss,
+        onDismissRequest = { if (!isLoading) onDismiss() },
         title = { Text(stringResource(R.string.report_user_title, username)) },
         text = {
             LazyColumn {
