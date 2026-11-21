@@ -114,6 +114,7 @@ import kotlinx.coroutines.withContext
     var showBlockDialog by rememberSaveable(chatId) { mutableStateOf(false) }
     private var isBlocking by remember { mutableStateOf(false) }
     var showClearChatDialog by rememberSaveable(chatId) { mutableStateOf(false) }
+    private var isClearing by remember { mutableStateOf(false) }
     val snackbarHostState = remember { SnackbarHostState() }
 
     // Initialize the ViewModel with the chat ID
@@ -1158,13 +1159,15 @@ val currentUserId = currentUserIdState ?: ""
 
         if (showClearChatDialog) {
             AlertDialog(
-                onDismissRequest = { showClearChatDialog = false },
+                onDismissRequest = { if (!isClearing) showClearChatDialog = false },
                 title = { Text(stringResource(R.string.chat_menu_clear_chat)) },
                 text = { Text(stringResource(R.string.chat_info_clear_chat_confirm)) },
                 confirmButton = {
                     TextButton(
                         onClick = {
+                            isClearing = true
                             viewModel.clearCurrentChat { result ->
+                                isClearing = false
                                 if (result.isSuccess) {
                                     showClearChatDialog = false
                                 }
@@ -1174,13 +1177,21 @@ val currentUserId = currentUserIdState ?: ""
                                     Toast.LENGTH_SHORT
                                 ).show()
                             }
-                        }
+                        },
+                        enabled = !isClearing
                     ) {
-                        Text(stringResource(R.string.action_ok))
+                        if (isClearing) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(Sizes.IconLarge),
+                                strokeWidth = Sizes.BorderDefault
+                            )
+                        } else {
+                            Text(stringResource(R.string.action_ok))
+                        }
                     }
                 },
                 dismissButton = {
-                    TextButton(onClick = { showClearChatDialog = false }) {
+                    TextButton(onClick = { if (!isClearing) showClearChatDialog = false }, enabled = !isClearing) {
                         Text(stringResource(R.string.action_cancel))
                     }
                 }
