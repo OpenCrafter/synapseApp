@@ -272,7 +272,7 @@ private fun FolderNameDialog(
     isSaving: Boolean = false
 ) {
     AlertDialog(
-        onDismissRequest = onDismiss,
+        onDismissRequest = { if (!isSaving) onDismiss() },
         title = { Text(title) },
         text = {
             OutlinedTextField(
@@ -289,7 +289,7 @@ private fun FolderNameDialog(
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) {
+            TextButton(onClick = onDismiss, enabled = !isSaving) {
                 Text(stringResource(R.string.cancel))
             }
         }
