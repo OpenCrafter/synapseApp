@@ -291,24 +291,31 @@ class AuthViewModel @Inject constructor(
                      else -> {}
                  }
                  _navigationEvent.emit(AuthNavigationEvent.InitiateGoogleSignIn)
-             } else {
-                getOAuthUrlUseCase(provider, Constants.AUTH_REDIRECT_URL).fold(
-                    onSuccess = { url ->
-                        _navigationEvent.emit(AuthNavigationEvent.OpenUrl(url))
-                    },
-                    onFailure = { error ->
-                        when (val state = _uiState.value) {
-                            is AuthUiState.SignIn -> _uiState.value = state.copy(
-                                generalError = error.message ?: "Sign-in failed"
-                            )
-                            is AuthUiState.SignUp -> _uiState.value = state.copy(
-                                generalError = error.message ?: "Sign-up failed"
-                            )
-                            else -> {}
-                        }
-                    }
-                )
-             }
+              } else {
+                  when (val state = _uiState.value) {
+                      is AuthUiState.SignIn -> _uiState.value = state.copy(isLoading = true, generalError = null)
+                      is AuthUiState.SignUp -> _uiState.value = state.copy(isLoading = true, generalError = null)
+                      else -> {}
+                  }
+                  getOAuthUrlUseCase(provider, Constants.AUTH_REDIRECT_URL).fold(
+                      onSuccess = { url ->
+                          _navigationEvent.emit(AuthNavigationEvent.OpenUrl(url))
+                      },
+                      onFailure = { e ->
+                          when (val state = _uiState.value) {
+                              is AuthUiState.SignIn -> _uiState.value = state.copy(
+                                  isLoading = false,
+                                  generalError = "OAuth sign-in failed: ${e.message ?: "unknown error"}"
+                              )
+                              is AuthUiState.SignUp -> _uiState.value = state.copy(
+                                  isLoading = false,
+                                  generalError = "OAuth sign-in failed: ${e.message ?: "unknown error"}"
+                              )
+                              else -> {}
+                          }
+                      }
+                  )
+              }
         }
     }
 

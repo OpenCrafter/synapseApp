@@ -2440,6 +2440,7 @@ Please explain the following message from %3$s in detail, considering the contex
     <string name="call_end_dialog_message">The call will end and you’ll return to your chat.</string>
     <string name="call_end_dialog_confirm">End call</string>
     <string name="call_end_dialog_dismiss">Cancel</string>
+    <string name="call_end_error_failed">Couldn\'t end the call. Please try again.</string>
     <string name="call_summary_line">%1$s · %2$s</string>
     <string name="call_direction_incoming">Incoming</string>
     <string name="call_direction_outgoing">Outgoing</string>

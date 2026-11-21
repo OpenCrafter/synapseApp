@@ -49,12 +49,13 @@ class AvatarViewModel @Inject constructor(
                         result.fold(
                             onSuccess = { profile ->
                                 _uiState.value = _uiState.value.copy(
-                                    currentAvatarUrl = profile.avatar
+                                    currentAvatarUrl = profile.avatar,
+                                    error = null
                                 )
                             },
                             onFailure = { error ->
                                 _uiState.value = _uiState.value.copy(
-                                    error = error.message ?: "Failed to load avatar"
+                                    error = "Failed to load avatar: ${error.message ?: "unknown error"}"
                                 )
                             }
                         )
@@ -62,7 +63,7 @@ class AvatarViewModel @Inject constructor(
                 }
             } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(
-                    error = e.message ?: "Failed to load avatar"
+                    error = "Failed to load avatar: ${e.message ?: "unknown error"}"
                 )
             }
         }

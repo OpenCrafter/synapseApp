@@ -112,7 +112,9 @@ import kotlinx.coroutines.withContext
     var showCreateFolderDialog by rememberSaveable(chatId) { mutableStateOf(false) }
     var newFolderName by rememberSaveable(chatId) { mutableStateOf("") }
     var showBlockDialog by rememberSaveable(chatId) { mutableStateOf(false) }
+    var isBlocking by remember { mutableStateOf(false) }
     var showClearChatDialog by rememberSaveable(chatId) { mutableStateOf(false) }
+    var isClearing by remember { mutableStateOf(false) }
     val snackbarHostState = remember { SnackbarHostState() }
 
     // Initialize the ViewModel with the chat ID
@@ -125,6 +127,7 @@ import kotlinx.coroutines.withContext
     val inputText by viewModel.inputText.collectAsState()
 
     val isLoading by viewModel.isLoading.collectAsState()
+    val reportLoading by viewModel.reportLoading.collectAsState()
     val isScreenVisible by viewModel.isScreenVisible.collectAsState()
     val participantProfile by viewModel.participantProfile.collectAsState()
     val isParticipantActive by viewModel.isParticipantActive.collectAsState()
@@ -170,6 +173,7 @@ val currentUserId = currentUserIdState ?: ""
     val chatThemePreset by viewModel.chatThemePreset.collectAsState()
     val chatMessageCornerRadius by viewModel.chatMessageCornerRadius.collectAsState()
     val chatAvatarDisabled by viewModel.chatAvatarDisabled.collectAsState()
+    val isDeletingChat by viewModel.isDeletingChat.collectAsState()
     val wordEffects by viewModel.wordEffects.collectAsState(emptyList())
 
     val participantAvatarUrl = participantProfile?.avatar
@@ -520,10 +524,10 @@ val currentUserId = currentUserIdState ?: ""
                 )
             }
         },
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         // Edge-to-edge: the conversation owns the whole window, so the header is an overlay instead
         // of a Scaffold top bar that would reserve layout space above the timeline.
-        contentWindowInsets = WindowInsets(0, 0, 0, 0),
-        snackbarHost = { SnackbarHost(snackbarHostState) }
+        contentWindowInsets = WindowInsets(0, 0, 0, 0)
     ) { paddingValues ->
         Box(
             modifier = Modifier
@@ -839,8 +843,8 @@ val currentUserId = currentUserIdState ?: ""
                                 android.widget.Toast.LENGTH_LONG
                             ).show()
                         },
-onSuccess = {
-                            showDeleteSelectedDialog = false
+                        onSuccess = {
+                            showDeleteMessageDialog = null
                             android.widget.Toast.makeText(
                                 context,
                                 context.getString(R.string.message_deleted_successfully),
@@ -1045,7 +1049,6 @@ onSuccess = {
 
         // Dismiss the disappearing mode dialog only when the async save succeeds.
         // On failure the dialog stays open so the user can see the error and retry.
-        val disappearingModeSaveFailedMessage = stringResource(R.string.disappearing_mode_save_failed)
         LaunchedEffect(disappearingModeSaveStatus) {
             when (disappearingModeSaveStatus) {
                 is ChatSettingsDelegate.DisappearingModeSaveStatus.Success -> {
@@ -1055,11 +1058,8 @@ onSuccess = {
                 is ChatSettingsDelegate.DisappearingModeSaveStatus.Failure -> {
                     // Keep dialog open; error is surfaced via snackbar below
                     snackbarHostState.showSnackbar(
-                        message = disappearingModeSaveFailedMessage
+                        message = context.getString(R.string.disappearing_mode_save_failed)
                     )
-                    // Reset to Idle so a subsequent consecutive failure re-triggers
-                    // this LaunchedEffect and the user gets feedback on every retry.
-                    viewModel.resetDisappearingModeSaveStatus()
                 }
                 ChatSettingsDelegate.DisappearingModeSaveStatus.Idle -> Unit
                 ChatSettingsDelegate.DisappearingModeSaveStatus.Saving -> Unit
@@ -1098,13 +1098,14 @@ onSuccess = {
                             ).show()
                         }
                     )
-                }
+                },
+                isLoading = reportLoading
             )
         }
 
         if (showBlockDialog) {
             AlertDialog(
-                onDismissRequest = { showBlockDialog = false },
+                onDismissRequest = { if (!isBlocking) showBlockDialog = false },
                 title = { Text(stringResource(R.string.chat_menu_block)) },
                 text = {
                     Text(
@@ -1117,23 +1118,39 @@ onSuccess = {
                 confirmButton = {
                     TextButton(
                         onClick = {
+                            isBlocking = true
                             viewModel.blockCurrentChatParticipant(participantId.orEmpty()) { result ->
+                                isBlocking = false
                                 if (result.isSuccess) {
                                     showBlockDialog = false
+                                    Toast.makeText(
+                                        context,
+                                        R.string.chat_info_msg_blocked,
+                                        Toast.LENGTH_SHORT
+                                    ).show()
+                                } else {
+                                    Toast.makeText(
+                                        context,
+                                        R.string.chat_info_error_block,
+                                        Toast.LENGTH_SHORT
+                                    ).show()
                                 }
-                                Toast.makeText(
-                                    context,
-                                    if (result.isSuccess) R.string.chat_info_msg_blocked else R.string.chat_info_error_block,
-                                    Toast.LENGTH_SHORT
-                                ).show()
                             }
-                        }
+                        },
+                        enabled = !isBlocking
                     ) {
-                        Text(stringResource(R.string.action_ok))
+                        if (isBlocking) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(Sizes.IconLarge),
+                                strokeWidth = Sizes.BorderDefault
+                            )
+                        } else {
+                            Text(stringResource(R.string.action_ok))
+                        }
                     }
                 },
                 dismissButton = {
-                    TextButton(onClick = { showBlockDialog = false }) {
+                    TextButton(onClick = { if (!isBlocking) showBlockDialog = false }, enabled = !isBlocking) {
                         Text(stringResource(R.string.action_cancel))
                     }
                 }
@@ -1142,13 +1159,15 @@ onSuccess = {
 
         if (showClearChatDialog) {
             AlertDialog(
-                onDismissRequest = { showClearChatDialog = false },
+                onDismissRequest = { if (!isClearing) showClearChatDialog = false },
                 title = { Text(stringResource(R.string.chat_menu_clear_chat)) },
                 text = { Text(stringResource(R.string.chat_info_clear_chat_confirm)) },
                 confirmButton = {
                     TextButton(
                         onClick = {
+                            isClearing = true
                             viewModel.clearCurrentChat { result ->
+                                isClearing = false
                                 if (result.isSuccess) {
                                     showClearChatDialog = false
                                 }
@@ -1158,19 +1177,48 @@ onSuccess = {
                                     Toast.LENGTH_SHORT
                                 ).show()
                             }
-                        }
+                        },
+                        enabled = !isClearing
                     ) {
-                        Text(stringResource(R.string.action_ok))
+                        if (isClearing) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(Sizes.IconLarge),
+                                strokeWidth = Sizes.BorderDefault
+                            )
+                        } else {
+                            Text(stringResource(R.string.action_ok))
+                        }
                     }
                 },
                 dismissButton = {
-                    TextButton(onClick = { showClearChatDialog = false }) {
+                    TextButton(onClick = { if (!isClearing) showClearChatDialog = false }, enabled = !isClearing) {
                         Text(stringResource(R.string.action_cancel))
                     }
                 }
             )
         }
         val chatFolders by viewModel.chatFolders.collectAsState()
+        val createFolderSaveStatus by viewModel.createFolderSaveStatus.collectAsState()
+
+        // Dismiss the create folder dialog only when the async save succeeds.
+        // On failure the dialog stays open so the user can see the error and retry.
+        LaunchedEffect(createFolderSaveStatus) {
+            when (createFolderSaveStatus) {
+                is ChatViewModel.CreateFolderSaveStatus.Success -> {
+                    showCreateFolderDialog = false
+                    newFolderName = ""
+                    viewModel.resetCreateFolderSaveStatus()
+                }
+                is ChatViewModel.CreateFolderSaveStatus.Failure -> {
+                    // Keep dialog open; error is surfaced via snackbar below
+                    snackbarHostState.showSnackbar(
+                        message = context.getString(R.string.chat_folder_save_failed)
+                    )
+                }
+                ChatViewModel.CreateFolderSaveStatus.Idle -> Unit
+                ChatViewModel.CreateFolderSaveStatus.Saving -> Unit
+            }
+        }
 
         if (showChatFolderSheet) {
             val currentChatId = resolvedChatId ?: chatId
@@ -1194,6 +1242,7 @@ onSuccess = {
                 onDismissRequest = {
                     showCreateFolderDialog = false
                     newFolderName = ""
+                    viewModel.resetCreateFolderSaveStatus()
                 },
                 title = { Text(stringResource(R.string.inbox_folder_create)) },
                 text = {
@@ -1206,18 +1255,12 @@ onSuccess = {
                 },
                 confirmButton = {
                     TextButton(
-                        enabled = newFolderName.isNotBlank(),
+                        enabled = newFolderName.isNotBlank() && createFolderSaveStatus !is ChatViewModel.CreateFolderSaveStatus.Saving,
                         onClick = {
-                            // Do not dismiss the dialog here: createFolderAndAssignCurrentChat is
-                            // async. Keep the dialog open until the result is known so a failed
-                            // folder creation is not mistaken for success. On failure the dialog
-                            // stays open for retry and the error is surfaced via viewModel.error.
-                            viewModel.createFolderAndAssignCurrentChat(newFolderName) { success ->
-                                if (success) {
-                                    showCreateFolderDialog = false
-                                    newFolderName = ""
-                                }
-                            }
+                            viewModel.createFolderAndAssignCurrentChat(newFolderName)
+                            // Do not dismiss here: dismissal is gated on createFolderSaveStatus
+                            // becoming Success (via the LaunchedEffect above). On Failure the
+                            // dialog stays open so the user can retry.
                         }
                     ) { Text(stringResource(R.string.inbox_folder_save)) }
                 },
@@ -1226,6 +1269,7 @@ onSuccess = {
                         onClick = {
                             showCreateFolderDialog = false
                             newFolderName = ""
+                            viewModel.resetCreateFolderSaveStatus()
                         }
                     ) { Text(stringResource(R.string.action_cancel)) }
                 }
@@ -1235,32 +1279,36 @@ onSuccess = {
         // Deleting a conversation is destructive and irreversible, so it is confirmed first.
         if (showDeleteChatDialog) {
             AlertDialog(
-                onDismissRequest = { showDeleteChatDialog = false },
+                // Keep the dialog open while the async delete is in flight so a backdrop/back tap
+                // cannot dismiss it before the result is known (and hide a failure).
+                onDismissRequest = { if (!isDeletingChat) showDeleteChatDialog = false },
                 title = { Text(stringResource(R.string.chat_menu_delete_chat)) },
                 text = { Text(stringResource(R.string.chat_menu_delete_chat_confirm)) },
                 confirmButton = {
-                    TextButton(
+                    TextButton(enabled = !isDeletingChat,
                         onClick = {
                             viewModel.deleteCurrentChat { result ->
-                                Toast.makeText(
-                                    context,
-                                    if (result.isSuccess) {
-                                        R.string.chat_menu_delete_chat_success
-                                    } else {
-                                        R.string.chat_menu_delete_chat_error
-                                    },
-                                    Toast.LENGTH_SHORT
-                                ).show()
                                 if (result.isSuccess) {
                                     showDeleteChatDialog = false
                                     onNavigateBack()
+                                    Toast.makeText(
+                                        context,
+                                        R.string.chat_menu_delete_chat_success,
+                                        Toast.LENGTH_SHORT
+                                    ).show()
+                                } else {
+                                    Toast.makeText(
+                                        context,
+                                        R.string.chat_menu_delete_chat_error,
+                                        Toast.LENGTH_SHORT
+                                    ).show()
                                 }
-                            }
+                                }
                         }
                     ) { Text(stringResource(R.string.action_ok)) }
                 },
                 dismissButton = {
-                    TextButton(onClick = { showDeleteChatDialog = false }) {
+                    TextButton(onClick = { showDeleteChatDialog = false }, enabled = !isDeletingChat) {
                         Text(stringResource(R.string.action_cancel))
                     }
                 }

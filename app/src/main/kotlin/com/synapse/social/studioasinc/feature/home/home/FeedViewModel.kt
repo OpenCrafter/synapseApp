@@ -57,9 +57,7 @@ data class FeedUiState(
     val postSummary: String? = null,
     val summaryError: String? = null,
     val reportSubmitted: Boolean = false,
-    // Post IDs with a bookmark toggle currently in flight. Scoped per post so that a rapid tap on
-    // one post never blocks bookmark taps on a different post.
-    val inFlightBookmarkIds: Set<String> = emptySet()
+    val bookmarkBusyPostIds: Set<String> = emptySet()
 )
 
 @HiltViewModel
@@ -212,16 +210,18 @@ class FeedViewModel @Inject constructor(
     }
 
     fun bookmarkPost(post: Post) {
-        // Guard against rapid-tap duplicate requests: ignore a second tap on the same post while its
-        // bookmark toggle is in flight. Other posts remain tappable.
-        if (currentState.inFlightBookmarkIds.contains(post.id)) return
-        updateState { it.copy(inFlightBookmarkIds = it.inFlightBookmarkIds + post.id) }
+        if (currentState.bookmarkBusyPostIds.contains(post.id)) return
+        // Mark busy synchronously before launching so a rapid second tap on the same post
+        // sees bookmarkBusyPostIds containing post.id and no duplicate concurrent call slips through.
+        updateState { it.copy(bookmarkBusyPostIds = it.bookmarkBusyPostIds + post.id) }
         viewModelScope.launch {
             try {
+                // Resolve the user before any optimistic UI write so a missing user never leaves
+                // the feed in an out-of-synced state.
+                val currentUserId = getCurrentUserIdUseCase() ?: return@launch
                 val optimisticPost = post.copy(isBookmarked = !post.isBookmarked)
                 cacheModifiedPost(optimisticPost)
                 PostEventBus.emit(PostEvent.Updated(optimisticPost))
-                val currentUserId = getCurrentUserIdUseCase() ?: return@launch
                 bookmarkPostUseCase(post.id, currentUserId, post.isBookmarked).collect { result ->
                     result.onFailure {
                         cacheModifiedPost(post)
@@ -232,8 +232,7 @@ class FeedViewModel @Inject constructor(
                     }
                 }
             } finally {
-                // Always clear the in-flight marker so the user can retry after success or failure.
-                updateState { it.copy(inFlightBookmarkIds = it.inFlightBookmarkIds - post.id) }
+                updateState { it.copy(bookmarkBusyPostIds = it.bookmarkBusyPostIds - post.id) }
             }
         }
     }

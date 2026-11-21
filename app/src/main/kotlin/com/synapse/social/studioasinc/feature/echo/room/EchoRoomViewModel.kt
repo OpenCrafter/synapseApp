@@ -520,15 +520,18 @@ class EchoRoomViewModel @Inject constructor(
 
     fun endRoomForEveryone() {
         val state = _uiState.value
-        if (closed || state.phase != EchoRoomPhase.LIVE || !state.isHost) return
+        if (closed || state.phase != EchoRoomPhase.LIVE || !state.isHost || state.busy) return
+        // Mark the room busy before launching so a rapid second tap sees `busy == true` and the
+        // confirm button (`enabled = !state.busy`) is disabled immediately. Setting it inside the
+        // coroutine would leave a dispatch-delay window where duplicate `endRoom()` calls slip through.
+        _uiState.update { it.copy(busy = true, error = null) }
         viewModelScope.launch {
-            _uiState.update { it.copy(busy = true, error = null, endRoomError = null) }
             endRoom(roomId)
                 .onSuccess { finishEnded() }
                 .onFailure { error ->
                     Napier.w("Echo room could not be ended: ${error.message}", tag = TAG)
                     _uiState.update {
-                        it.copy(busy = false, endRoomError = error.toEchoErrorKind())
+                        it.copy(busy = false, error = error.toEchoErrorKind())
                     }
                 }
         }
@@ -583,8 +586,7 @@ class EchoRoomViewModel @Inject constructor(
                 micEnabled = false,
                 permissionPrompt = null,
                 participantMenu = null,
-                busy = false,
-                endRoomError = null
+                busy = false
             )
         }
     }

@@ -87,6 +87,7 @@ private fun PreviewCallScreen(
     CallScreenContent(
         state = CallUiState(session = session, elapsedMs = elapsedMs),
         actions = CallActions(),
+        onEndDialogDismiss = {},
         debugToolsEnabled = debugToolsEnabled,
         onClose = {}
     )
@@ -334,6 +335,7 @@ private fun StartFailedPreview() {
         CallScreenContent(
             state = CallUiState(startFailed = true),
             actions = CallActions(),
+            onEndDialogDismiss = {},
             debugToolsEnabled = false,
             onClose = {}
         )

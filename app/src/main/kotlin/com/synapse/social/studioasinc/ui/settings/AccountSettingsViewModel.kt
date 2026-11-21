@@ -167,10 +167,12 @@ class AccountSettingsViewModel @Inject constructor(
                     accountRepository.changeEmail(newEmail)
                         .onSuccess {
                             _showChangeEmailDialog.value = false
+                            _isLoading.value = false
                         }
                         .onFailure { e ->
                             android.util.Log.e("AccountSettingsViewModel", "Failed to change email", e)
                             _error.value = "Failed to change email: ${e.message}"
+                            _isLoading.value = false
                         }
                 }
                 .onFailure { e ->
@@ -181,9 +183,8 @@ class AccountSettingsViewModel @Inject constructor(
                     } else {
                         _error.value = "Failed to verify password: ${e?.message}"
                     }
+                    _isLoading.value = false
                 }
-
-            _isLoading.value = false
         }
     }
 
@@ -233,10 +234,12 @@ class AccountSettingsViewModel @Inject constructor(
                         .onSuccess {
                             android.util.Log.d("AccountSettingsViewModel", "Password changed successfully")
                             _showChangePasswordDialog.value = false
+                            _isLoading.value = false
                         }
                         .onFailure { e ->
                             android.util.Log.e("AccountSettingsViewModel", "Failed to change password", e)
                             _error.value = "Failed to change password: ${e.message}"
+                            _isLoading.value = false
                         }
                 }
                 .onFailure { e ->
@@ -247,9 +250,8 @@ class AccountSettingsViewModel @Inject constructor(
                     } else {
                         _error.value = "Failed to verify password: ${e?.message}"
                     }
+                    _isLoading.value = false
                 }
-
-            _isLoading.value = false
         }
     }
 
@@ -288,13 +290,13 @@ class AccountSettingsViewModel @Inject constructor(
             accountRepository.deleteAccount()
                 .onSuccess {
                     _showDeleteAccountDialog.value = false
+                    _isLoading.value = false
                 }
                 .onFailure { e ->
                     android.util.Log.e("AccountSettingsViewModel", "Failed to delete account", e)
                     _error.value = "Failed to delete account: ${e.message}"
+                    _isLoading.value = false
                 }
-
-            _isLoading.value = false
         }
     }
 

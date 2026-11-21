@@ -33,8 +33,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.stringResource
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.data.call.CallSimulationAction
 import com.synapse.social.studioasinc.feature.auth.ui.util.AnimationUtil
 import com.synapse.social.studioasinc.feature.call.components.CallAudioRouteSheet
@@ -84,6 +86,7 @@ fun CallScreen(
     CallScreenContent(
         state = state,
         actions = actions,
+        onEndDialogDismiss = { viewModel.clearEndError() },
         debugToolsEnabled = debugToolsEnabled,
         onClose = onClose
     )
@@ -93,11 +96,13 @@ fun CallScreen(
 fun CallScreenContent(
     state: CallUiState,
     actions: CallActions,
+    onEndDialogDismiss: () -> Unit,
     debugToolsEnabled: Boolean,
     onClose: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val session = state.session
+    val endErrorMessage = state.endError?.let { stringResource(R.string.call_end_error_failed) }
     var showRouteSheet by rememberSaveable { mutableStateOf(false) }
     var showDebugSheet by rememberSaveable { mutableStateOf(false) }
     var showEndDialog by rememberSaveable { mutableStateOf(false) }
@@ -274,8 +279,13 @@ fun CallScreenContent(
             onConfirm = {
                 surfaceActions.onEndAndClose()
             },
-            onDismiss = { showEndDialog = false },
-            enabled = !state.isEndingCall
+            onDismiss = {
+                showEndDialog = false
+                onEndDialogDismiss()
+            },
+            enabled = !state.isEndingCall,
+            errorMessage = endErrorMessage,
+            dismissable = !state.isEndingCall
         )
     }
 }

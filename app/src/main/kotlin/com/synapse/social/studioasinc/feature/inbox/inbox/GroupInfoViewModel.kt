@@ -50,6 +50,8 @@ data class GroupInfoUiState(
     val isReporting: Boolean = false,
     /** True while an invite link rotation is in flight; used to disable the confirm button. */
     val isRevokingInvite: Boolean = false,
+    /** True while a member removal is in flight; used to keep the confirmation dialog open until the result is known. */
+    val isRemoving: Boolean = false,
     /** True while a group name update is in flight; used to disable the confirm button and prevent double-tap. */
     val isUpdatingName: Boolean = false,
     /** True while a group description update is in flight; used to disable the confirm button and prevent double-tap. */
@@ -505,6 +507,7 @@ class GroupInfoViewModel @Inject constructor(
 
     fun removeMember(userId: String, onResult: (Boolean) -> Unit = {}) {
         val chatId = currentChatId ?: return
+        _uiState.value = _uiState.value.copy(isRemoving = true)
         viewModelScope.launch {
             chatRepository.removeGroupMember(chatId, userId)
                 .onSuccess {
@@ -512,12 +515,13 @@ class GroupInfoViewModel @Inject constructor(
                     _uiState.value = _uiState.value.copy(
                         members = remaining,
                         filteredMembers = _uiState.value.filteredMembers.filterNot { it.first.uid == userId },
-                        errorRes = null
+                        errorRes = null,
+                        isRemoving = false
                     )
                     onResult(true)
                 }
                 .onFailure {
-                    _uiState.value = _uiState.value.copy(errorRes = R.string.group_error_member_update)
+                    _uiState.value = _uiState.value.copy(errorRes = R.string.group_error_member_update, isRemoving = false)
                     onResult(false)
                 }
         }

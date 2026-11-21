@@ -168,12 +168,17 @@ fun EchoRoomScreen(
 
     if (confirmEnd) {
         AlertDialog(
+            // Do not let the host dismiss the dialog (outside tap / back) while the end-room
+            // operation is in flight, otherwise the error feedback is lost when it completes.
             onDismissRequest = { if (!state.busy) confirmEnd = false },
             title = { Text(stringResource(R.string.echo_room_end_confirm_title)) },
             text = {
                 Column {
                     Text(stringResource(R.string.echo_room_end_confirm_body))
-                    state.endRoomError?.let { error ->
+                    // The end-room operation reports its failure via the general error field.
+                    // Show that so the host can see why it failed and retry instead of being
+                    // left with a silent, dismissed dialog.
+                    state.error?.let { error ->
                         Text(
                             text = stringResource(error.messageRes()),
                             color = MaterialTheme.colorScheme.error,

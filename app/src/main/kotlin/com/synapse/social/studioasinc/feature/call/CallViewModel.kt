@@ -134,17 +134,23 @@ class CallViewModel @Inject constructor(
     /** Ends the live session before leaving so no ghost call survives the screen. */
     fun endAndClose() {
         val session = currentSession() ?: return
-        _uiState.update { it.copy(isEndingCall = true) }
+        _uiState.update { it.copy(isEndingCall = true, endError = null) }
         viewModelScope.launch {
             endCall(session).fold(
                 onSuccess = {
                     _uiState.update { it.copy(isEndingCall = false, closeRequested = true) }
                 },
-                onFailure = {
-                    _uiState.update { it.copy(isEndingCall = false) }
+                onFailure = { exception ->
+                    val kind = if (exception is CallBackendException) exception.kind else CallErrorKind.UNKNOWN
+                    _uiState.update { it.copy(isEndingCall = false, endError = kind) }
                 }
             )
         }
+    }
+
+    /** Clears the last end-call error so a fresh dialog / retry starts clean. */
+    fun clearEndError() {
+        _uiState.update { it.copy(endError = null) }
     }
 
     fun redial() {

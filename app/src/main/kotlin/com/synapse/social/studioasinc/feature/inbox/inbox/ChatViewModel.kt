@@ -144,6 +144,9 @@ private val messageSyncUseCase: MessageSyncUseCase = MessageSyncUseCase(getMessa
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
 
+    private val _reportLoading = MutableStateFlow(false)
+    val reportLoading: StateFlow<Boolean> = _reportLoading.asStateFlow()
+
     private val _isRefreshing = MutableStateFlow(false)
     val isRefreshing: StateFlow<Boolean> = _isRefreshing.asStateFlow()
 
@@ -220,6 +223,12 @@ private val messageSyncUseCase: MessageSyncUseCase = MessageSyncUseCase(getMessa
 
     private val _isMuteUpdating = MutableStateFlow(false)
     val isMuteUpdating: StateFlow<Boolean> = _isMuteUpdating.asStateFlow()
+
+    // True while `deleteCurrentChat` is in flight. Used by ChatScreen to keep the delete
+    // confirmation dialog open (and the confirm button disabled) until the async delete result
+    // is known, so a backdrop/back tap cannot dismiss it mid-operation and hide a failure.
+    private val _isDeletingChat = MutableStateFlow(false)
+    val isDeletingChat: StateFlow<Boolean> = _isDeletingChat.asStateFlow()
 
     private val _searchResults = MutableStateFlow<List<com.synapse.social.studioasinc.shared.domain.model.chat.Message>>(emptyList())
     val searchResults: StateFlow<List<com.synapse.social.studioasinc.shared.domain.model.chat.Message>> = _searchResults.asStateFlow()
@@ -1225,18 +1234,23 @@ private val messageSyncUseCase: MessageSyncUseCase = MessageSyncUseCase(getMessa
         if (reason.isBlank()) {
             return onResult(Result.failure(IllegalArgumentException("A report reason is required")))
         }
+        _reportLoading.value = true
         viewModelScope.launch {
-            val result = if (_isGroupChat.value || participantUserId.isNullOrBlank()) {
-                reportChatUseCase(chatId, reason)
-            } else {
-                val reporterId = _currentUserId.value.orEmpty()
-                if (reporterId.isBlank()) {
-                    Result.failure(IllegalStateException("User not authenticated"))
+            try {
+                val result = if (_isGroupChat.value || participantUserId.isNullOrBlank()) {
+                    reportChatUseCase(chatId, reason)
                 } else {
-                    reportUserUseCase(reporterId, participantUserId, reason).first()
+                    val reporterId = _currentUserId.value.orEmpty()
+                    if (reporterId.isBlank()) {
+                        Result.failure(IllegalStateException("User not authenticated"))
+                    } else {
+                        reportUserUseCase(reporterId, participantUserId, reason).first()
+                    }
                 }
+                onResult(result)
+            } finally {
+                _reportLoading.value = false
             }
-            onResult(result)
         }
     }
 
@@ -1358,13 +1372,19 @@ private val messageSyncUseCase: MessageSyncUseCase = MessageSyncUseCase(getMessa
     fun deleteCurrentChat(onResult: (Result<Unit>) -> Unit) {
         val chatId = currentChatId
             ?: return onResult(Result.failure(IllegalStateException("No active chat")))
+        if (_isDeletingChat.value) return
         viewModelScope.launch {
-            val result = chatRepository.deleteConversation(chatId)
-            if (result.isSuccess) {
-                messagingDelegate.clearMessages()
-                _hasMoreMessages.value = false
+            _isDeletingChat.value = true
+            try {
+                val result = chatRepository.deleteConversation(chatId)
+                if (result.isSuccess) {
+                    messagingDelegate.clearMessages()
+                    _hasMoreMessages.value = false
+                }
+                onResult(result)
+            } finally {
+                _isDeletingChat.value = false
             }
-            onResult(result)
         }
     }
 

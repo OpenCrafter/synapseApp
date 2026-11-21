@@ -61,13 +61,12 @@ data class SearchUiState(
     val blockError: String? = null,
     val isReportDialogShowing: Boolean = false,
     val reportDialogPost: com.synapse.social.studioasinc.domain.model.Post? = null,
-    val isReportSubmitting: Boolean = false,
     val reportSuccess: Boolean = false,
     val reportError: String? = null,
     val isSummarizing: Boolean = false,
     val postSummary: String? = null,
     val summaryError: String? = null,
-    val isBookmarking: Boolean = false
+    val bookmarkBusyPostIds: Set<String> = emptySet()
 )
 
 @HiltViewModel
@@ -397,9 +396,11 @@ class SearchViewModel @Inject constructor(
     }
 
     fun bookmarkPost(post: com.synapse.social.studioasinc.domain.model.Post) {
-        // Guard against rapid-tap duplicate requests: ignore a second tap while a toggle is in flight.
-        if (currentState.isBookmarking) return
-        updateState { it.copy(isBookmarking = true) }
+        if (currentState.bookmarkBusyPostIds.contains(post.id)) return
+        // Mark busy synchronously before launching so a rapid second tap on the same post
+        // sees bookmarkBusyPostIds containing post.id and no duplicate concurrent call slips
+        // through the dispatch-delay window.
+        updateState { it.copy(bookmarkBusyPostIds = it.bookmarkBusyPostIds + post.id) }
         viewModelScope.launch {
             try {
                 val userId = authRepository.getCurrentUserId() ?: return@launch
@@ -407,8 +408,7 @@ class SearchViewModel @Inject constructor(
                     result.onFailure { err -> updateState { it.copy(error = err.message) } }
                 }
             } finally {
-                // Always clear the flag so the user can retry after success or failure.
-                updateState { it.copy(isBookmarking = false) }
+                updateState { it.copy(bookmarkBusyPostIds = it.bookmarkBusyPostIds - post.id) }
             }
         }
     }
@@ -449,28 +449,25 @@ class SearchViewModel @Inject constructor(
 
     fun submitReport(reason: String) {
         val post = currentState.reportDialogPost ?: return
-        // Clear any previous failure state and mark submission as in-flight so the dialog
-        // shows a loading indicator instead of appearing stuck.
-        updateState { it.copy(isReportSubmitting = true, reportError = null) }
+        // Clear any stale error from a previous failed attempt so a retry
+        // does not misleadingly show an old failure while the new request is in flight.
+        updateState { it.copy(reportError = null) }
         viewModelScope.launch {
             reportPostUseCase(post.id, reason, null).collect { result ->
                 result.onSuccess {
                     updateState {
                         it.copy(
                             isReportDialogShowing = false,
-                            isReportSubmitting = false,
                             reportDialogPost = null,
                             reportSuccess = true
                         )
                     }
                 }.onFailure { err ->
-                    // Keep the report dialog open on failure so the user sees the inline error
-                    // and can retry, instead of silently dismissing the dialog and losing the
-                    // selected reason.
+                    // Keep the dialog open on failure so the user can see the error and retry
+                    // without re-selecting the reason. Close only on success.
                     updateState {
                         it.copy(
-                            isReportSubmitting = false,
-                            reportDialogPost = null,
+                            isReportDialogShowing = true,
                             reportError = err.message ?: "Failed to report post"
                         )
                     }

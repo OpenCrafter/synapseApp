@@ -166,7 +166,7 @@ internal fun GroupHubStage(
 
     if (showRevokeDialog) {
         AlertDialog(
-            onDismissRequest = { showRevokeDialog = false; onSaveStatusReset() },
+            onDismissRequest = { if (saveStatus is GroupHubSaveStatus.Idle || saveStatus is GroupHubSaveStatus.Failure) { showRevokeDialog = false; onSaveStatusReset() } },
             title = { Text(stringResource(R.string.group_revoke_title)) },
             text = { Text(stringResource(R.string.group_revoke_body)) },
             confirmButton = {
@@ -182,7 +182,7 @@ internal fun GroupHubStage(
                     Text(stringResource(R.string.group_revoke_confirm))
                 }
             },
-            dismissButton = { TextButton(onClick = { showRevokeDialog = false }) { Text(stringResource(R.string.cancel)) } }
+            dismissButton = { TextButton(onClick = { if (saveStatus is GroupHubSaveStatus.Idle || saveStatus is GroupHubSaveStatus.Failure) { showRevokeDialog = false } }, enabled = saveStatus !is GroupHubSaveStatus.Saving) { Text(stringResource(R.string.cancel)) } }
         )
     }
     if (showRequestsDialog) {
@@ -196,7 +196,7 @@ internal fun GroupHubStage(
     }
     memberToRemove?.let { user ->
         AlertDialog(
-            onDismissRequest = { memberToRemove = null; onSaveStatusReset() },
+            onDismissRequest = { if (saveStatus is GroupHubSaveStatus.Idle || saveStatus is GroupHubSaveStatus.Failure) { memberToRemove = null; onSaveStatusReset() } },
             title = { Text(stringResource(R.string.group_remove_member_title)) },
             text = { Text(stringResource(R.string.group_remove_member_body, userDisplayName(user))) },
             confirmButton = {
@@ -212,7 +212,7 @@ internal fun GroupHubStage(
                     Text(stringResource(R.string.remove_member), color = MaterialTheme.colorScheme.error)
                 }
             },
-            dismissButton = { TextButton(onClick = { memberToRemove = null }) { Text(stringResource(R.string.cancel)) } }
+            dismissButton = { TextButton(onClick = { if (saveStatus is GroupHubSaveStatus.Idle || saveStatus is GroupHubSaveStatus.Failure) { memberToRemove = null } }, enabled = saveStatus !is GroupHubSaveStatus.Saving) { Text(stringResource(R.string.cancel)) } }
         )
     }
 
