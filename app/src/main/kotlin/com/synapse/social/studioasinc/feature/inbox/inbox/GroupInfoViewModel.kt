@@ -64,9 +64,7 @@ data class GroupInfoUiState(
     val addableUsers: List<User> = emptyList(),
     val selectedUsersToAdd: List<User> = emptyList(),
     val addMemberSearchQuery: String = "",
-    val isLoadingContacts: Boolean = false,
-    /** True while the disappearing mode save is in flight; used to disable the mode options and keep the dialog open until the save result is known. */
-    val isUpdatingDisappearingMode: Boolean = false
+    val isLoadingContacts: Boolean = false
 )
 
 @HiltViewModel
