@@ -107,7 +107,6 @@ import kotlinx.coroutines.withContext
     val reducedMotion = AnimationUtil.rememberReducedMotion()
     var showEncryptionSheet by rememberSaveable(chatId) { mutableStateOf(false) }
     var showReportDialog by rememberSaveable(chatId) { mutableStateOf(false) }
-    var isReporting by rememberSaveable(chatId) { mutableStateOf(false) }
     var showDeleteChatDialog by rememberSaveable(chatId) { mutableStateOf(false) }
     var showChatFolderSheet by rememberSaveable(chatId) { mutableStateOf(false) }
     var showCreateFolderDialog by rememberSaveable(chatId) { mutableStateOf(false) }
@@ -126,6 +125,7 @@ import kotlinx.coroutines.withContext
     val inputText by viewModel.inputText.collectAsState()
 
     val isLoading by viewModel.isLoading.collectAsState()
+    val reportLoading by viewModel.reportLoading.collectAsState()
     val isScreenVisible by viewModel.isScreenVisible.collectAsState()
     val participantProfile by viewModel.participantProfile.collectAsState()
     val isParticipantActive by viewModel.isParticipantActive.collectAsState()
@@ -1081,12 +1081,10 @@ val currentUserId = currentUserIdState ?: ""
                 targetName = chatDisplayName,
                 onDismiss = { showReportDialog = false },
                 onReport = { reason ->
-                    isReporting = true
                     viewModel.reportCurrentChat(
                         participantUserId = participantId,
                         reason = reason,
                         onResult = { result ->
-                            isReporting = false
                             if (result.isSuccess) {
                                 showReportDialog = false
                             }
@@ -1098,7 +1096,7 @@ val currentUserId = currentUserIdState ?: ""
                         }
                     )
                 },
-                isLoading = isReporting
+                isLoading = reportLoading
             )
         }
 
