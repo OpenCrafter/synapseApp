@@ -78,7 +78,10 @@ fun ApiKeyItem(
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showDeleteConfirm = false }) {
+                TextButton(
+                    onClick = { if (!isLoading) showDeleteConfirm = false },
+                    enabled = !isLoading
+                ) {
                     Text(stringResource(R.string.cancel))
                 }
             }
