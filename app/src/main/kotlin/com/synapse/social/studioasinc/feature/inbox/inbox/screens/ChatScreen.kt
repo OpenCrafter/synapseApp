@@ -171,6 +171,7 @@ val currentUserId = currentUserIdState ?: ""
     val chatThemePreset by viewModel.chatThemePreset.collectAsState()
     val chatMessageCornerRadius by viewModel.chatMessageCornerRadius.collectAsState()
     val chatAvatarDisabled by viewModel.chatAvatarDisabled.collectAsState()
+    val isDeletingChat by viewModel.isDeletingChat.collectAsState()
     val wordEffects by viewModel.wordEffects.collectAsState(emptyList())
 
     val participantAvatarUrl = participantProfile?.avatar
@@ -1256,11 +1257,13 @@ val currentUserId = currentUserIdState ?: ""
         // Deleting a conversation is destructive and irreversible, so it is confirmed first.
         if (showDeleteChatDialog) {
             AlertDialog(
-                onDismissRequest = { showDeleteChatDialog = false },
+                // Keep the dialog open while the async delete is in flight so a backdrop/back tap
+                // cannot dismiss it before the result is known (and hide a failure).
+                onDismissRequest = { if (!isDeletingChat) showDeleteChatDialog = false },
                 title = { Text(stringResource(R.string.chat_menu_delete_chat)) },
                 text = { Text(stringResource(R.string.chat_menu_delete_chat_confirm)) },
                 confirmButton = {
-                    TextButton(
+                    TextButton(enabled = !isDeletingChat,
                         onClick = {
                             viewModel.deleteCurrentChat { result ->
                                 if (result.isSuccess) {
@@ -1283,7 +1286,7 @@ val currentUserId = currentUserIdState ?: ""
                     ) { Text(stringResource(R.string.action_ok)) }
                 },
                 dismissButton = {
-                    TextButton(onClick = { showDeleteChatDialog = false }) {
+                    TextButton(onClick = { showDeleteChatDialog = false }, enabled = !isDeletingChat) {
                         Text(stringResource(R.string.action_cancel))
                     }
                 }
