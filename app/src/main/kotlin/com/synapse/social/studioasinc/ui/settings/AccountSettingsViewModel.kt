@@ -82,12 +82,13 @@ class AccountSettingsViewModel @Inject constructor(
                         appleLinked = providers.contains("apple")
                     )
                     android.util.Log.d("AccountSettingsViewModel", "Loaded ${providers.size} linked accounts")
+                    _isLoading.value = false
                 }
                 .onFailure { e ->
                     android.util.Log.e("AccountSettingsViewModel", "Failed to load linked accounts", e)
                     _error.value = "Failed to load linked accounts: ${e.message}"
+                    _isLoading.value = false
                 }
-            _isLoading.value = false
         }
     }
 
@@ -103,9 +104,8 @@ class AccountSettingsViewModel @Inject constructor(
                 .onFailure { e ->
                     android.util.Log.e("AccountSettingsViewModel", "Failed to connect $provider", e)
                     _error.value = "Failed to connect ${provider.displayName}: ${e.message}"
+                    _isLoading.value = false
                 }
-
-            _isLoading.value = false
         }
     }
 
@@ -121,9 +121,8 @@ class AccountSettingsViewModel @Inject constructor(
                 .onFailure { e ->
                     android.util.Log.e("AccountSettingsViewModel", "Failed to disconnect $provider", e)
                     _error.value = "Failed to disconnect ${provider.displayName}: ${e.message}"
+                    _isLoading.value = false
                 }
-
-            _isLoading.value = false
         }
     }
 
