@@ -88,6 +88,12 @@ class FeedViewModel @Inject constructor(
 
     private val refreshTrigger = MutableStateFlow(0)
 
+    // Post IDs with a reaction (like/oppose) toggle currently in flight. Scoped per post so that a
+    // rapid tap on one post never blocks reaction taps on a different post.
+    private val inFlightReactionIds = mutableSetOf<String>()
+    // Post IDs with a reshare (repost/unrepost) currently in flight. Scoped per post.
+    private val inFlightReshareIds = mutableSetOf<String>()
+
     @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
     val posts: Flow<PagingData<FeedItem>> = refreshTrigger.flatMapLatest {
         getFeedPagedUseCase()
@@ -166,16 +172,29 @@ class FeedViewModel @Inject constructor(
     }
 
     private fun performReaction(post: Post, reactionType: ReactionType) {
-         viewModelScope.launch {
-             reactToPostUseCase(post, reactionType).collect { result ->
-                 result.onSuccess { updatedPost ->
-                     cacheModifiedPost(updatedPost)
-                     PostEventBus.emit(PostEvent.Updated(updatedPost))
-                 }.onFailure { e ->
-                     updateState { it.copy(error = e.message ?: "Failed to perform reaction") }
-                 }
-             }
-         }
+        // Guard against rapid-tap duplicate requests: ignore a second tap on the same post while its
+        // reaction toggle is in flight. Other posts remain tappable.
+        synchronized(inFlightReactionIds) {
+            if (inFlightReactionIds.contains(post.id)) return
+            inFlightReactionIds.add(post.id)
+        }
+        viewModelScope.launch {
+            try {
+                reactToPostUseCase(post, reactionType).collect { result ->
+                    result.onSuccess { updatedPost ->
+                        cacheModifiedPost(updatedPost)
+                        PostEventBus.emit(PostEvent.Updated(updatedPost))
+                    }.onFailure { e ->
+                        updateState { it.copy(error = e.message ?: "Failed to perform reaction") }
+                    }
+                }
+            } finally {
+                // Always clear the in-flight marker so the user can retry after success or failure.
+                synchronized(inFlightReactionIds) {
+                    inFlightReactionIds.remove(post.id)
+                }
+            }
+        }
     }
 
     fun reactToComment(commentId: String, reactionType: ReactionType) {
@@ -239,30 +258,43 @@ class FeedViewModel @Inject constructor(
     }
 
     fun resharePost(post: Post) {
+        // Guard against rapid-tap duplicate requests: ignore a second tap on the same post while its
+        // reshare is in flight. Other posts remain tappable.
+        synchronized(inFlightReshareIds) {
+            if (inFlightReshareIds.contains(post.id)) return
+            inFlightReshareIds.add(post.id)
+        }
         viewModelScope.launch {
-            val isCurrentlyReshared = post.isReshared
-            val optimisticPost = post.copy(
-                isReshared = !isCurrentlyReshared,
-                resharesCount = if (isCurrentlyReshared) maxOf(0, post.resharesCount - 1) else post.resharesCount + 1
-            )
-            cacheModifiedPost(optimisticPost)
-            PostEventBus.emit(PostEvent.Updated(optimisticPost))
+            try {
+                val isCurrentlyReshared = post.isReshared
+                val optimisticPost = post.copy(
+                    isReshared = !isCurrentlyReshared,
+                    resharesCount = if (isCurrentlyReshared) maxOf(0, post.resharesCount - 1) else post.resharesCount + 1
+                )
+                cacheModifiedPost(optimisticPost)
+                PostEventBus.emit(PostEvent.Updated(optimisticPost))
 
-            val result = if (isCurrentlyReshared) {
-                unrepostPostUseCase(post.id)
-            } else {
-                repostPostUseCase(post.id)
-            }
+                val result = if (isCurrentlyReshared) {
+                    unrepostPostUseCase(post.id)
+                } else {
+                    repostPostUseCase(post.id)
+                }
 
-            result.onSuccess {
-                // The own-repost row is a new feed item; pull a fresh page to surface it.
-                refresh()
-            }.onFailure {
-                // Revert on failure and tell the user — a silent revert looks like a no-op.
-                cacheModifiedPost(post)
-                PostEventBus.emit(PostEvent.Updated(post))
-                updateState {
-                    it.copy(error = it.error ?: application.getString(R.string.error_reshare_failed))
+                result.onSuccess {
+                    // The own-repost row is a new feed item; pull a fresh page to surface it.
+                    refresh()
+                }.onFailure {
+                    // Revert on failure and tell the user — a silent revert looks like a no-op.
+                    cacheModifiedPost(post)
+                    PostEventBus.emit(PostEvent.Updated(post))
+                    updateState {
+                        it.copy(error = it.error ?: application.getString(R.string.error_reshare_failed))
+                    }
+                }
+            } finally {
+                // Always clear the in-flight marker so the user can retry after success or failure.
+                synchronized(inFlightReshareIds) {
+                    inFlightReshareIds.remove(post.id)
                 }
             }
         }
