@@ -769,7 +769,7 @@ private fun InboxScreenContent(
             text = { Text(stringResource(R.string.inbox_delete_message, selectedChatIds.size)) },
             confirmButton = {
                 TextButton(onClick = {
-                    viewModel.deleteConversations(selectedChatIds) { success ->
+                    viewModel.deleteConversations(selectedChatIds) { success, _ ->
                         if (success) {
                             showDeleteDialog = false
                             returnToInbox()
