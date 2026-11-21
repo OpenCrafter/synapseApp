@@ -627,7 +627,7 @@ fun GroupInfoScreen(
 
     if (showReportConfirmDialog) {
         AlertDialog(
-            onDismissRequest = { showReportConfirmDialog = false },
+            onDismissRequest = { if (!uiState.isReporting) showReportConfirmDialog = false },
             title = { Text(stringResource(R.string.group_report_title)) },
             text = { Text(stringResource(R.string.group_report_body)) },
             confirmButton = {
