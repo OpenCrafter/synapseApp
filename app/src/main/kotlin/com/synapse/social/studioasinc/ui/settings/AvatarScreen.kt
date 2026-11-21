@@ -168,7 +168,7 @@ fun AvatarScreen(
 
     if (showRemoveDialog) {
         AlertDialog(
-            onDismissRequest = { showRemoveDialog = false },
+            onDismissRequest = { if (!isRemoving) showRemoveDialog = false },
             title = { Text(stringResource(R.string.remove_profile_photo_title)) },
             text = { Text(stringResource(R.string.remove_profile_photo_body)) },
             confirmButton = {
