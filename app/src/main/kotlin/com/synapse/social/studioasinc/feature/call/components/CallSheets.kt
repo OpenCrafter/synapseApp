@@ -236,12 +236,25 @@ private fun DebugActionRow(
 fun CallEndConfirmationDialog(
     onConfirm: () -> Unit,
     onDismiss: () -> Unit,
-    enabled: Boolean = true
+    enabled: Boolean = true,
+    errorMessage: String? = null,
+    dismissable: Boolean = true
 ) {
     AlertDialog(
-        onDismissRequest = onDismiss,
+        onDismissRequest = { if (dismissable) onDismiss() },
         title = { Text(stringResource(R.string.call_end_dialog_title)) },
-        text = { Text(stringResource(R.string.call_end_dialog_message)) },
+        text = {
+            Column {
+                Text(stringResource(R.string.call_end_dialog_message))
+                errorMessage?.let { error ->
+                    Text(
+                        text = error,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.error
+                    )
+                }
+            }
+        },
         confirmButton = {
             TextButton(
                 onClick = onConfirm,
@@ -254,7 +267,10 @@ fun CallEndConfirmationDialog(
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) {
+            TextButton(
+                onClick = { if (dismissable) onDismiss() },
+                enabled = dismissable
+            ) {
                 Text(stringResource(R.string.call_end_dialog_dismiss))
             }
         }
