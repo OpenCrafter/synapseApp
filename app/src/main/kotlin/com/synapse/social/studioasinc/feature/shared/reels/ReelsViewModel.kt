@@ -39,6 +39,12 @@ class ReelsViewModel @Inject constructor(
     private var currentPage = 0
     private val pageSize = 10
 
+    // Reel IDs with a like toggle currently in flight. Scoped per reel so that a rapid tap on one
+    // reel never blocks like taps on a different reel.
+    private val inFlightLikeReelIds = mutableSetOf<String>()
+    // Reel IDs with an oppose toggle currently in flight. Scoped per reel.
+    private val inFlightOpposeReelIds = mutableSetOf<String>()
+
     private val _uiState = MutableStateFlow(ReelsUiState())
     val uiState: StateFlow<ReelsUiState> = _uiState.asStateFlow()
 
@@ -105,6 +111,11 @@ class ReelsViewModel @Inject constructor(
     }
 
     fun likeReel(reelId: String) {
+        // Guard against rapid-tap duplicate requests: ignore a second tap on the same reel while
+        // its like toggle is in flight. Other reels remain tappable.
+        if (inFlightLikeReelIds.contains(reelId)) return
+        inFlightLikeReelIds.add(reelId)
+
         _uiState.update { state ->
             val updatedReels = state.reels.map { reel ->
                 if (reel.id == reelId) {
@@ -117,23 +128,33 @@ class ReelsViewModel @Inject constructor(
         }
 
         viewModelScope.launch {
-             reelRepository.likeReel(reelId).onFailure {
+            try {
+                 reelRepository.likeReel(reelId).onFailure {
 
-                 _uiState.update { state ->
-                    val updatedReels = state.reels.map { reel ->
-                        if (reel.id == reelId) {
-                            val oldLiked = !reel.isLikedByCurrentUser
-                            val oldCount = if (oldLiked) reel.likesCount + 1 else max(0, reel.likesCount - 1)
-                            reel.copy(isLikedByCurrentUser = oldLiked, likesCount = oldCount)
-                        } else reel
-                    }
-                    state.copy(reels = updatedReels, error = "Failed to update like")
+                     _uiState.update { state ->
+                        val updatedReels = state.reels.map { reel ->
+                            if (reel.id == reelId) {
+                                val oldLiked = !reel.isLikedByCurrentUser
+                                val oldCount = if (oldLiked) reel.likesCount + 1 else max(0, reel.likesCount - 1)
+                                reel.copy(isLikedByCurrentUser = oldLiked, likesCount = oldCount)
+                            } else reel
+                        }
+                        state.copy(reels = updatedReels, error = "Failed to update like")
+                     }
                  }
-             }
+            } finally {
+                // Always clear the in-flight marker so the user can retry after success or failure.
+                inFlightLikeReelIds.remove(reelId)
+            }
         }
     }
 
     fun opposeReel(reelId: String) {
+        // Guard against rapid-tap duplicate requests: ignore a second tap on the same reel while
+        // its oppose toggle is in flight. Other reels remain tappable.
+        if (inFlightOpposeReelIds.contains(reelId)) return
+        inFlightOpposeReelIds.add(reelId)
+
         _uiState.update { state ->
             val updatedReels = state.reels.map { reel ->
                 if (reel.id == reelId) {
@@ -146,18 +167,23 @@ class ReelsViewModel @Inject constructor(
         }
 
         viewModelScope.launch {
-            reelRepository.opposeReel(reelId).onFailure {
+            try {
+                reelRepository.opposeReel(reelId).onFailure {
 
-                 _uiState.update { state ->
-                    val updatedReels = state.reels.map { reel ->
-                        if (reel.id == reelId) {
-                            val oldOpposed = !reel.isOpposedByCurrentUser
-                            val oldCount = if (oldOpposed) reel.opposeCount + 1 else max(0, reel.opposeCount - 1)
-                            reel.copy(isOpposedByCurrentUser = oldOpposed, opposeCount = oldCount)
-                        } else reel
-                    }
-                    state.copy(reels = updatedReels, error = "Failed to update oppose")
-                 }
+                     _uiState.update { state ->
+                        val updatedReels = state.reels.map { reel ->
+                            if (reel.id == reelId) {
+                                val oldOpposed = !reel.isOpposedByCurrentUser
+                                val oldCount = if (oldOpposed) reel.opposeCount + 1 else max(0, reel.opposeCount - 1)
+                                reel.copy(isOpposedByCurrentUser = oldOpposed, opposeCount = oldCount)
+                            } else reel
+                        }
+                        state.copy(reels = updatedReels, error = "Failed to update oppose")
+                     }
+             }
+            } finally {
+                // Always clear the in-flight marker so the user can retry after success or failure.
+                inFlightOpposeReelIds.remove(reelId)
             }
         }
     }
