@@ -49,6 +49,7 @@ import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.feature.auth.ui.util.AnimationUtil
 import com.synapse.social.studioasinc.feature.inbox.inbox.WordEffectsViewModel
 import com.synapse.social.studioasinc.feature.inbox.inbox.components.WordEffectOverlay
+import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 import com.synapse.social.studioasinc.shared.domain.model.chat.effects.ChatEffectAnimation
 import com.synapse.social.studioasinc.shared.domain.model.chat.effects.EmojiEffectCatalog
@@ -174,6 +175,7 @@ fun WordEffectsScreen(
     pendingDelete?.let { effect ->
         DeleteEffectDialog(
             effect = effect,
+            isDeleting = uiState.deletingIds.contains(effect.id),
             onDismiss = { pendingDelete = null },
             onConfirm = {
                 viewModel.deleteEffect(chatId, effect.id) { success ->
@@ -460,20 +462,33 @@ private fun WordEffectEditorDialog(
 @Composable
 private fun DeleteEffectDialog(
     effect: WordEffect,
+    isDeleting: Boolean = false,
     onDismiss: () -> Unit,
     onConfirm: () -> Unit
 ) {
     AlertDialog(
-        onDismissRequest = onDismiss,
+        // Keep the dialog open while the asynchronous delete is in flight so an outside tap or
+        // back press cannot dismiss it before the result (and any error feedback) is known.
+        onDismissRequest = { if (!isDeleting) onDismiss() },
         title = { Text(stringResource(R.string.word_effects_delete_confirm_title)) },
         text = { Text(stringResource(R.string.word_effects_delete_confirm_body, effect.trigger)) },
         confirmButton = {
-            TextButton(onClick = onConfirm) {
+            TextButton(
+                onClick = onConfirm,
+                enabled = !isDeleting
+            ) {
+                if (isDeleting) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(Sizes.IconSemiMedium),
+                        strokeWidth = Sizes.BorderDefault
+                    )
+                    Spacer(modifier = Modifier.width(Spacing.space8))
+                }
                 Text(stringResource(R.string.word_effects_delete_confirm))
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) {
+            TextButton(onClick = onDismiss, enabled = !isDeleting) {
                 Text(stringResource(R.string.word_effects_cancel))
             }
         }
