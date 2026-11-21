@@ -111,10 +111,17 @@ class ReelsViewModel @Inject constructor(
     }
 
     fun likeReel(reelId: String) {
+        val original = _uiState.value.reels.firstOrNull { it.id == reelId } ?: return
         // Guard against rapid-tap duplicate requests: ignore a second tap on the same reel while
-        // its like toggle is in flight. Other reels remain tappable.
-        if (inFlightLikeReelIds.contains(reelId)) return
-        inFlightLikeReelIds.add(reelId)
+        // its like toggle (or an opposing toggle) is in flight. Other reels remain tappable.
+        synchronized(inFlightLikeReelIds) {
+            if (inFlightLikeReelIds.contains(reelId) || inFlightOpposeReelIds.contains(reelId)) return
+            inFlightLikeReelIds.add(reelId)
+        }
+        // Capture the pre-tap values before the optimistic update so a failed toggle can roll
+        // back to the exact original state instead of flipping a possibly-refreshed server value.
+        val wasLiked = original.isLikedByCurrentUser
+        val wasCount = original.likesCount
 
         _uiState.update { state ->
             val updatedReels = state.reels.map { reel ->
@@ -134,9 +141,7 @@ class ReelsViewModel @Inject constructor(
                      _uiState.update { state ->
                         val updatedReels = state.reels.map { reel ->
                             if (reel.id == reelId) {
-                                val oldLiked = !reel.isLikedByCurrentUser
-                                val oldCount = if (oldLiked) reel.likesCount + 1 else max(0, reel.likesCount - 1)
-                                reel.copy(isLikedByCurrentUser = oldLiked, likesCount = oldCount)
+                                reel.copy(isLikedByCurrentUser = wasLiked, likesCount = wasCount)
                             } else reel
                         }
                         state.copy(reels = updatedReels, error = "Failed to update like")
@@ -144,16 +149,23 @@ class ReelsViewModel @Inject constructor(
                  }
             } finally {
                 // Always clear the in-flight marker so the user can retry after success or failure.
-                inFlightLikeReelIds.remove(reelId)
+                synchronized(inFlightLikeReelIds) {
+                    inFlightLikeReelIds.remove(reelId)
+                }
             }
         }
     }
 
     fun opposeReel(reelId: String) {
+        val original = _uiState.value.reels.firstOrNull { it.id == reelId } ?: return
         // Guard against rapid-tap duplicate requests: ignore a second tap on the same reel while
-        // its oppose toggle is in flight. Other reels remain tappable.
-        if (inFlightOpposeReelIds.contains(reelId)) return
-        inFlightOpposeReelIds.add(reelId)
+        // its oppose toggle (or an opposing toggle) is in flight. Other reels remain tappable.
+        synchronized(inFlightOpposeReelIds) {
+            if (inFlightOpposeReelIds.contains(reelId) || inFlightLikeReelIds.contains(reelId)) return
+            inFlightOpposeReelIds.add(reelId)
+        }
+        val wasOpposed = original.isOpposedByCurrentUser
+        val wasCount = original.opposeCount
 
         _uiState.update { state ->
             val updatedReels = state.reels.map { reel ->
@@ -173,9 +185,7 @@ class ReelsViewModel @Inject constructor(
                      _uiState.update { state ->
                         val updatedReels = state.reels.map { reel ->
                             if (reel.id == reelId) {
-                                val oldOpposed = !reel.isOpposedByCurrentUser
-                                val oldCount = if (oldOpposed) reel.opposeCount + 1 else max(0, reel.opposeCount - 1)
-                                reel.copy(isOpposedByCurrentUser = oldOpposed, opposeCount = oldCount)
+                                reel.copy(isOpposedByCurrentUser = wasOpposed, opposeCount = wasCount)
                             } else reel
                         }
                         state.copy(reels = updatedReels, error = "Failed to update oppose")
@@ -183,7 +193,9 @@ class ReelsViewModel @Inject constructor(
              }
             } finally {
                 // Always clear the in-flight marker so the user can retry after success or failure.
-                inFlightOpposeReelIds.remove(reelId)
+                synchronized(inFlightOpposeReelIds) {
+                    inFlightOpposeReelIds.remove(reelId)
+                }
             }
         }
     }
