@@ -15,13 +15,15 @@ object PostActionsFactory {
         onQuote: (Post) -> Unit,
         onUserClick: (String) -> Unit,
         onOptionClick: (Post) -> Unit,
-        onMediaClick: (Post, Int) -> Unit
+        onMediaClick: (Post, Int) -> Unit,
+        onLike: (Post) -> Unit = viewModel::likePost,
+        onRepost: (Post) -> Unit = viewModel::resharePost
     ): PostActions {
         return PostActions(
-            onLike = viewModel::likePost,
+            onLike = onLike,
             onComment = onComment,
             onShare = onShare,
-            onRepost = viewModel::resharePost,
+            onRepost = onRepost,
             onQuote = onQuote,
             onBookmark = viewModel::bookmarkPost,
             onOptionClick = onOptionClick,
