@@ -65,7 +65,8 @@ data class SearchUiState(
     val reportError: String? = null,
     val isSummarizing: Boolean = false,
     val postSummary: String? = null,
-    val summaryError: String? = null
+    val summaryError: String? = null,
+    val bookmarkBusy: Boolean = false
 )
 
 @HiltViewModel
@@ -395,10 +396,18 @@ class SearchViewModel @Inject constructor(
     }
 
     fun bookmarkPost(post: com.synapse.social.studioasinc.domain.model.Post) {
+        if (currentState.bookmarkBusy) return
+        // Mark busy synchronously before launching so a rapid second tap sees bookmarkBusy == true
+        // and no duplicate concurrent bookmarkPostUseCase call slips through the dispatch window.
+        updateState { it.copy(bookmarkBusy = true) }
         viewModelScope.launch {
-            val userId = authRepository.getCurrentUserId() ?: return@launch
-            bookmarkPostUseCase(post.id, userId, post.isBookmarked == true).collect { result ->
-                result.onFailure { err -> updateState { it.copy(error = err.message) } }
+            try {
+                val userId = authRepository.getCurrentUserId() ?: return@launch
+                bookmarkPostUseCase(post.id, userId, post.isBookmarked == true).collect { result ->
+                    result.onFailure { err -> updateState { it.copy(error = err.message) } }
+                }
+            } finally {
+                updateState { it.copy(bookmarkBusy = false) }
             }
         }
     }
