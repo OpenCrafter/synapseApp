@@ -1286,7 +1286,7 @@ val currentUserId = currentUserIdState ?: ""
                     ) { Text(stringResource(R.string.action_ok)) }
                 },
                 dismissButton = {
-                    TextButton(onClick = { showDeleteChatDialog = false }) {
+                    TextButton(onClick = { showDeleteChatDialog = false }, enabled = !isDeletingChat) {
                         Text(stringResource(R.string.action_cancel))
                     }
                 }
