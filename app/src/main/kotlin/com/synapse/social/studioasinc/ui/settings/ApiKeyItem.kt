@@ -18,7 +18,8 @@ import com.synapse.social.studioasinc.feature.shared.theme.AppTypography
 @Composable
 fun ApiKeyItem(
     apiKey: ApiKeyInfo,
-    onDelete: (String, (Boolean) -> Unit) -> Unit
+    onDelete: (String, (Boolean) -> Unit) -> Unit,
+    isLoading: Boolean = false
 ) {
     var showDeleteConfirm by remember { mutableStateOf(false) }
 
@@ -58,7 +59,7 @@ fun ApiKeyItem(
 
     if (showDeleteConfirm) {
         AlertDialog(
-            onDismissRequest = { showDeleteConfirm = false },
+            onDismissRequest = { if (!isLoading) showDeleteConfirm = false },
             title = { Text(stringResource(R.string.delete_api_key_title)) },
             text = { Text(stringResource(R.string.delete_api_key_body, apiKey.keyName)) },
             confirmButton = {
@@ -77,7 +78,10 @@ fun ApiKeyItem(
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showDeleteConfirm = false }) {
+                TextButton(
+                    onClick = { if (!isLoading) showDeleteConfirm = false },
+                    enabled = !isLoading
+                ) {
                     Text(stringResource(R.string.cancel))
                 }
             }
