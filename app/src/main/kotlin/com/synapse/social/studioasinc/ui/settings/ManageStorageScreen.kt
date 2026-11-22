@@ -39,14 +39,26 @@ fun ManageStorageScreen(
     val storageUsage by viewModel.storageUsage.collectAsState()
     val largeFiles by viewModel.largeFiles.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
+    val error by viewModel.error.collectAsState()
 
     val keepMediaDays by viewModel.keepMediaDays.collectAsState()
     val maxCacheSizeGB by viewModel.maxCacheSizeGB.collectAsState()
+
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    LaunchedEffect(error) {
+        val currentError = error
+        if (currentError != null) {
+            snackbarHostState.showSnackbar(message = currentError)
+            viewModel.clearError()
+        }
+    }
 
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
 
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         topBar = {
             LargeTopAppBar(
                 colors = TopAppBarDefaults.topAppBarColors(
