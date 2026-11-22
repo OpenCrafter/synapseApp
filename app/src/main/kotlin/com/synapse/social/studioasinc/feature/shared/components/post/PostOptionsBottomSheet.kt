@@ -184,7 +184,7 @@ fun PostOptionsBottomSheet(
 
     if (showDeleteDialog) {
         AlertDialog(
-            onDismissRequest = { showDeleteDialog = false },
+            onDismissRequest = { if (!isDeleting) showDeleteDialog = false },
             title = { Text(stringResource(R.string.delete_post_title)) },
             text = { Text(stringResource(R.string.delete_post_body)) },
             confirmButton = {
