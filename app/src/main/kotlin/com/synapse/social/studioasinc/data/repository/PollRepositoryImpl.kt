@@ -118,7 +118,9 @@ class PollRepositoryImpl @Inject constructor(
             }
             .decodeList<PollVote>()
 
-        check(client.auth.currentUserOrNull()?.id == userId) { "Poll session changed" }
+        if (client.auth.currentUserOrNull()?.id != userId) {
+            return Result.failure(IllegalStateException("Poll session changed"))
+        }
         votes.associate { it.postId to it.optionIndex }
     }
 

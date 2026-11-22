@@ -26,7 +26,7 @@ class PopulatePostPollsUseCaseTest {
         }
     }
 
-    private fun poll(id: String) = Post(id = id, hasPoll = true,
+    private fun poll(id: String) = Post(id = id, timestamp = 0L, hasPoll = true,
         pollOptions = listOf(PollOption("A", 0), PollOption("B", 0)))
 
     @Test fun hydratesEachPageAndMatchesDetail() = runBlocking {

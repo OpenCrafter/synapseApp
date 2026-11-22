@@ -30,6 +30,9 @@ class RevokeVoteUseCase @Inject constructor(
         val result = pollRepository.revokeVote(post.id)
         val error = result.exceptionOrNull()
         if (error is kotlinx.coroutines.CancellationException) throw error
-        emit(result.map { updatedPost }.onFailure { emit(Result.failure(it)) })
+        when (result) {
+            is Result.Success -> emit(Result.success(updatedPost))
+            is Result.Failure -> emit(Result.failure(result.exception))
+        }
     }
 }
