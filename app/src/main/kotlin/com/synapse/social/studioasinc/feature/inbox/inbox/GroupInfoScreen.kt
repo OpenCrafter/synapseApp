@@ -440,7 +440,7 @@ fun GroupInfoScreen(
     if (showEditNameDialog) {
         var nameText by remember { mutableStateOf(groupInfo?.name ?: groupName) }
         AlertDialog(
-            onDismissRequest = { showEditNameDialog = false },
+            onDismissRequest = { if (!uiState.isUpdatingName) showEditNameDialog = false },
             title = { Text(stringResource(R.string.group_edit_name)) },
             text = {
                 OutlinedTextField(
@@ -463,7 +463,10 @@ fun GroupInfoScreen(
                 ) { Text(stringResource(R.string.group_save)) }
             },
             dismissButton = {
-                PressScaleTextButton(onClick = { showEditNameDialog = false }) {
+                PressScaleTextButton(
+                    onClick = { showEditNameDialog = false },
+                    enabled = !uiState.isUpdatingName
+                ) {
                     Text(stringResource(R.string.cancel))
                 }
             }
@@ -473,7 +476,7 @@ fun GroupInfoScreen(
     if (showEditDescriptionDialog) {
         var descriptionText by remember { mutableStateOf(groupInfo?.description ?: "") }
         AlertDialog(
-            onDismissRequest = { showEditDescriptionDialog = false },
+            onDismissRequest = { if (!uiState.isUpdatingDescription) showEditDescriptionDialog = false },
             title = { Text(stringResource(R.string.group_edit_description)) },
             text = {
                 OutlinedTextField(
@@ -496,7 +499,10 @@ fun GroupInfoScreen(
                 ) { Text(stringResource(R.string.group_save)) }
             },
             dismissButton = {
-                PressScaleTextButton(onClick = { showEditDescriptionDialog = false }) {
+                PressScaleTextButton(
+                    onClick = { showEditDescriptionDialog = false },
+                    enabled = !uiState.isUpdatingDescription
+                ) {
                     Text(stringResource(R.string.cancel))
                 }
             }
@@ -506,7 +512,7 @@ fun GroupInfoScreen(
     if (showDisappearingDialog) {
         val currentMode = groupInfo?.disappearingMode ?: DisappearingMode.OFF
         AlertDialog(
-            onDismissRequest = { showDisappearingDialog = false },
+            onDismissRequest = { if (!isUpdatingDisappearingMode) showDisappearingDialog = false },
             title = { Text(stringResource(R.string.group_disappearing_messages)) },
             text = {
                 Column {
@@ -515,8 +521,8 @@ fun GroupInfoScreen(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .clickable(enabled = !isUpdatingDisappearingMode) {
-                                    viewModel.setDisappearingMode(mode) {
-                                        showDisappearingDialog = false
+                                    viewModel.setDisappearingMode(mode) { success ->
+                                        if (success) showDisappearingDialog = false
                                     }
                                 }
                                 .padding(vertical = Spacing.space4),
@@ -524,11 +530,7 @@ fun GroupInfoScreen(
                         ) {
                             RadioButton(
                                 selected = mode == currentMode,
-                                onClick = {
-                                    viewModel.setDisappearingMode(mode) {
-                                        showDisappearingDialog = false
-                                    }
-                                },
+                                onClick = null,
                                 enabled = !isUpdatingDisappearingMode
                             )
                             Spacer(Modifier.width(Spacing.space8))
@@ -538,7 +540,10 @@ fun GroupInfoScreen(
                 }
             },
             confirmButton = {
-                PressScaleTextButton(onClick = { showDisappearingDialog = false }) {
+                PressScaleTextButton(
+                    onClick = { showDisappearingDialog = false },
+                    enabled = !isUpdatingDisappearingMode
+                ) {
                     Text(stringResource(R.string.done))
                 }
             }
@@ -606,23 +611,29 @@ fun GroupInfoScreen(
 
     if (showDeleteConfirmDialog) {
         AlertDialog(
-            onDismissRequest = { showDeleteConfirmDialog = false },
+            onDismissRequest = { if (!uiState.isDeleting) showDeleteConfirmDialog = false },
             title = { Text(stringResource(R.string.group_delete_confirm_title)) },
             text = { Text(stringResource(R.string.group_delete_confirm_body)) },
             confirmButton = {
                 PressScaleTextButton(
                     onClick = {
-                        viewModel.deleteGroup {
-                            showDeleteConfirmDialog = false
-                            onNavigateBack()
+                        viewModel.deleteGroup { success ->
+                            if (success) {
+                                showDeleteConfirmDialog = false
+                                onNavigateBack()
+                            }
                         }
-                    }
+                    },
+                    enabled = !uiState.isDeleting
                 ) {
                     Text(stringResource(R.string.group_delete), color = MaterialTheme.colorScheme.error)
                 }
             },
             dismissButton = {
-                PressScaleTextButton(onClick = { showDeleteConfirmDialog = false }) {
+                PressScaleTextButton(
+                    onClick = { if (!uiState.isDeleting) showDeleteConfirmDialog = false },
+                    enabled = !uiState.isDeleting
+                ) {
                     Text(stringResource(R.string.cancel))
                 }
             }

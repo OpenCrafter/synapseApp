@@ -56,6 +56,8 @@ data class GroupInfoUiState(
     val isRemoving: Boolean = false,
     /** True while a group leave is in flight; used to keep the confirmation dialog open until the result is known. */
     val isLeaving: Boolean = false,
+    /** True while a group deletion is in flight; used to keep the confirmation dialog open until the result is known. */
+    val isDeleting: Boolean = false,
     /** True while a group name update is in flight; used to disable the confirm button and prevent double-tap. */
     val isUpdatingName: Boolean = false,
     /** True while a group description update is in flight; used to disable the confirm button and prevent double-tap. */
@@ -191,6 +193,7 @@ class GroupInfoViewModel @Inject constructor(
 
     fun updateGroupName(name: String, onResult: () -> Unit) {
         val chatId = currentChatId ?: return
+        if (_uiState.value.isUpdatingName) return
         _uiState.value = _uiState.value.copy(isUpdatingName = true)
         viewModelScope.launch {
             chatRepository.updateGroupInfo(chatId, name = name)
@@ -206,6 +209,7 @@ class GroupInfoViewModel @Inject constructor(
 
     fun updateGroupDescription(description: String, onResult: () -> Unit) {
         val chatId = currentChatId ?: return
+        if (_uiState.value.isUpdatingDescription) return
         _uiState.value = _uiState.value.copy(isUpdatingDescription = true)
         viewModelScope.launch {
             chatRepository.updateGroupInfo(chatId, description = description)
@@ -342,6 +346,7 @@ class GroupInfoViewModel @Inject constructor(
 
     fun setDisappearingMode(mode: DisappearingMode, onResult: (Boolean) -> Unit) {
         val chatId = currentChatId ?: return
+        if (_uiState.value.isUpdatingDisappearingMode) return
         _uiState.value = _uiState.value.copy(isUpdatingDisappearingMode = true)
         viewModelScope.launch {
             chatRepository.setDisappearingMode(chatId, mode)
@@ -632,14 +637,23 @@ class GroupInfoViewModel @Inject constructor(
         }
     }
 
-    fun deleteGroup(onDeleted: () -> Unit) {
+    fun deleteGroup(onDeleted: (Boolean) -> Unit = {}) {
         val chatId = currentChatId ?: return
+        if (_uiState.value.isDeleting) return
+        _uiState.value = _uiState.value.copy(isDeleting = true)
         viewModelScope.launch {
-            chatRepository.deleteGroup(chatId)
-                .onSuccess { onDeleted() }
-                .onFailure {
-                    _uiState.value = _uiState.value.copy(errorRes = R.string.group_error_create)
-                }
+            try {
+                chatRepository.deleteGroup(chatId)
+                    .onSuccess {
+                        onDeleted(true)
+                    }
+                    .onFailure {
+                        _uiState.value = _uiState.value.copy(errorRes = R.string.group_error_create)
+                        onDeleted(false)
+                    }
+            } finally {
+                _uiState.value = _uiState.value.copy(isDeleting = false)
+            }
         }
     }
 
