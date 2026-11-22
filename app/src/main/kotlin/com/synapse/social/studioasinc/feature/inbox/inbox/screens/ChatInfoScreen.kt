@@ -136,6 +136,7 @@ fun ChatInfoScreen(
     var blockOperationInProgress by remember { mutableStateOf(false) }
     var showReportConfirmDialog by remember { mutableStateOf(false) }
     var reportOperationInProgress by remember { mutableStateOf(false) }
+    var clearOperationInProgress by remember { mutableStateOf(false) }
     var showGroupsDialog by remember { mutableStateOf(false) }
     var showEncryptionSheet by remember { mutableStateOf(false) }
     var moreMenuExpanded by remember { mutableStateOf(false) }
@@ -480,23 +481,28 @@ fun ChatInfoScreen(
 
     if (showClearChatDialog) {
         AlertDialog(
-            onDismissRequest = { showClearChatDialog = false },
+            onDismissRequest = { if (!clearOperationInProgress) showClearChatDialog = false },
             title = { Text(stringResource(R.string.chat_info_clear_history_title)) },
             text = { Text(stringResource(R.string.chat_info_clear_chat_confirm)) },
             confirmButton = {
-                PressScaleTextButton(onClick = {
-                    // Do not dismiss the dialog here: clearing is async. Keep it open until the
-                    // result is known so the user gets success/failure feedback and can retry.
-                    viewModel.clearChat(chatId) {
-                        showClearChatDialog = false
-                        onNavigateBack()
+                PressScaleTextButton(
+                    enabled = !clearOperationInProgress,
+                    onClick = {
+                        // Do not dismiss the dialog here: clearing is async. Keep it open until the
+                        // result is known so the user gets success/failure feedback and can retry.
+                        clearOperationInProgress = true
+                        viewModel.clearChat(chatId) {
+                            clearOperationInProgress = false
+                            showClearChatDialog = false
+                            onNavigateBack()
+                        }
                     }
-                }) {
+                ) {
                     Text(stringResource(R.string.action_delete), color = MaterialTheme.colorScheme.error)
                 }
             },
             dismissButton = {
-                PressScaleTextButton(onClick = { showClearChatDialog = false }) {
+                PressScaleTextButton(onClick = { if (!clearOperationInProgress) showClearChatDialog = false }) {
                     Text(stringResource(R.string.cancel))
                 }
             }
