@@ -178,7 +178,9 @@ fun GroupParticipantsScreen(
 
     memberToRemove?.let { member ->
         AlertDialog(
-            onDismissRequest = { memberToRemove = null },
+            // Keep the dialog open while the async removal is in flight so a backdrop/back tap
+            // cannot dismiss it before the result is known (and hide a failure).
+            onDismissRequest = { if (!uiState.isRemoving) memberToRemove = null },
             title = { Text(stringResource(R.string.group_remove_member_title)) },
             text = { Text(stringResource(R.string.group_remove_member_body, userDisplayName(member))) },
             confirmButton = {
