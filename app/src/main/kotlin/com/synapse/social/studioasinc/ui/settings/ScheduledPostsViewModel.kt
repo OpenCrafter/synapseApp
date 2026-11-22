@@ -32,6 +32,11 @@ class ScheduledPostsViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(ScheduledPostsUiState())
     val uiState: StateFlow<ScheduledPostsUiState> = _uiState.asStateFlow()
 
+    // Tracks post IDs that currently have a retry/reschedule/cancel operation in flight,
+    // so the UI can disable the corresponding controls and prevent duplicate requests.
+    private val _inFlightPostIds = MutableStateFlow(emptySet<String>())
+    val inFlightPostIds: StateFlow<Set<String>> = _inFlightPostIds.asStateFlow()
+
     init {
         loadScheduledPosts()
     }
@@ -69,45 +74,71 @@ class ScheduledPostsViewModel @Inject constructor(
     }
 
     fun cancelScheduledPost(id: String, onResult: (Boolean) -> Unit) {
+        // Guard against concurrent invocations for the same post
+        if (_inFlightPostIds.value.contains(id)) {
+            onResult(false)
+            return
+        }
         viewModelScope.launch {
-            _uiState.update { state ->
-                state.copy(posts = state.posts.filter { it.id != id })
-            }
-            val result = scheduledPostRepository.cancelScheduledPost(id)
-            if (result.isSuccess) {
-                onResult(true)
-            } else {
-                loadScheduledPosts()
-                onResult(false)
+            _inFlightPostIds.value = _inFlightPostIds.value + id
+            try {
+                _uiState.update { state ->
+                    state.copy(posts = state.posts.filter { it.id != id })
+                }
+                val result = scheduledPostRepository.cancelScheduledPost(id)
+                if (result.isSuccess) {
+                    onResult(true)
+                } else {
+                    loadScheduledPosts()
+                    onResult(false)
+                }
+            } finally {
+                _inFlightPostIds.value = _inFlightPostIds.value - id
             }
         }
     }
 
     fun retryScheduledPost(id: String) {
+        // Guard against concurrent invocations for the same post
+        if (_inFlightPostIds.value.contains(id)) return
+
         viewModelScope.launch {
-            val post = _uiState.value.posts.find { it.id == id }
-            scheduledPostRepository.retryScheduledPost(id)
-                .onSuccess {
-                    post?.let { ScheduledPostPublisherWorker.scheduleAt(getApplication(), it.scheduledAt) }
-                    loadScheduledPosts()
-                }
-                .onFailure { error ->
-                    _uiState.update { it.copy(error = "Retry failed: ${error.message}") }
-                }
+            _inFlightPostIds.value = _inFlightPostIds.value + id
+            try {
+                val post = _uiState.value.posts.find { it.id == id }
+                scheduledPostRepository.retryScheduledPost(id)
+                    .onSuccess {
+                        post?.let { ScheduledPostPublisherWorker.scheduleAt(getApplication(), it.scheduledAt) }
+                        loadScheduledPosts()
+                    }
+                    .onFailure { error ->
+                        _uiState.update { it.copy(error = "Retry failed: ${error.message}") }
+                    }
+            } finally {
+                _inFlightPostIds.value = _inFlightPostIds.value - id
+            }
         }
     }
 
     fun reschedulePost(id: String, newScheduledAt: String) {
+        // Guard against concurrent invocations for the same post
+        if (_inFlightPostIds.value.contains(id)) return
+
         viewModelScope.launch {
-            val post = _uiState.value.posts.find { it.id == id } ?: return@launch
-            scheduledPostRepository.updateScheduledPost(id, newScheduledAt, post.postRequest)
-                .onSuccess {
-                    ScheduledPostPublisherWorker.scheduleAt(getApplication(), newScheduledAt)
-                    loadScheduledPosts()
-                }
-                .onFailure { error ->
-                    _uiState.update { it.copy(error = "Reschedule failed: ${error.message}") }
-                }
+            _inFlightPostIds.value = _inFlightPostIds.value + id
+            try {
+                val post = _uiState.value.posts.find { it.id == id } ?: return@launch
+                scheduledPostRepository.updateScheduledPost(id, newScheduledAt, post.postRequest)
+                    .onSuccess {
+                        ScheduledPostPublisherWorker.scheduleAt(getApplication(), newScheduledAt)
+                        loadScheduledPosts()
+                    }
+                    .onFailure { error ->
+                        _uiState.update { it.copy(error = "Reschedule failed: ${error.message}") }
+                    }
+            } finally {
+                _inFlightPostIds.value = _inFlightPostIds.value - id
+            }
         }
     }
 }

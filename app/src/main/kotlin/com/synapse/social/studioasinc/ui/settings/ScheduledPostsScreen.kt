@@ -44,6 +44,7 @@ fun ScheduledPostsScreen(
     onBackClick: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val inFlightPostIds by viewModel.inFlightPostIds.collectAsState()
     val context = LocalContext.current
 
     var reschedulingPostId by remember { mutableStateOf<String?>(null) }
@@ -150,6 +151,7 @@ fun ScheduledPostsScreen(
                         items(uiState.posts, key = { it.id }) { scheduledPost ->
                             ScheduledPostCard(
                                 scheduledPost = scheduledPost,
+                                inFlightPostIds = inFlightPostIds,
                                 onEdit = {
                                     val intent = Intent(context, CreatePostActivity::class.java).apply {
                                         putExtra("scheduled_post_id", scheduledPost.id)
@@ -212,6 +214,7 @@ fun ScheduledPostsScreen(
 @Composable
 private fun ScheduledPostCard(
     scheduledPost: ScheduledPost,
+    inFlightPostIds: Set<String>,
     onEdit: () -> Unit,
     onReschedule: () -> Unit,
     onRetry: () -> Unit,
@@ -257,6 +260,7 @@ private fun ScheduledPostCard(
                                 menuExpanded = false
                                 onReschedule()
                             },
+                            enabled = scheduledPost.id !in inFlightPostIds,
                             leadingIcon = { Icon(Icons.Default.Schedule, contentDescription = null) }
                         )
                         if (scheduledPost.status == ScheduledPost.STATUS_FAILED) {
@@ -266,6 +270,7 @@ private fun ScheduledPostCard(
                                     menuExpanded = false
                                     onRetry()
                                 },
+                                enabled = scheduledPost.id !in inFlightPostIds,
                                 leadingIcon = { Icon(Icons.Default.Refresh, contentDescription = null) }
                             )
                         }
