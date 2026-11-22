@@ -47,8 +47,9 @@ fun ManageStorageScreen(
     val snackbarHostState = remember { SnackbarHostState() }
 
     LaunchedEffect(error) {
-        if (error != null) {
-            snackbarHostState.showSnackbar(message = error)
+        val currentError = error
+        if (currentError != null) {
+            snackbarHostState.showSnackbar(message = currentError)
             viewModel.clearError()
         }
     }
