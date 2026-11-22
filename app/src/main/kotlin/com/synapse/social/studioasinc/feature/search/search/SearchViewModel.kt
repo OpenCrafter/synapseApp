@@ -67,7 +67,8 @@ data class SearchUiState(
     val isSummarizing: Boolean = false,
     val postSummary: String? = null,
     val summaryError: String? = null,
-    val bookmarkBusyPostIds: Set<String> = emptySet()
+    val bookmarkBusyPostIds: Set<String> = emptySet(),
+    val followingBusyAccountIds: Set<String> = emptySet()
 )
 
 @HiltViewModel
@@ -304,6 +305,7 @@ class SearchViewModel @Inject constructor(
     }
 
     fun toggleFollow(accountId: String) {
+        if (currentState.followingBusyAccountIds.contains(accountId)) return
         val currentUserId = authRepository.getCurrentUserId() ?: return
         val account = currentState.accounts.find { it.id == accountId } ?: return
         val wasFollowing = account.isFollowing
@@ -322,7 +324,8 @@ class SearchViewModel @Inject constructor(
             }
             state.copy(
                 accounts = updatedAccounts,
-                cachedData = state.cachedData + (SearchTab.PEOPLE to updatedAccounts)
+                cachedData = state.cachedData + (SearchTab.PEOPLE to updatedAccounts),
+                followingBusyAccountIds = state.followingBusyAccountIds + accountId
             )
         }
 
@@ -377,6 +380,10 @@ class SearchViewModel @Inject constructor(
                     }
                 }
             )
+            // Reset busy flag so subsequent taps on the same account are allowed again.
+            updateState { state ->
+                state.copy(followingBusyAccountIds = state.followingBusyAccountIds - accountId)
+            }
         }
     }
 

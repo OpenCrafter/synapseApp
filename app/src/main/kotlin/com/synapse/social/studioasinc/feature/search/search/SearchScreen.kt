@@ -338,7 +338,8 @@ fun SearchScreen(
                                                     AccountCard(
                                                         account = account,
                                                         onClick = { onNavigateToProfile(account.id) },
-                                                        onFollowClick = { viewModel.toggleFollow(account.id) }
+                                                        onFollowClick = { if (account.id !in uiState.followingBusyAccountIds) viewModel.toggleFollow(account.id) },
+                                                        isFollowingBusy = account.id in uiState.followingBusyAccountIds
                                                     )
                                                 }
                                             }

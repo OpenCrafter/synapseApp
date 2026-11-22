@@ -28,7 +28,8 @@ import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 fun AccountCard(
     account: SearchAccount,
     onClick: () -> Unit,
-    onFollowClick: () -> Unit
+    onFollowClick: () -> Unit,
+    isFollowingBusy: Boolean = false
 ) {
 
     var isVisible by remember { mutableStateOf(false) }
@@ -108,7 +109,8 @@ fun AccountCard(
              OutlinedButton(
                  onClick = onFollowClick,
                  modifier = Modifier.height(Sizes.AvatarSmall),
-                 contentPadding = PaddingValues(horizontal = Spacing.space16)
+                 contentPadding = PaddingValues(horizontal = Spacing.space16),
+                 enabled = !isFollowingBusy
              ) {
                  Text(stringResource(R.string.action_following))
              }
@@ -116,7 +118,8 @@ fun AccountCard(
             Button(
                 onClick = onFollowClick,
                 modifier = Modifier.height(Sizes.AvatarSmall),
-                contentPadding = PaddingValues(horizontal = Spacing.space16)
+                contentPadding = PaddingValues(horizontal = Spacing.space16),
+                enabled = !isFollowingBusy
             ) {
                 Text(stringResource(R.string.action_follow))
             }
