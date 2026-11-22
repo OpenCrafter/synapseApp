@@ -645,7 +645,7 @@ class GroupInfoViewModel @Inject constructor(
         }
     }
 
-    fun deleteGroup(onDeleted: (Boolean) -> Unit = {}) {
+    fun deleteGroup(onDeleted: () -> Unit) {
         val chatId = currentChatId ?: return
         if (_uiState.value.isDeleting) return
         _uiState.value = _uiState.value.copy(isDeleting = true)
@@ -653,11 +653,11 @@ class GroupInfoViewModel @Inject constructor(
             try {
                 chatRepository.deleteGroup(chatId)
                     .onSuccess {
-                        onDeleted(true)
+                        _uiState.value = _uiState.value.copy(isDeleting = false)
+                        onDeleted()
                     }
                     .onFailure {
                         _uiState.value = _uiState.value.copy(errorRes = R.string.group_error_create)
-                        onDeleted(false)
                     }
             } finally {
                 _uiState.value = _uiState.value.copy(isDeleting = false)
