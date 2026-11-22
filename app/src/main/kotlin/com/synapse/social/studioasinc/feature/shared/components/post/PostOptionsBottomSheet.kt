@@ -197,15 +197,18 @@ fun PostOptionsBottomSheet(
                         if (isDeleting) return@click
                         isDeleting = true
                         scope.launch {
-                            val result = onDelete()
-                            if (result.isSuccess) {
-                                showDeleteDialog = false
-                                onDismiss()
+                            try {
+                                val result = onDelete()
+                                if (result.isSuccess) {
+                                    showDeleteDialog = false
+                                    onDismiss()
+                                }
+                                // On failure the dialog stays open so the user can retry; the screen's
+                                // existing error handling (e.g. the deletePostError snackbar) surfaces the
+                                // failure while the dialog remains available for another attempt.
+                            } finally {
+                                isDeleting = false
                             }
-                            // On failure the dialog stays open so the user can retry; the screen's
-                            // existing error handling (e.g. the deletePostError snackbar) surfaces the
-                            // failure while the dialog remains available for another attempt.
-                            isDeleting = false
                         }
                     }
                 ) {
@@ -213,7 +216,10 @@ fun PostOptionsBottomSheet(
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showDeleteDialog = false }) {
+                TextButton(
+                    enabled = !isDeleting,
+                    onClick = { if (!isDeleting) showDeleteDialog = false }
+                ) {
                     Text(stringResource(R.string.cancel))
                 }
             }
