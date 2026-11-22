@@ -81,7 +81,11 @@ fun BusinessPlatformScreen(
                 verticalArrangement = Arrangement.spacedBy(Spacing.space24)
             ) {
                 item {
-                    AccountTypeSection(state = state, onSwitchToBusiness = { viewModel.switchToBusinessAccount() })
+                    AccountTypeSection(
+                        state = state,
+                        onSwitchToBusiness = { viewModel.switchToBusinessAccount() },
+                        isLoading = isLoading
+                    )
                 }
                 if (state.isBusinessAccount) {
                     item { AnalyticsDashboardSection(state.analytics) }
@@ -89,7 +93,8 @@ fun BusinessPlatformScreen(
                         MonetizationSection(
                             state = state,
                             onToggleMonetization = { viewModel.toggleMonetization(it) },
-                            onNavigateToPayoutSettings = onNavigateToPayoutSettings
+                            onNavigateToPayoutSettings = onNavigateToPayoutSettings,
+                            isLoading = isLoading
                         )
                     }
                     item {
@@ -101,7 +106,8 @@ fun BusinessPlatformScreen(
                     item {
                         VerificationSection(
                             status = state.verificationStatus,
-                            onApply = { viewModel.applyForVerification() }
+                            onApply = { viewModel.applyForVerification() },
+                            isLoading = isLoading
                         )
                     }
                 }
@@ -114,7 +120,8 @@ fun BusinessPlatformScreen(
 @Composable
 private fun AccountTypeSection(
     state: BusinessPlatformState,
-    onSwitchToBusiness: () -> Unit
+    onSwitchToBusiness: () -> Unit,
+    isLoading: Boolean
 ) {
     SettingsSection(title = stringResource(R.string.business_section_account_type)) {
         Column(
@@ -157,6 +164,7 @@ private fun AccountTypeSection(
             if (!state.isBusinessAccount) {
                 Button(
                     onClick = onSwitchToBusiness,
+                    enabled = !isLoading,
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = AppSpacing.itemHorizontalPadding)
@@ -273,7 +281,8 @@ private fun AnalyticsCard(
 private fun MonetizationSection(
     state: BusinessPlatformState,
     onToggleMonetization: (Boolean) -> Unit,
-    onNavigateToPayoutSettings: () -> Unit
+    onNavigateToPayoutSettings: () -> Unit,
+    isLoading: Boolean
 ) {
     SettingsSection(title = stringResource(R.string.business_section_monetization)) {
         Column {
@@ -282,6 +291,7 @@ private fun MonetizationSection(
                 subtitle = stringResource(R.string.business_monetization_subtitle),
                 checked = state.monetizationEnabled,
                 onCheckedChange = onToggleMonetization,
+                enabled = !isLoading,
                 position = if (state.monetizationEnabled && state.revenue != null)
                     SettingsItemPosition.Top else SettingsItemPosition.Single
             )
@@ -374,7 +384,8 @@ private fun ProfessionalToolsSection(
 @Composable
 private fun VerificationSection(
     status: VerificationStatus,
-    onApply: () -> Unit
+    onApply: () -> Unit,
+    isLoading: Boolean
 ) {
     SettingsSection(title = stringResource(R.string.business_section_verification)) {
         Row(
@@ -414,7 +425,7 @@ private fun VerificationSection(
             }
             when (status) {
                 VerificationStatus.NOT_APPLIED, VerificationStatus.REJECTED -> {
-                    Button(onClick = onApply) {
+                    Button(onClick = onApply, enabled = !isLoading) {
                         Text(stringResource(R.string.action_apply))
                     }
                 }
