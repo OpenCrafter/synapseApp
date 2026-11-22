@@ -566,7 +566,7 @@ fun GroupInfoScreen(
                             // the error is surfaced via the existing errorRes snackbar.
                         }
                     },
-                    enabled = !isRemoving
+                    enabled = !memberIsRemoving
                 ) {
                     Text(stringResource(R.string.action_remove), color = MaterialTheme.colorScheme.error)
                 }
