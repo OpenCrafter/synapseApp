@@ -14,6 +14,7 @@ import androidx.compose.ui.unit.dp
 import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.feature.shared.theme.AppColors
 import com.synapse.social.studioasinc.feature.shared.theme.AppSpacing
+import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 
 
 
@@ -29,6 +30,7 @@ fun AccessibilityScreen(
     val highContrastText by viewModel.highContrastTextEnabled.collectAsState()
     val reduceAnimations by viewModel.reduceAnimationsEnabled.collectAsState()
     val autoplayAnimations by viewModel.autoplayAnimationsEnabled.collectAsState()
+    val error by viewModel.error.collectAsState()
 
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
@@ -46,6 +48,18 @@ fun AccessibilityScreen(
                 },
                 scrollBehavior = scrollBehavior
             )
+        },
+        snackbarHost = {
+            if (error != null) {
+                Snackbar(
+                    modifier = Modifier.padding(Spacing.space16),
+                    action = {
+                        TextButton(onClick = { viewModel.clearError() }) {
+                            Text(stringResource(R.string.action_dismiss))
+                        }
+                    }
+                ) { Text(error ?: "") }
+            }
         }
     ) { paddingValues ->
         LazyColumn(
