@@ -185,6 +185,7 @@ fun GroupParticipantsScreen(
             text = { Text(stringResource(R.string.group_remove_member_body, userDisplayName(member))) },
             confirmButton = {
                 TextButton(
+                    enabled = !uiState.isRemoving,
                     onClick = {
                         viewModel.removeMember(member.uid) { success ->
                             if (success) memberToRemove = null
@@ -195,7 +196,10 @@ fun GroupParticipantsScreen(
                 }
             },
             dismissButton = {
-                TextButton(onClick = { memberToRemove = null }) {
+                TextButton(
+                    onClick = { memberToRemove = null },
+                    enabled = !uiState.isRemoving
+                ) {
                     Text(stringResource(R.string.cancel))
                 }
             }
