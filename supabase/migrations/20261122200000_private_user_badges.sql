@@ -3,7 +3,7 @@ begin;
 create schema if not exists private;
 create table private.user_badges (
   user_id uuid primary key references public.users(id) on delete cascade,
-  badge_id text not null check (badge_id in ('verified', 'official', 'notable', 'trusted', 'owner', 'admin', 'moderator', 'staff', 'support', 'community_manager', 'developer', 'core_developer', 'contributor', 'open_source', 'technical_expert', 'bug_hunter', 'founding_member', 'early_supporter', 'community_hero', 'ambassador', 'beta_tester', 'creator', 'video_creator', 'influencer', 'featured_creator', 'top_creator', 'rising_creator', 'partner', 'premium', 'vip', 'special_guest', 'legend', 'pioneer'))
+  badge_type text not null check (badge_type in ('verified', 'official', 'notable', 'trusted', 'owner', 'admin', 'moderator', 'staff', 'support', 'community_manager', 'developer', 'core_developer', 'contributor', 'open_source', 'technical_expert', 'bug_hunter', 'founding_member', 'early_supporter', 'community_hero', 'ambassador', 'beta_tester', 'creator', 'video_creator', 'influencer', 'featured_creator', 'top_creator', 'rising_creator', 'partner', 'premium', 'vip', 'special_guest', 'legend', 'pioneer'))
 );
 alter table private.user_badges enable row level security;
 revoke all on private.user_badges from public, anon, authenticated, service_role;
