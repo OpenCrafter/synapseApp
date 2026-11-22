@@ -533,7 +533,7 @@ fun ChatInfoScreen(
                 ) { Text(title, color = MaterialTheme.colorScheme.error) }
             },
             dismissButton = {
-                PressScaleTextButton(onClick = { showBlockConfirmDialog = false }) {
+                PressScaleTextButton(onClick = { if (!blockOperationInProgress) showBlockConfirmDialog = false }) {
                     Text(stringResource(R.string.cancel))
                 }
             }
