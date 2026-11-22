@@ -161,28 +161,35 @@ fun PasskeysScreen(
     }
 
     if (passkeyPendingRemoval != null) {
+        val removing = passkeyPendingRemoval?.id in uiState.removingIds
         AlertDialog(
-            onDismissRequest = { passkeyPendingRemoval = null },
+            onDismissRequest = { if (!removing) passkeyPendingRemoval = null },
             title = { Text(stringResource(R.string.settings_passkey_delete_confirm_title)) },
             text = { Text(stringResource(R.string.settings_passkey_delete_confirm_body)) },
             confirmButton = {
                 TextButton(
                     onClick = {
-                        passkeyPendingRemoval?.let { passkey ->
-                            viewModel.removePasskey(passkey.id) { success ->
-                                // Dismiss only when the async remove succeeds. On failure the dialog
-                                // stays open so the user can retry; the error is surfaced via the
-                                // ViewModel state observed by the caller.
-                                if (success) passkeyPendingRemoval = null
+                        if (!removing) {
+                            passkeyPendingRemoval?.let { passkey ->
+                                viewModel.removePasskey(passkey.id) { success ->
+                                    // Dismiss only when the async remove succeeds. On failure the dialog
+                                    // stays open so the user can retry; the error is surfaced via the
+                                    // ViewModel state observed by the caller.
+                                    if (success) passkeyPendingRemoval = null
+                                }
                             }
                         }
-                    }
+                    },
+                    enabled = !removing
                 ) {
                     Text(stringResource(R.string.action_delete))
                 }
             },
             dismissButton = {
-                TextButton(onClick = { passkeyPendingRemoval = null }) {
+                TextButton(
+                    onClick = { if (!removing) passkeyPendingRemoval = null },
+                    enabled = !removing
+                ) {
                     Text(stringResource(R.string.action_cancel))
                 }
             }
