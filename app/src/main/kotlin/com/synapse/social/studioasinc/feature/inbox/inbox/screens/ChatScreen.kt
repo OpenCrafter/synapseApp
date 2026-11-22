@@ -115,6 +115,8 @@ import kotlinx.coroutines.withContext
     var isBlocking by remember { mutableStateOf(false) }
     var showClearChatDialog by rememberSaveable(chatId) { mutableStateOf(false) }
     var isClearing by remember { mutableStateOf(false) }
+    var isDeletingMessage by remember { mutableStateOf(false) }
+    var isDeletingSelected by remember { mutableStateOf(false) }
     val snackbarHostState = remember { SnackbarHostState() }
 
     // Initialize the ViewModel with the chat ID
@@ -830,48 +832,59 @@ val currentUserId = currentUserIdState ?: ""
             DeleteMessageDialog(
                 message = showDeleteMessageDialog,
                 canDeleteForEveryone = showDeleteMessageDialog?.senderId == currentUserId,
-                onDismissRequest = { showDeleteMessageDialog = null },
+                isLoading = isDeletingMessage,
+                onDismissRequest = { if (!isDeletingMessage) showDeleteMessageDialog = null },
                 onDeleteForMe = { message ->
                     // Do not dismiss the dialog here: deletion is async. Keep it open until the
                     // result is known so the user gets success/failure feedback and can retry.
-                    viewModel.deleteMessageForMe(
-                        message,
-                        onError = { err ->
-                            android.widget.Toast.makeText(
-                                context,
-                                err,
-                                android.widget.Toast.LENGTH_LONG
-                            ).show()
-                        },
-                        onSuccess = {
-                            showDeleteMessageDialog = null
-                            android.widget.Toast.makeText(
-                                context,
-                                context.getString(R.string.message_deleted_successfully),
-                                android.widget.Toast.LENGTH_SHORT
-                            ).show()
-                        }
-                    )
+                    if (!isDeletingMessage) {
+                        isDeletingMessage = true
+                        viewModel.deleteMessageForMe(
+                            message,
+                            onError = { err ->
+                                isDeletingMessage = false
+                                android.widget.Toast.makeText(
+                                    context,
+                                    err,
+                                    android.widget.Toast.LENGTH_LONG
+                                ).show()
+                            },
+                            onSuccess = {
+                                isDeletingMessage = false
+                                showDeleteMessageDialog = null
+                                android.widget.Toast.makeText(
+                                    context,
+                                    context.getString(R.string.message_deleted_successfully),
+                                    android.widget.Toast.LENGTH_SHORT
+                                ).show()
+                            }
+                        )
+                    }
                 },
                 onDeleteForEveryone = { message ->
-                    viewModel.deleteMessage(
-                        message,
-                        onError = { err ->
-                            android.widget.Toast.makeText(
-                                context,
-                                err,
-                                android.widget.Toast.LENGTH_LONG
-                            ).show()
-                        },
-                        onSuccess = {
-                            showDeleteMessageDialog = null
-                            android.widget.Toast.makeText(
-                                context,
-                                context.getString(R.string.success_delete_for_everyone),
-                                android.widget.Toast.LENGTH_SHORT
-                            ).show()
-                        }
-                    )
+                    if (!isDeletingMessage) {
+                        isDeletingMessage = true
+                        viewModel.deleteMessage(
+                            message,
+                            onError = { err ->
+                                isDeletingMessage = false
+                                android.widget.Toast.makeText(
+                                    context,
+                                    err,
+                                    android.widget.Toast.LENGTH_LONG
+                                ).show()
+                            },
+                            onSuccess = {
+                                isDeletingMessage = false
+                                showDeleteMessageDialog = null
+                                android.widget.Toast.makeText(
+                                    context,
+                                    context.getString(R.string.success_delete_for_everyone),
+                                    android.widget.Toast.LENGTH_SHORT
+                                ).show()
+                            }
+                        )
+                    }
                 }
             )
 
@@ -881,38 +894,49 @@ val currentUserId = currentUserIdState ?: ""
                     messageCount = selectedMessageIds.size,
                     canDeleteForEveryone = selectedMessages.isNotEmpty() &&
                         selectedMessages.all { it.senderId == currentUserId },
-                    onDismissRequest = { showDeleteSelectedDialog = false },
+                    isLoading = isDeletingSelected,
+                    onDismissRequest = { if (!isDeletingSelected) showDeleteSelectedDialog = false },
                     onDeleteForMe = {
-                        viewModel.deleteSelectedMessagesForMe(
-                            onError = { err ->
-                                // Error is surfaced via viewModel.error -> LaunchedEffect(error) toast
-                                // (set by the delegate). Keep the dialog open so the user can retry.
-                            },
-                            onSuccess = {
-                                showDeleteSelectedDialog = false
-                                android.widget.Toast.makeText(
-                                    context,
-                                    context.getString(R.string.message_deleted_successfully),
-                                    android.widget.Toast.LENGTH_SHORT
-                                ).show()
-                            }
-                        )
+                        if (!isDeletingSelected) {
+                            isDeletingSelected = true
+                            viewModel.deleteSelectedMessagesForMe(
+                                onError = { err ->
+                                    isDeletingSelected = false
+                                    // Error is surfaced via viewModel.error -> LaunchedEffect(error) toast
+                                    // (set by the delegate). Keep the dialog open so the user can retry.
+                                },
+                                onSuccess = {
+                                    isDeletingSelected = false
+                                    showDeleteSelectedDialog = false
+                                    android.widget.Toast.makeText(
+                                        context,
+                                        context.getString(R.string.message_deleted_successfully),
+                                        android.widget.Toast.LENGTH_SHORT
+                                    ).show()
+                                }
+                            )
+                        }
                     },
                     onDeleteForEveryone = {
-                        viewModel.deleteSelectedMessagesForEveryone(
-                            onError = { err ->
-                                // Error is surfaced via viewModel.error -> LaunchedEffect(error) toast
-                                // (set by the delegate). Keep the dialog open so the user can retry.
-                            },
-                            onSuccess = {
-                                showDeleteSelectedDialog = false
-                                android.widget.Toast.makeText(
-                                    context,
-                                    context.getString(R.string.message_deleted_successfully),
-                                    android.widget.Toast.LENGTH_SHORT
-                                ).show()
-                            }
-                        )
+                        if (!isDeletingSelected) {
+                            isDeletingSelected = true
+                            viewModel.deleteSelectedMessagesForEveryone(
+                                onError = { err ->
+                                    isDeletingSelected = false
+                                    // Error is surfaced via viewModel.error -> LaunchedEffect(error) toast
+                                    // (set by the delegate). Keep the dialog open so the user can retry.
+                                },
+                                onSuccess = {
+                                    isDeletingSelected = false
+                                    showDeleteSelectedDialog = false
+                                    android.widget.Toast.makeText(
+                                        context,
+                                        context.getString(R.string.message_deleted_successfully),
+                                        android.widget.Toast.LENGTH_SHORT
+                                    ).show()
+                                }
+                            )
+                        }
                     }
                 )
             }

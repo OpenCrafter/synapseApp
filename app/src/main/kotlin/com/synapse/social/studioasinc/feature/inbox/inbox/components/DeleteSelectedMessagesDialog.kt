@@ -9,7 +9,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.synapse.social.studioasinc.R
+import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
+import com.synapse.social.studioasinc.ui.components.ExpressiveLoadingIndicator
 
 /**
  * Confirmation dialog for bulk deletion of selected messages from the top app bar.
@@ -19,6 +21,7 @@ import com.synapse.social.studioasinc.feature.shared.theme.Spacing
  *
  * @param messageCount The number of messages selected for deletion.
  * @param canDeleteForEveryone Whether every selected message can be deleted for all participants.
+ * @param isLoading Whether a delete operation is currently in flight.
  * @param onDismissRequest Called when the dialog is dismissed.
  * @param onDeleteForMe Called when the user selects "Delete for me".
  * @param onDeleteForEveryone Called when the user selects "Delete for everyone".
@@ -28,6 +31,7 @@ import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 fun DeleteSelectedMessagesDialog(
     messageCount: Int,
     canDeleteForEveryone: Boolean,
+    isLoading: Boolean = false,
     onDismissRequest: () -> Unit,
     onDeleteForMe: () -> Unit,
     onDeleteForEveryone: () -> Unit
@@ -63,7 +67,16 @@ fun DeleteSelectedMessagesDialog(
         },
         confirmButton = {
             if (canDeleteForEveryone) {
-                TextButton(onClick = onDeleteForEveryone) {
+                TextButton(
+                    onClick = onDeleteForEveryone,
+                    enabled = !isLoading
+                ) {
+                    if (isLoading) {
+                        ExpressiveLoadingIndicator(
+                            modifier = Modifier.size(Sizes.IconSemiMedium)
+                        )
+                        Spacer(modifier = Modifier.width(Spacing.space8))
+                    }
                     Text(
                         text = stringResource(R.string.delete_for_everyone),
                         style = MaterialTheme.typography.labelLarge,
@@ -71,7 +84,16 @@ fun DeleteSelectedMessagesDialog(
                     )
                 }
             } else {
-                TextButton(onClick = onDeleteForMe) {
+                TextButton(
+                    onClick = onDeleteForMe,
+                    enabled = !isLoading
+                ) {
+                    if (isLoading) {
+                        ExpressiveLoadingIndicator(
+                            modifier = Modifier.size(Sizes.IconSemiMedium)
+                        )
+                        Spacer(modifier = Modifier.width(Spacing.space8))
+                    }
                     Text(
                         text = stringResource(R.string.delete_for_me),
                         style = MaterialTheme.typography.labelLarge,
@@ -85,7 +107,10 @@ fun DeleteSelectedMessagesDialog(
                 modifier = Modifier.padding(end = Spacing.space8),
                 horizontalArrangement = Arrangement.spacedBy(Spacing.space8)
             ) {
-                TextButton(onClick = onDismissRequest) {
+                TextButton(
+                    onClick = onDismissRequest,
+                    enabled = !isLoading
+                ) {
                     Text(
                         text = stringResource(R.string.cancel),
                         style = MaterialTheme.typography.labelLarge,
@@ -93,7 +118,10 @@ fun DeleteSelectedMessagesDialog(
                     )
                 }
                 if (canDeleteForEveryone) {
-                    TextButton(onClick = onDeleteForMe) {
+                    TextButton(
+                        onClick = onDeleteForMe,
+                        enabled = !isLoading
+                    ) {
                         Text(
                             text = stringResource(R.string.delete_for_me),
                             style = MaterialTheme.typography.labelLarge,
