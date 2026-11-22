@@ -229,7 +229,7 @@ fun SettingsBackupScreen(
 
     state.pendingRestore?.let { pending ->
         AlertDialog(
-            onDismissRequest = { viewModel.dismissRestorePreview() },
+            onDismissRequest = { if (!state.isBusy) viewModel.dismissRestorePreview() },
             title = {
                 Text(
                     when (pending.source) {
@@ -271,7 +271,7 @@ fun SettingsBackupScreen(
 
     state.conflict?.let { conflict ->
         AlertDialog(
-            onDismissRequest = { viewModel.dismissConflict() },
+            onDismissRequest = { if (!state.isBusy) viewModel.dismissConflict() },
             title = { Text(stringResource(R.string.backup_conflict_title)) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(Spacing.space8)) {
