@@ -1,10 +1,13 @@
-# Issue #821 — rollout safety gates
+# Issue #821 — badge rollout
 
-The storage migration is staging-only until the end-to-end rollout is ready. It does not expose badge reads, migrate legacy flags, or change clients.
+Supabase owns `badge_type`. The private assignments table has one primary-keyed row per profile. No badge SQL is maintained in this repository.
 
-1. Reconcile verified accounts against independently reviewed verification records. Do not copy `verify`, `account_premium`, or `account_type` into trusted badge state: authenticated accounts can currently write these fields on their own profiles.
-2. Implement authorized assignment and revocation, including authoritative entitlement and partnership checks. Never use a badge to authorize application privileges.
-3. Include the current badge in batched identity reads, preserving profile visibility. Invalidate stale client state and retire legacy badge rendering only once reconciliation is ready.
-4. On an isolated database, test duplicate assignments, invalid badge IDs, unauthorized access, replacement, and revocation. Build and verify Android, iOS, and web before rollout.
+- The service-role-only `set_user_badge_type` operation inserts or replaces one badge atomically; null revokes it. The trusted caller must validate eligibility against authoritative role, verification, entitlement, or partnership records before assignment. Never authorize app privileges from badge labels.
+- `get_profile_badge_types` accepts up to 200 profile UIDs and respects the existing profile visibility policy. Do not retain a cached badge when a fresh lookup no longer returns the assignment.
+- Web profile headers consume this endpoint and use locally bundled 24 px Google Material Symbols Rounded SVGs. Official and Premium share `workspace_premium`; all other names use their corresponding requested symbols. The upstream license is bundled with the SVGs.
 
-Do not apply to production as a standalone migration.
+## Before cutover
+
+1. Reconcile verification against independently approved records. Do not backfill from `verify`, `account_premium`, or `account_type`: authenticated users currently have permission to write those fields on their own profiles.
+2. Connect trusted assignment callers, including authoritative entitlement and partnership checks. Replace legacy verification rendering only after reconciliation and wire all identity surfaces to authoritative badge reads.
+3. Verify replacement and revocation, denied client access, visibility, cache refresh, and responsive accessible layouts. Run builds for Android, iOS, and web before marking the PR ready.
