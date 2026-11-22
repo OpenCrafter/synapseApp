@@ -27,12 +27,13 @@ class RevokeVoteUseCase @Inject constructor(
             userPollVote = null
         )
 
-        emit(Result.success(updatedPost))
-
-        try {
-            pollRepository.revokeVote(post.id)
-        } catch (e: Exception) {
-            emit(Result.failure(e))
+        val result = pollRepository.revokeVote(post.id)
+        val error = result.exceptionOrNull()
+        if (error is kotlinx.coroutines.CancellationException) throw error
+        if (result.isSuccess) {
+            emit(Result.success(updatedPost))
+        } else {
+            emit(Result.failure(result.exceptionOrNull() ?: IllegalStateException("Failed to revoke vote")))
         }
     }
 }

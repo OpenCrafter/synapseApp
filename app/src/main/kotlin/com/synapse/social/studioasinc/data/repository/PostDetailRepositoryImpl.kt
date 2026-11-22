@@ -1,5 +1,6 @@
 package com.synapse.social.studioasinc.data.repository
 
+import com.synapse.social.studioasinc.domain.usecase.post.PopulatePostPollsUseCase
 import kotlinx.serialization.json.jsonPrimitive
 import android.util.Log
 import com.synapse.social.studioasinc.domain.model.*
@@ -25,6 +26,8 @@ class PostDetailRepositoryImpl @Inject constructor(
     private val reactionRepository: ReactionRepositoryImpl,
     private val mediaUploadRepository: MediaUploadRepository? = null
 ) {
+    private val populatePostPolls = PopulatePostPollsUseCase(PollRepositoryImpl(client))
+
     companion object {
         private const val TAG = "PostDetailRepositoryImpl"
     }
@@ -85,31 +88,9 @@ class PostDetailRepositoryImpl @Inject constructor(
 
             val reactionSummary = reactionRepository.getReactionSummary(postId, "post").getOrDefault(emptyMap())
 
-            var pollResults: List<PollOptionResult>? = null
-            var userPollVote: Int? = null
-            if (post.hasPoll == true) {
-                val pollData = getPollData(postId, currentUserId)
-                pollResults = pollData.first
-                userPollVote = pollData.second
-            }
-
-            // A poll's authoritative state is the post row plus the rows in "poll_votes", but every
-            // poll renderer derives the user's selection from `Post.userPollVote` (PostUiMapper ->
-            // PollContent) and the per-option counts from `Post.pollOptions`, and the post is what
-            // gets republished on PostEventBus. Keeping the freshly fetched vote only in the sibling
-            // PostDetail fields meant a poll loaded after the process was recreated - and a post
-            // rebroadcast after voting - rendered as if no vote had ever been submitted, so the user
-            // could believe a successfully persisted vote had been lost. Fold the fetched poll state
-            // back into the post so reloaded polls show the stored vote and current results.
-            val postWithPollState = if (resolvedPost.hasPoll == true) {
-                resolvedPost.copy(
-                    pollOptions = pollResults
-                        ?.map { PollOption(text = it.text, votes = it.voteCount) }
-                        ?: resolvedPost.pollOptions,
-                    userPollVote = userPollVote
-                )
-            } else {
-                resolvedPost
+            val postWithPollState = populatePostPolls(listOf(resolvedPost)).single()
+            val pollResults = postWithPollState.pollOptions?.takeIf { postWithPollState.isPollStateAvailable }?.let { options ->
+                PollOptionResult.calculateResults(options.map { it.text }, options.mapIndexed { index, option -> index to option.votes }.toMap())
             }
 
             val postDetail = PostDetail(
@@ -120,7 +101,7 @@ class PostDetailRepositoryImpl @Inject constructor(
                 isBookmarked = isBookmarked,
                 hasReshared = hasReshared,
                 pollResults = pollResults,
-                userPollVote = userPollVote
+                userPollVote = postWithPollState.userPollVote
             )
 
             Log.d(TAG, "Successfully fetched post details for: $postId")
@@ -379,44 +360,6 @@ class PostDetailRepositoryImpl @Inject constructor(
         } catch (e: Exception) {
             Log.e(TAG, "Failed to check reshare status: ${e.message}")
             false
-        }
-    }
-
-    private suspend fun getPollData(postId: String, userId: String?): Pair<List<PollOptionResult>?, Int?> {
-        return try {
-            val post = client.from("posts")
-                .select { filter { eq("id", postId) } }
-                .decodeSingleOrNull<JsonObject>()
-
-            val options = post?.get("poll_options")?.jsonArray?.mapNotNull {
-                it.jsonObject["text"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull
-            } ?: emptyList()
-
-            if (options.isEmpty()) {
-                return Pair(null, null)
-            }
-
-            val votes = client.from("poll_votes")
-                .select { filter { eq("post_id", postId) } }
-                .decodeList<JsonObject>()
-
-            val voteCounts = votes.groupBy {
-                it["option_index"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.intOrNull ?: 0
-            }.mapValues { it.value.size }
-
-            val pollResults = PollOptionResult.calculateResults(options, voteCounts)
-
-            val userVote = if (userId != null) {
-                votes.find { it["user_id"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull == userId }
-                    ?.get("option_index")?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.intOrNull
-            } else null
-
-            Pair(pollResults, userVote)
-        } catch (e: CancellationException) {
-            throw e
-        } catch (e: Exception) {
-            Log.e(TAG, "Failed to get poll data: ${e.message}")
-            Pair(null, null)
         }
     }
 

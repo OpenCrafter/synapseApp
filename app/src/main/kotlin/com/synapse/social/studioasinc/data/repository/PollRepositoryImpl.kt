@@ -105,12 +105,12 @@ class PollRepositoryImpl @Inject constructor(
 
     override suspend fun getBatchUserVotes(postIds: List<String>): Result<Map<String, Int>> = runCatching {
         val userId = client.auth.currentUserOrNull()?.id
-            ?: return Result.failure(Exception("Not authenticated"))
+            ?: return Result.success(emptyMap())
 
         if (postIds.isEmpty()) return Result.success(emptyMap())
 
         val votes = client.from("poll_votes")
-            .select(Columns.list("post_id", "option_index")) {
+            .select(Columns.list("post_id", "option_index", "user_id")) {
                 filter {
                     isIn("post_id", postIds)
                     eq("user_id", userId)
@@ -118,6 +118,9 @@ class PollRepositoryImpl @Inject constructor(
             }
             .decodeList<PollVote>()
 
+        if (client.auth.currentUserOrNull()?.id != userId) {
+            return Result.failure(IllegalStateException("Poll session changed"))
+        }
         votes.associate { it.postId to it.optionIndex }
     }
 
@@ -126,7 +129,9 @@ class PollRepositoryImpl @Inject constructor(
 
         val counts = client.postgrest.rpc(
             "get_poll_votes_count",
-            mapOf("post_ids" to postIds)
+            kotlinx.serialization.json.buildJsonObject {
+                put("post_ids", kotlinx.serialization.json.JsonArray(postIds.map { kotlinx.serialization.json.JsonPrimitive(it) }))
+            }
         ).decodeList<PollVoteCount>()
 
         counts.groupBy { it.postId }

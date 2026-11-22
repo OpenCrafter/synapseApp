@@ -1,5 +1,6 @@
 package com.synapse.social.studioasinc.data.paging
 
+import com.synapse.social.studioasinc.domain.usecase.post.PopulatePostPollsUseCase
 import android.util.Log
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
@@ -10,6 +11,7 @@ import com.synapse.social.studioasinc.data.repository.helpers.withSignedStorageM
 import io.github.jan.supabase.postgrest.query.Columns
 import io.github.jan.supabase.postgrest.query.Order
 import io.github.jan.supabase.postgrest.query.PostgrestQueryBuilder
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.*
@@ -17,11 +19,12 @@ import kotlinx.serialization.json.*
 private val json = Json { ignoreUnknownKeys = true }
 
 class PostPagingSource(
-    private val queryBuilder: PostgrestQueryBuilder
+    private val queryBuilder: PostgrestQueryBuilder,
+    client: io.github.jan.supabase.SupabaseClient
 ) : PagingSource<Int, Post>() {
 
     private val reactionRepository = ReactionRepositoryImpl(SupabaseClient.client)
-    private val pollRepository = com.synapse.social.studioasinc.data.repository.PollRepositoryImpl(SupabaseClient.client)
+    private val pollRepository = com.synapse.social.studioasinc.data.repository.PollRepositoryImpl(client)
 
     override suspend fun load(params: LoadParams<Int>): LoadResult<Int, Post> {
         val position = params.key ?: 0
@@ -88,6 +91,8 @@ class PostPagingSource(
                 prevKey = if (position == 0) null else (position - pageSize).coerceAtLeast(0),
                 nextKey = if (postsWithReactions.isEmpty()) null else position + pageSize
             )
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             Log.e("PostPagingSource", "Error loading posts", e)
             LoadResult.Error(e)
@@ -98,38 +103,5 @@ class PostPagingSource(
         return null
     }
 
-    private suspend fun populatePostPolls(posts: List<Post>): List<Post> {
-        val pollPosts = posts.filter { it.hasPoll == true }
-        if (pollPosts.isEmpty()) return posts
-
-        val postIds = pollPosts.map { it.id }
-
-
-        val userVotesResult = pollRepository.getBatchUserVotes(postIds)
-        val userVotes = userVotesResult.getOrNull() ?: emptyMap()
-
-
-        val pollCountsResult = pollRepository.getBatchPollVotes(postIds)
-        val pollCounts = pollCountsResult.getOrNull() ?: emptyMap()
-
-        return posts.map { post ->
-            if (post.hasPoll == true) {
-                val userVote = userVotes[post.id]
-                val counts = pollCounts[post.id] ?: emptyMap()
-
-
-                val updatedOptions = post.pollOptions?.mapIndexed { index, option ->
-                    option.copy(votes = counts[index] ?: 0)
-                }
-
-                val updatedPost = post.copy(
-                    pollOptions = updatedOptions
-                )
-                updatedPost.userPollVote = userVote
-                updatedPost
-            } else {
-                post
-            }
-        }
-    }
+    private val populatePostPolls = PopulatePostPollsUseCase(pollRepository)
 }

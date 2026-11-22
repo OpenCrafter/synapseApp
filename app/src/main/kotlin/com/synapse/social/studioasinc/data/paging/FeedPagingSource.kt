@@ -1,5 +1,6 @@
 package com.synapse.social.studioasinc.data.paging
 
+import com.synapse.social.studioasinc.domain.usecase.post.PopulatePostPollsUseCase
 import android.util.Log
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
@@ -14,6 +15,7 @@ import io.github.jan.supabase.postgrest.rpc
 import io.github.jan.supabase.postgrest.query.Columns
 import io.github.jan.supabase.postgrest.query.Order
 import io.github.jan.supabase.postgrest.query.PostgrestQueryBuilder
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
@@ -34,7 +36,7 @@ class FeedPagingSource(
 ) : PagingSource<Int, FeedItem>() {
 
     private val reactionRepository = ReactionRepositoryImpl(SupabaseClient.client)
-    private val pollRepository = com.synapse.social.studioasinc.data.repository.PollRepositoryImpl(SupabaseClient.client)
+    private val pollRepository = com.synapse.social.studioasinc.data.repository.PollRepositoryImpl(client)
 
     override suspend fun load(params: LoadParams<Int>): LoadResult<Int, FeedItem> {
         val position = params.key ?: 0
@@ -62,7 +64,7 @@ class FeedPagingSource(
                                 ?: post
                         } else post
                     }
-                val feedItems = localPosts.map { FeedItem.PostItem(it) }
+                val feedItems = populatePostPolls(localPosts).map { FeedItem.PostItem(it) }
 
                 return LoadResult.Page(
                     data = feedItems,
@@ -74,6 +76,8 @@ class FeedPagingSource(
 
             // Fallback to Network if cache has gaps, is empty, or if we are refreshing the top of the feed (position == 0)
             return syncNetworkData(position, pageSize)
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             Log.e("FeedPagingSource", "Error loading feed items", e)
             LoadResult.Error(e)
@@ -205,20 +209,21 @@ class FeedPagingSource(
             // Map and enrich posts
             val postsList = postsMap.values.toList()
             val postsWithReactions = reactionRepository.populatePostReactions(postsList)
-            val postsWithPolls = populatePostPolls(postsWithReactions)
-            val postsWithInteractions = populateUserInteractions(postsWithPolls)
+            val postsWithInteractions = populateUserInteractions(postsWithReactions)
             val enrichedPostsMap = postsWithInteractions.associateBy { it.id }
 
             // Resolve quoted posts by their stored quoted_post_id. The `quoted_post` embed is
             // unreliable here: `posts` has several self-referencing FKs, so PostgREST returns the
             // reverse (children) direction as an array instead of the parent post we actually quote.
-            val hydratedPostsMap = enrichedPostsMap.mapValues { (_, post) ->
+            val postsWithQuotes = enrichedPostsMap.mapValues { (_, post) ->
                 if (post.quotedPost == null && !post.quotedPostId.isNullOrBlank()) {
                     val quoted = enrichedPostsMap[post.quotedPostId]
                         ?: postDao.getPostById(post.quotedPostId)?.let { PostMapper.toModel(it) }
                     if (quoted != null) post.copy(quotedPost = quoted) else post
                 } else post
             }
+
+            val hydratedPostsMap = populatePostPolls(postsWithQuotes.values.toList()).associateBy { it.id }
 
             // 2. Map Comments from timeline response
             val commentsMap = timelineResponse.filter { it["item_type"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it else null }?.contentOrNull == "comment" }.mapNotNull { timelineItem ->
@@ -300,7 +305,7 @@ class FeedPagingSource(
             }
 
             // Insert fetched items into cache
-            val postsToCache = postsWithPolls.map { PostMapper.toEntity(it) }
+            val postsToCache = hydratedPostsMap.values.map { PostMapper.toEntity(it) }
             if (postsToCache.isNotEmpty()) {
                 postDao.insertAll(postsToCache)
             }
@@ -336,25 +341,7 @@ class FeedPagingSource(
         }
     }
 
-    private suspend fun populatePostPolls(posts: List<Post>): List<Post> {
-        val pollPosts = posts.filter { it.hasPoll == true }
-        if (pollPosts.isEmpty()) return posts
-        val postIds = pollPosts.map { it.id }
-        val userVotesResult = pollRepository.getBatchUserVotes(postIds)
-        val userVotes = userVotesResult.getOrNull() ?: emptyMap()
-        val pollCountsResult = pollRepository.getBatchPollVotes(postIds)
-        val pollCounts = pollCountsResult.getOrNull() ?: emptyMap()
-        return posts.map { post ->
-            if (post.hasPoll == true) {
-                val userVote = userVotes[post.id]
-                val counts = pollCounts[post.id] ?: emptyMap()
-                val updatedOptions = post.pollOptions?.mapIndexed { index, option ->
-                    option.copy(votes = counts[index] ?: 0)
-                }
-                post.copy(pollOptions = updatedOptions).apply { userPollVote = userVote }
-            } else post
-        }
-    }
+    private val populatePostPolls = PopulatePostPollsUseCase(pollRepository)
 
     private suspend fun populateUserInteractions(posts: List<Post>): List<Post> {
         val currentUserId = client.auth.currentUserOrNull()?.id ?: return posts

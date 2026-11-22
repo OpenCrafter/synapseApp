@@ -296,7 +296,11 @@ internal class PostCrudHelper(
                 model
             }
             val hydratedPost = post?.let { hydrateQuotedPosts(listOf(it)).firstOrNull() }
-            Result.success(hydratedPost)
+            Result.success(hydratedPost?.let {
+                com.synapse.social.studioasinc.domain.usecase.post.PopulatePostPollsUseCase(
+                    com.synapse.social.studioasinc.data.repository.PollRepositoryImpl(client)
+                )(listOf(it)).single()
+            })
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {

@@ -1,5 +1,6 @@
 package com.synapse.social.studioasinc.data.repository
 
+import com.synapse.social.studioasinc.domain.usecase.post.PopulatePostPollsUseCase
 import com.synapse.social.studioasinc.domain.model.MediaItem
 import com.synapse.social.studioasinc.domain.model.MediaType
 import com.synapse.social.studioasinc.domain.model.PollOption
@@ -266,35 +267,6 @@ internal class ProfilePostsRepositoryImpl(
         return reactionRepository.populatePostReactions(posts)
     }
 
-    internal suspend fun populatePostPolls(posts: List<Post>): List<Post> {
-        val pollPosts = posts.filter { it.hasPoll == true }
-        if (pollPosts.isEmpty()) return posts
-
-        val postIds = pollPosts.map { it.id }
-
-        val userVotesResult = pollRepository.getBatchUserVotes(postIds)
-        val userVotes = userVotesResult.getOrNull() ?: emptyMap()
-
-        val pollCountsResult = pollRepository.getBatchPollVotes(postIds)
-        val pollCounts = pollCountsResult.getOrNull() ?: emptyMap()
-
-        return posts.map { post ->
-            if (post.hasPoll == true) {
-                val userVote = userVotes[post.id]
-                val counts = pollCounts[post.id] ?: emptyMap()
-
-                val updatedOptions = post.pollOptions?.mapIndexed { index, option ->
-                    option.copy(votes = counts[index] ?: 0)
-                }
-
-                val updatedPost = post.copy(
-                    pollOptions = updatedOptions
-                )
-                updatedPost.userPollVote = userVote
-                updatedPost
-            } else {
-                post
-            }
-        }
-    }
+    internal suspend fun populatePostPolls(posts: List<Post>): List<Post> =
+        PopulatePostPollsUseCase(pollRepository)(posts)
 }

@@ -25,12 +25,13 @@ class VotePollUseCase @Inject constructor(
             userPollVote = optionIndex
         )
 
-        emit(Result.success(updatedPost))
-
-        try {
-            pollRepository.submitVote(post.id, optionIndex)
-        } catch (e: Exception) {
-            emit(Result.failure(e))
+        val result = pollRepository.submitVote(post.id, optionIndex)
+        val error = result.exceptionOrNull()
+        if (error is kotlinx.coroutines.CancellationException) throw error
+        if (result.isSuccess) {
+            emit(Result.success(updatedPost))
+        } else {
+            emit(Result.failure(result.exceptionOrNull() ?: IllegalStateException("Failed to submit vote")))
         }
     }
 }

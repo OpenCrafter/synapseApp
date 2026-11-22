@@ -1,5 +1,6 @@
 package com.synapse.social.studioasinc.data.repository.helpers
 
+import com.synapse.social.studioasinc.domain.usecase.post.PopulatePostPollsUseCase
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.PagingData
@@ -42,7 +43,7 @@ internal class PostFeedHelper(
                 pageSize = 20,
                 enablePlaceholders = false
             ),
-            pagingSourceFactory = { PostPagingSource(client.from("posts")) }
+            pagingSourceFactory = { PostPagingSource(client.from("posts"), client) }
         ).flow
     }
 
@@ -60,7 +61,7 @@ internal class PostFeedHelper(
         // Observe local DB
         val dbFlow = postDao.getAllPostsAsFlow().map { entities ->
             val posts = entities.map { PostMapper.toModel(it) }
-            Result.success(posts)
+            Result.success(populatePostPolls(posts))
         }
 
         // Trigger refresh and emit DB flow
@@ -81,7 +82,7 @@ internal class PostFeedHelper(
                 pageSize = 20,
                 enablePlaceholders = false
             ),
-            pagingSourceFactory = { PostPagingSource(client.from("posts")) }
+            pagingSourceFactory = { PostPagingSource(client.from("posts"), client) }
         ).flow
     }
 
@@ -187,35 +188,5 @@ internal class PostFeedHelper(
         return reactionRepository.populatePostReactions(posts)
     }
 
-    private suspend fun populatePostPolls(posts: List<Post>): List<Post> {
-        val pollPosts = posts.filter { it.hasPoll == true }
-        if (pollPosts.isEmpty()) return posts
-
-        val postIds = pollPosts.map { it.id }
-
-        val userVotesResult = pollRepository.getBatchUserVotes(postIds)
-        val userVotes = userVotesResult.getOrNull() ?: emptyMap()
-
-        val pollCountsResult = pollRepository.getBatchPollVotes(postIds)
-        val pollCounts = pollCountsResult.getOrNull() ?: emptyMap()
-
-        return posts.map { post ->
-            if (post.hasPoll == true) {
-                val userVote = userVotes[post.id]
-                val counts = pollCounts[post.id] ?: emptyMap()
-
-                val updatedOptions = post.pollOptions?.mapIndexed { index, option ->
-                    option.copy(votes = counts[index] ?: 0)
-                }
-
-                val updatedPost = post.copy(
-                    pollOptions = updatedOptions
-                )
-                updatedPost.userPollVote = userVote
-                updatedPost
-            } else {
-                post
-            }
-        }
-    }
+    private val populatePostPolls = PopulatePostPollsUseCase(pollRepository)
 }
