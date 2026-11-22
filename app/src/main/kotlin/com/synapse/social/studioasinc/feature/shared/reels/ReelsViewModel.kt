@@ -44,6 +44,12 @@ class ReelsViewModel @Inject constructor(
     private val inFlightLikeReelIds = mutableSetOf<String>()
     // Reel IDs with an oppose toggle currently in flight. Scoped per reel.
     private val inFlightOpposeReelIds = mutableSetOf<String>()
+    // Reel IDs with a report request currently in flight. Scoped per reel so a rapid tap on one
+    // reel never blocks report taps on a different reel.
+    private val inFlightReportReelIds = mutableSetOf<String>()
+    // Creator IDs with a block request currently in flight. Prevents duplicate concurrent block
+    // requests when the user taps Block repeatedly while the first is still in flight.
+    private val inFlightBlockCreatorIds = mutableSetOf<String>()
 
     private val _uiState = MutableStateFlow(ReelsUiState())
     val uiState: StateFlow<ReelsUiState> = _uiState.asStateFlow()
@@ -201,20 +207,48 @@ class ReelsViewModel @Inject constructor(
     }
 
     suspend fun reportReel(reelId: String, reason: String): Result<Unit> {
-        return reelRepository.reportReel(reelId, reason)
-            .onFailure { e ->
-                _uiState.update { it.copy(error = "Failed to report: ${e.message}") }
+        // Guard against rapid-tap duplicate requests: ignore a second report for the same reel
+        // while the first is still in flight. Other reels remain reportable.
+        synchronized(inFlightReportReelIds) {
+            if (inFlightReportReelIds.contains(reelId)) {
+                return Result.success(Unit)
             }
+            inFlightReportReelIds.add(reelId)
+        }
+        return try {
+            reelRepository.reportReel(reelId, reason)
+                .onFailure { e ->
+                    _uiState.update { it.copy(error = "Failed to report: ${e.message}") }
+                }
+        } finally {
+            synchronized(inFlightReportReelIds) {
+                inFlightReportReelIds.remove(reelId)
+            }
+        }
     }
 
     suspend fun blockCreator(creatorId: String): Result<Unit> {
-        return reelRepository.blockCreator(creatorId)
-            .onSuccess {
-                loadReels()
+        // Guard against rapid-tap duplicate requests: ignore a second block for the same creator
+        // while the first is still in flight.
+        synchronized(inFlightBlockCreatorIds) {
+            if (inFlightBlockCreatorIds.contains(creatorId)) {
+                return Result.success(Unit)
             }
-            .onFailure { e ->
-                _uiState.update { it.copy(error = "Failed to block: ${e.message}") }
+            inFlightBlockCreatorIds.add(creatorId)
+        }
+        return try {
+            reelRepository.blockCreator(creatorId)
+                .onSuccess {
+                    loadReels()
+                }
+                .onFailure { e ->
+                    _uiState.update { it.copy(error = "Failed to block: ${e.message}") }
+                }
+        } finally {
+            synchronized(inFlightBlockCreatorIds) {
+                inFlightBlockCreatorIds.remove(creatorId)
             }
+        }
     }
 
     fun downloadReel(videoUrl: String) {
