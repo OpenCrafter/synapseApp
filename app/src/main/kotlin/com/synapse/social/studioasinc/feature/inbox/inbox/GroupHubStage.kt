@@ -373,11 +373,11 @@ private fun JoinRequestsDialog(
                             Row(horizontalArrangement = Arrangement.spacedBy(Spacing.space8)) {
                                 TextButton(
                                     onClick = { onApprove(request.id) },
-                                    enabled = requestId !in requestActionInProgress
+                                    enabled = request.id !in requestActionInProgress
                                 ) { Text(stringResource(R.string.group_approve)) }
                                 TextButton(
                                     onClick = { onDecline(request.id) },
-                                    enabled = requestId !in requestActionInProgress
+                                    enabled = request.id !in requestActionInProgress
                                 ) { Text(stringResource(R.string.group_decline), color = MaterialTheme.colorScheme.error) }
                             }
                         }
