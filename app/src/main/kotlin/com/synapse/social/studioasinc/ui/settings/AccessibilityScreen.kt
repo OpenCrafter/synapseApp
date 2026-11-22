@@ -32,15 +32,19 @@ fun AccessibilityScreen(
     val error by viewModel.error.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
 
+    val dismissLabel = stringResource(R.string.action_dismiss)
+
     LaunchedEffect(error) {
-        if (error != null) {
-            snackbarHostState.showSnackbar(
-                snackbarMessage = error,
-                action = SnackbarAction(
-                    label = stringResource(R.string.action_dismiss),
-                    onClick = { viewModel.clearError() }
-                )
+        val currentError = error
+        if (currentError != null) {
+            val result = snackbarHostState.showSnackbar(
+                message = currentError,
+                actionLabel = dismissLabel,
+                duration = SnackbarDuration.Indefinite
             )
+            if (result == SnackbarResult.ActionPerformed) {
+                viewModel.clearError()
+            }
         }
     }
 
