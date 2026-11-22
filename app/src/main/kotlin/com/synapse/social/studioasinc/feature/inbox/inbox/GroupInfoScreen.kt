@@ -599,7 +599,7 @@ fun GroupInfoScreen(
             },
             dismissButton = {
                 PressScaleTextButton(
-                    onClick = { showLeaveConfirmDialog = false },
+                    onClick = { if (!isLeaving) showLeaveConfirmDialog = false },
                     enabled = !isLeaving
                 ) {
                     Text(stringResource(R.string.cancel))
@@ -656,7 +656,7 @@ fun GroupInfoScreen(
             },
             dismissButton = {
                 PressScaleTextButton(
-                    onClick = { showReportConfirmDialog = false },
+                    onClick = { if (!uiState.isReporting) showReportConfirmDialog = false },
                     enabled = !uiState.isReporting
                 ) {
                     Text(stringResource(R.string.cancel))
@@ -686,7 +686,7 @@ fun GroupInfoScreen(
             },
             dismissButton = {
                 PressScaleTextButton(
-                    onClick = { showInviteRevokeDialog = false },
+                    onClick = { if (!uiState.isRevokingInvite) showInviteRevokeDialog = false },
                     enabled = !uiState.isRevokingInvite
                 ) {
                     Text(stringResource(R.string.cancel))
