@@ -624,7 +624,7 @@ fun GroupInfoScreen(
             },
             dismissButton = {
                 PressScaleTextButton(
-                    onClick = { showDeleteConfirmDialog = false },
+                    onClick = { if (!uiState.isDeleting) showDeleteConfirmDialog = false },
                     enabled = !uiState.isDeleting
                 ) {
                     Text(stringResource(R.string.cancel))
