@@ -29,6 +29,24 @@ fun AccessibilityScreen(
     val highContrastText by viewModel.highContrastTextEnabled.collectAsState()
     val reduceAnimations by viewModel.reduceAnimationsEnabled.collectAsState()
     val autoplayAnimations by viewModel.autoplayAnimationsEnabled.collectAsState()
+    val error by viewModel.error.collectAsState()
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    val dismissLabel = stringResource(R.string.action_dismiss)
+
+    LaunchedEffect(error) {
+        val currentError = error
+        if (currentError != null) {
+            val result = snackbarHostState.showSnackbar(
+                message = currentError,
+                actionLabel = dismissLabel,
+                duration = SnackbarDuration.Indefinite
+            )
+            if (result == SnackbarResult.ActionPerformed) {
+                viewModel.clearError()
+            }
+        }
+    }
 
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
@@ -46,7 +64,8 @@ fun AccessibilityScreen(
                 },
                 scrollBehavior = scrollBehavior
             )
-        }
+        },
+        snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { paddingValues ->
         LazyColumn(
             modifier = Modifier

@@ -200,7 +200,6 @@ fun GroupInfoScreen(
     val isAdmin = uiState.currentUserIsAdmin
     val canEditGroupInfo = uiState.canEditGroupInfo
     val isUpdatingDisappearingMode = uiState.isUpdatingDisappearingMode
-    val isRemoving = uiState.isRemoving
     val isLeaving = uiState.isLeaving
     val isCreator = uiState.currentUserIsCreator
     val inviteCode = uiState.inviteCode
@@ -440,7 +439,7 @@ fun GroupInfoScreen(
     if (showEditNameDialog) {
         var nameText by remember { mutableStateOf(groupInfo?.name ?: groupName) }
         AlertDialog(
-            onDismissRequest = { showEditNameDialog = false },
+            onDismissRequest = { if (!uiState.isUpdatingName) showEditNameDialog = false },
             title = { Text(stringResource(R.string.group_edit_name)) },
             text = {
                 OutlinedTextField(
@@ -463,7 +462,10 @@ fun GroupInfoScreen(
                 ) { Text(stringResource(R.string.group_save)) }
             },
             dismissButton = {
-                PressScaleTextButton(onClick = { showEditNameDialog = false }) {
+                PressScaleTextButton(
+                    onClick = { showEditNameDialog = false },
+                    enabled = !uiState.isUpdatingName
+                ) {
                     Text(stringResource(R.string.cancel))
                 }
             }
@@ -473,7 +475,7 @@ fun GroupInfoScreen(
     if (showEditDescriptionDialog) {
         var descriptionText by remember { mutableStateOf(groupInfo?.description ?: "") }
         AlertDialog(
-            onDismissRequest = { showEditDescriptionDialog = false },
+            onDismissRequest = { if (!uiState.isUpdatingDescription) showEditDescriptionDialog = false },
             title = { Text(stringResource(R.string.group_edit_description)) },
             text = {
                 OutlinedTextField(
@@ -496,7 +498,10 @@ fun GroupInfoScreen(
                 ) { Text(stringResource(R.string.group_save)) }
             },
             dismissButton = {
-                PressScaleTextButton(onClick = { showEditDescriptionDialog = false }) {
+                PressScaleTextButton(
+                    onClick = { showEditDescriptionDialog = false },
+                    enabled = !uiState.isUpdatingDescription
+                ) {
                     Text(stringResource(R.string.cancel))
                 }
             }
@@ -506,7 +511,7 @@ fun GroupInfoScreen(
     if (showDisappearingDialog) {
         val currentMode = groupInfo?.disappearingMode ?: DisappearingMode.OFF
         AlertDialog(
-            onDismissRequest = { showDisappearingDialog = false },
+            onDismissRequest = { if (!isUpdatingDisappearingMode) showDisappearingDialog = false },
             title = { Text(stringResource(R.string.group_disappearing_messages)) },
             text = {
                 Column {
@@ -515,8 +520,8 @@ fun GroupInfoScreen(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .clickable(enabled = !isUpdatingDisappearingMode) {
-                                    viewModel.setDisappearingMode(mode) {
-                                        showDisappearingDialog = false
+                                    viewModel.setDisappearingMode(mode) { success ->
+                                        if (success) showDisappearingDialog = false
                                     }
                                 }
                                 .padding(vertical = Spacing.space4),
@@ -524,11 +529,7 @@ fun GroupInfoScreen(
                         ) {
                             RadioButton(
                                 selected = mode == currentMode,
-                                onClick = {
-                                    viewModel.setDisappearingMode(mode) {
-                                        showDisappearingDialog = false
-                                    }
-                                },
+                                onClick = null,
                                 enabled = !isUpdatingDisappearingMode
                             )
                             Spacer(Modifier.width(Spacing.space8))
@@ -538,7 +539,10 @@ fun GroupInfoScreen(
                 }
             },
             confirmButton = {
-                PressScaleTextButton(onClick = { showDisappearingDialog = false }) {
+                PressScaleTextButton(
+                    onClick = { showDisappearingDialog = false },
+                    enabled = !isUpdatingDisappearingMode
+                ) {
                     Text(stringResource(R.string.done))
                 }
             }
@@ -546,8 +550,9 @@ fun GroupInfoScreen(
     }
 
     memberToRemove?.let { member ->
+        val memberIsRemoving = uiState.removingMemberIds.contains(member.uid)
         AlertDialog(
-            onDismissRequest = { if (!isRemoving) memberToRemove = null },
+            onDismissRequest = { if (!memberIsRemoving) memberToRemove = null },
             title = { Text(stringResource(R.string.group_remove_member_title)) },
             text = { Text(stringResource(R.string.group_remove_member_body, userDisplayName(member))) },
             confirmButton = {
@@ -560,15 +565,16 @@ fun GroupInfoScreen(
                             // On failure the dialog stays open so the user can retry;
                             // the error is surfaced via the existing errorRes snackbar.
                         }
-                    }
+                    },
+                    enabled = !isRemoving
                 ) {
                     Text(stringResource(R.string.action_remove), color = MaterialTheme.colorScheme.error)
                 }
             },
             dismissButton = {
                 PressScaleTextButton(
-                    onClick = { if (!isRemoving) memberToRemove = null },
-                    enabled = !isRemoving
+                    onClick = { if (!memberIsRemoving) memberToRemove = null },
+                    enabled = !memberIsRemoving
                 ) {
                     Text(stringResource(R.string.cancel))
                 }
@@ -597,7 +603,10 @@ fun GroupInfoScreen(
                 }
             },
             dismissButton = {
-                PressScaleTextButton(onClick = { showLeaveConfirmDialog = false }) {
+                PressScaleTextButton(
+                    onClick = { if (!isLeaving) showLeaveConfirmDialog = false },
+                    enabled = !isLeaving
+                ) {
                     Text(stringResource(R.string.cancel))
                 }
             }
@@ -655,7 +664,10 @@ fun GroupInfoScreen(
                 }
             },
             dismissButton = {
-                PressScaleTextButton(onClick = { showReportConfirmDialog = false }) {
+                PressScaleTextButton(
+                    onClick = { if (!uiState.isReporting) showReportConfirmDialog = false },
+                    enabled = !uiState.isReporting
+                ) {
                     Text(stringResource(R.string.cancel))
                 }
             }
@@ -682,7 +694,10 @@ fun GroupInfoScreen(
                 ) { Text(stringResource(R.string.group_revoke_confirm)) }
             },
             dismissButton = {
-                PressScaleTextButton(onClick = { showInviteRevokeDialog = false }) {
+                PressScaleTextButton(
+                    onClick = { if (!uiState.isRevokingInvite) showInviteRevokeDialog = false },
+                    enabled = !uiState.isRevokingInvite
+                ) {
                     Text(stringResource(R.string.cancel))
                 }
             }
@@ -692,6 +707,7 @@ fun GroupInfoScreen(
     if (showRequestsDialog) {
         JoinRequestsDialog(
             requests = uiState.pendingRequests,
+            isLoading = uiState.isProcessingJoinRequest,
             onApprove = { viewModel.approveRequest(it) },
             onDecline = { viewModel.declineRequest(it) },
             onDismiss = { showRequestsDialog = false }
@@ -1297,18 +1313,24 @@ internal fun ErrorBanner(message: String, onRetry: () -> Unit) {
 @Composable
 private fun JoinRequestsDialog(
     requests: List<GroupJoinRequest>,
+    isLoading: Boolean = false,
     onApprove: (String) -> Unit,
     onDecline: (String) -> Unit,
     onDismiss: () -> Unit
 ) {
     AlertDialog(
-        onDismissRequest = onDismiss,
+        onDismissRequest = { if (!isLoading) onDismiss() },
         title = { Text(stringResource(R.string.group_pending_dialog_title)) },
         text = {
-            if (requests.isEmpty()) {
-                Text(stringResource(R.string.group_no_pending_requests))
-            } else {
-                Column(
+            when {
+                isLoading -> Box(
+                    Modifier.fillMaxWidth().padding(Spacing.space16),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator()
+                }
+                requests.isEmpty() -> Text(stringResource(R.string.group_no_pending_requests))
+                else -> Column(
                     modifier = Modifier
                         .heightIn(max = Sizes.HeightSheetContent)
                         .verticalScroll(rememberScrollState()),
@@ -1324,10 +1346,16 @@ private fun JoinRequestsDialog(
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                             Row(horizontalArrangement = Arrangement.spacedBy(Spacing.space8)) {
-                                TextButton(onClick = { onApprove(request.id) }) {
+                                TextButton(
+                                    onClick = { onApprove(request.id) },
+                                    enabled = !isLoading
+                                ) {
                                     Text(stringResource(R.string.group_approve))
                                 }
-                                TextButton(onClick = { onDecline(request.id) }) {
+                                TextButton(
+                                    onClick = { onDecline(request.id) },
+                                    enabled = !isLoading
+                                ) {
                                     Text(
                                         text = stringResource(R.string.group_decline),
                                         color = MaterialTheme.colorScheme.error
