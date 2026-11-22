@@ -74,11 +74,11 @@ export const ProfileHeader = ({
                 </div>
 
                 <div className="mt-4">
-                    <div className="flex flex-wrap items-center gap-2">
-                        <h1 className="font-heading text-2xl font-semibold tracking-tight">
+                    <div className="flex min-w-0 items-center gap-2">
+                        <h1 className="min-w-0 truncate font-heading text-2xl font-semibold tracking-tight" title={profile.display_name ?? profile.username ?? undefined}>
                             {profile.display_name ?? profile.username}
                         </h1>
-                        {profile.verify ? <BadgeCheckIcon className="size-5 text-cyan-600 dark:text-cyan-400" aria-label="Verified" /> : null}
+                        {profile.verify ? <BadgeCheckIcon className="size-5 shrink-0 text-cyan-600 dark:text-cyan-400" aria-label="Verified" /> : null}
                         {profile.is_private ? (
                             <span className="flex items-center gap-1 text-xs text-muted-foreground">
                                 <LockIcon className="size-3.5" /> Private
