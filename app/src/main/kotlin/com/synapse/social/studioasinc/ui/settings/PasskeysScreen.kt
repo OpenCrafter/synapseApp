@@ -161,8 +161,9 @@ fun PasskeysScreen(
     }
 
     if (passkeyPendingRemoval != null) {
+        val removing = passkeyPendingRemoval?.id in uiState.removingIds
         AlertDialog(
-            onDismissRequest = { passkeyPendingRemoval = null },
+            onDismissRequest = { if (!removing) passkeyPendingRemoval = null },
             title = { Text(stringResource(R.string.settings_passkey_delete_confirm_title)) },
             text = { Text(stringResource(R.string.settings_passkey_delete_confirm_body)) },
             confirmButton = {
@@ -176,13 +177,17 @@ fun PasskeysScreen(
                                 if (success) passkeyPendingRemoval = null
                             }
                         }
-                    }
+                    },
+                    enabled = !removing
                 ) {
                     Text(stringResource(R.string.action_delete))
                 }
             },
             dismissButton = {
-                TextButton(onClick = { passkeyPendingRemoval = null }) {
+                TextButton(
+                    onClick = { if (!removing) passkeyPendingRemoval = null },
+                    enabled = !removing
+                ) {
                     Text(stringResource(R.string.action_cancel))
                 }
             }
