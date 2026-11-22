@@ -206,9 +206,11 @@ class FeedViewModel @Inject constructor(
         // Guard against rapid-tap duplicate requests: ignore a second tap on the same comment while its
         // reaction toggle is in flight. Other comments remain tappable.
         if (currentState.inFlightCommentReactionIds.contains(commentId)) return
+        // Mark in flight synchronously before launching so a near-simultaneous second tap cannot pass
+        // the guard before the coroutine sets the marker (TOCTOU). Mirrors bookmarkPost.
+        updateState { it.copy(inFlightCommentReactionIds = it.inFlightCommentReactionIds + commentId) }
         viewModelScope.launch {
             try {
-                updateState { it.copy(inFlightCommentReactionIds = it.inFlightCommentReactionIds + commentId) }
                 reactToCommentUseCase(commentId, reactionType).onSuccess { updatedCommentPost ->
                     cacheModifiedPost(updatedCommentPost)
                 }.onFailure { e ->
