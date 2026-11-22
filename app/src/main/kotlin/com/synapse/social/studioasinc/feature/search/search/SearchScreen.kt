@@ -394,7 +394,8 @@ fun SearchScreen(
                                                         AccountCard(
                                                             account = account,
                                                             onClick = { onNavigateToProfile(account.id) },
-                                                            onFollowClick = { viewModel.toggleFollow(account.id) }
+                                                            onFollowClick = { if (account.id !in uiState.followingBusyAccountIds) viewModel.toggleFollow(account.id) },
+                                                            isFollowingBusy = account.id in uiState.followingBusyAccountIds
                                                         )
                                                         HorizontalDivider(
                                                             color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),

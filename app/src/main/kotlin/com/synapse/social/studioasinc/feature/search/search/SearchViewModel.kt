@@ -311,6 +311,11 @@ class SearchViewModel @Inject constructor(
         val wasFollowing = account.isFollowing
         val delta = if (wasFollowing) -1 else 1
 
+        // Mark busy synchronously before launching so a rapid second tap on the same account
+        // sees followingBusyAccountIds containing accountId and no duplicate concurrent call slips
+        // through the dispatch-delay window. Matches the bookmarkBusyPostIds convention.
+        updateState { it.copy(followingBusyAccountIds = it.followingBusyAccountIds + accountId) }
+
         // Optimistic update: change follow state and followers count immediately,
         // and sync cache so tab switches don't revert the button.
         updateState { state ->
@@ -324,65 +329,68 @@ class SearchViewModel @Inject constructor(
             }
             state.copy(
                 accounts = updatedAccounts,
-                cachedData = state.cachedData + (SearchTab.PEOPLE to updatedAccounts),
-                followingBusyAccountIds = state.followingBusyAccountIds + accountId
+                cachedData = state.cachedData + (SearchTab.PEOPLE to updatedAccounts)
             )
         }
 
         viewModelScope.launch {
-            val result = if (wasFollowing) {
-                unfollowUserUseCase(currentUserId, accountId)
-            } else {
-                followUserUseCase(currentUserId, accountId)
-            }
-
-            result.fold(
-                onSuccess = {
-                    // Verify follow status with server to ensure UI reflects actual backend state
-                    getProfileFollowStatusUseCase(accountId).fold(
-                        onSuccess = { followStatus ->
-                            updateState { state ->
-                                val updatedAccounts = state.accounts.map { acc ->
-                                    if (acc.id == accountId) {
-                                        acc.copy(
-                                            isFollowing = followStatus == ProfileFollowStatus.FOLLOWING
-                                        )
-                                    } else acc
-                                }
-                                state.copy(
-                                    accounts = updatedAccounts,
-                                    cachedData = state.cachedData + (SearchTab.PEOPLE to updatedAccounts)
-                                )
-                            }
-                        },
-                        onFailure = { error ->
-                            android.util.Log.w("SearchViewModel", "Failed to verify follow status: ${error.message}")
-                            // Keep optimistic state on verification failure
-                        }
-                    )
-                },
-                onFailure = { err ->
-                    // Revert optimistic update on failure, including cache.
-                    updateState { state ->
-                        val revertedAccounts = state.accounts.map { acc ->
-                            if (acc.id == accountId) {
-                                acc.copy(
-                                    isFollowing = wasFollowing,
-                                    followersCount = maxOf(0, acc.followersCount - delta)
-                                )
-                            } else acc
-                        }
-                        state.copy(
-                            error = err.message,
-                            accounts = revertedAccounts,
-                            cachedData = state.cachedData + (SearchTab.PEOPLE to revertedAccounts)
-                        )
-                    }
+            try {
+                val result = if (wasFollowing) {
+                    unfollowUserUseCase(currentUserId, accountId)
+                } else {
+                    followUserUseCase(currentUserId, accountId)
                 }
-            )
-            // Reset busy flag so subsequent taps on the same account are allowed again.
-            updateState { state ->
-                state.copy(followingBusyAccountIds = state.followingBusyAccountIds - accountId)
+
+                result.fold(
+                    onSuccess = {
+                        // Verify follow status with server to ensure UI reflects actual backend state
+                        getProfileFollowStatusUseCase(accountId).fold(
+                            onSuccess = { followStatus ->
+                                updateState { state ->
+                                    val updatedAccounts = state.accounts.map { acc ->
+                                        if (acc.id == accountId) {
+                                            acc.copy(
+                                                isFollowing = followStatus == ProfileFollowStatus.FOLLOWING
+                                            )
+                                        } else acc
+                                    }
+                                    state.copy(
+                                        accounts = updatedAccounts,
+                                        cachedData = state.cachedData + (SearchTab.PEOPLE to updatedAccounts)
+                                    )
+                                }
+                            },
+                            onFailure = { error ->
+                                android.util.Log.w("SearchViewModel", "Failed to verify follow status: ${error.message}")
+                                // Keep optimistic state on verification failure
+                            }
+                        )
+                    },
+                    onFailure = { err ->
+                        // Revert optimistic update on failure, including cache.
+                        updateState { state ->
+                            val revertedAccounts = state.accounts.map { acc ->
+                                if (acc.id == accountId) {
+                                    acc.copy(
+                                        isFollowing = wasFollowing,
+                                        followersCount = maxOf(0, acc.followersCount - delta)
+                                    )
+                                } else acc
+                            }
+                            state.copy(
+                                error = err.message,
+                                accounts = revertedAccounts,
+                                cachedData = state.cachedData + (SearchTab.PEOPLE to revertedAccounts)
+                            )
+                        }
+                    }
+                )
+            } finally {
+                // Reset busy flag so subsequent taps on the same account are allowed again,
+                // even if the coroutine is cancelled or an exception is thrown.
+                updateState { state ->
+                    state.copy(followingBusyAccountIds = state.followingBusyAccountIds - accountId)
+                }
             }
         }
     }
