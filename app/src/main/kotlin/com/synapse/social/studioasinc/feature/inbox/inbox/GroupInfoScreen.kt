@@ -606,7 +606,7 @@ fun GroupInfoScreen(
 
     if (showDeleteConfirmDialog) {
         AlertDialog(
-            onDismissRequest = { showDeleteConfirmDialog = false },
+            onDismissRequest = { if (!uiState.isDeleting) showDeleteConfirmDialog = false },
             title = { Text(stringResource(R.string.group_delete_confirm_title)) },
             text = { Text(stringResource(R.string.group_delete_confirm_body)) },
             confirmButton = {
@@ -616,13 +616,17 @@ fun GroupInfoScreen(
                             showDeleteConfirmDialog = false
                             onNavigateBack()
                         }
-                    }
+                    },
+                    enabled = !uiState.isDeleting
                 ) {
                     Text(stringResource(R.string.group_delete), color = MaterialTheme.colorScheme.error)
                 }
             },
             dismissButton = {
-                PressScaleTextButton(onClick = { showDeleteConfirmDialog = false }) {
+                PressScaleTextButton(
+                    onClick = { showDeleteConfirmDialog = false },
+                    enabled = !uiState.isDeleting
+                ) {
                     Text(stringResource(R.string.cancel))
                 }
             }
