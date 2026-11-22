@@ -52,8 +52,11 @@ internal fun ProfileMoreMenuSection(
             },
             onReportUser = { viewModel.showReportDialog() },
             onMuteUser = {
-                profile?.let { viewModel.muteUser(it.id) }
-            }
+                // Do not fire another mute request while one is already in flight.
+                if (!state.isMuting) {
+                    profile?.let { viewModel.muteUser(it.id) }
+                }
+            },
         )
     }
 }
