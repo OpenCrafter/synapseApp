@@ -562,7 +562,7 @@ fun ChatInfoScreen(
                 }
             },
             dismissButton = {
-                PressScaleTextButton(onClick = { showReportConfirmDialog = false }) {
+                PressScaleTextButton(onClick = { if (!reportOperationInProgress) showReportConfirmDialog = false }) {
                     Text(stringResource(R.string.cancel))
                 }
             }
