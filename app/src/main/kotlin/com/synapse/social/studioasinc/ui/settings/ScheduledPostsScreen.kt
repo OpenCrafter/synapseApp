@@ -184,8 +184,9 @@ fun ScheduledPostsScreen(
     }
 
     cancelConfirmPostId?.let { postId ->
+        val cancelling = postId in inFlightPostIds
         AlertDialog(
-            onDismissRequest = { cancelConfirmPostId = null },
+            onDismissRequest = { if (!cancelling) cancelConfirmPostId = null },
             title = { Text(stringResource(R.string.cancel_scheduled_post)) },
             text = { Text("Are you sure you want to cancel and delete this scheduled post?") },
             confirmButton = {
@@ -197,13 +198,17 @@ fun ScheduledPostsScreen(
                             // ViewModel so the post remains visible.
                             if (success) cancelConfirmPostId = null
                         }
-                    }
+                    },
+                    enabled = !cancelling
                 ) {
                     Text(stringResource(R.string.m_delete), color = MaterialTheme.colorScheme.error)
                 }
             },
             dismissButton = {
-                TextButton(onClick = { cancelConfirmPostId = null }) {
+                TextButton(
+                    onClick = { if (!cancelling) cancelConfirmPostId = null },
+                    enabled = !cancelling
+                ) {
                     Text(stringResource(R.string.cancel))
                 }
             }
