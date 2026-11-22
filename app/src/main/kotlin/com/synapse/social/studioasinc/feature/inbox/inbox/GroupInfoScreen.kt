@@ -201,6 +201,7 @@ fun GroupInfoScreen(
     val canEditGroupInfo = uiState.canEditGroupInfo
     val isUpdatingDisappearingMode = uiState.isUpdatingDisappearingMode
     val isRemoving = uiState.isRemoving
+    val isLeaving = uiState.isLeaving
     val isCreator = uiState.currentUserIsCreator
     val inviteCode = uiState.inviteCode
     val allowMemberInvites = groupInfo?.allowMemberInvites ?: false
@@ -577,7 +578,9 @@ fun GroupInfoScreen(
 
     if (showLeaveConfirmDialog) {
         AlertDialog(
-            onDismissRequest = { showLeaveConfirmDialog = false },
+            // Keep the dialog open while the async leave is in flight so a backdrop/back tap
+            // cannot dismiss it before the result is known (and hide a failure).
+            onDismissRequest = { if (!isLeaving) showLeaveConfirmDialog = false },
             title = { Text(stringResource(R.string.leave_group)) },
             text = { Text(stringResource(R.string.leave_group_confirm)) },
             confirmButton = {
@@ -587,7 +590,8 @@ fun GroupInfoScreen(
                             showLeaveConfirmDialog = false
                             onNavigateBack()
                         }
-                    }
+                    },
+                    enabled = !isLeaving
                 ) {
                     Text(stringResource(R.string.leave_group), color = MaterialTheme.colorScheme.error)
                 }
