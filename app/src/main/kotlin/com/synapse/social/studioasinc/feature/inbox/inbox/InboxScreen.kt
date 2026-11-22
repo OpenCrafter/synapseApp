@@ -267,6 +267,7 @@ private fun InboxScreenContent(
     var showCreateMenu by rememberSaveable { mutableStateOf(false) }
     var showFolderSheet by remember { mutableStateOf(false) }
     var showCreateFolderDialog by remember { mutableStateOf(false) }
+    var isCreatingFolder by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf(false) }
     var showSelectionMenu by remember { mutableStateOf(false) }
     var showInboxMenu by remember { mutableStateOf(false) }
@@ -732,7 +733,7 @@ private fun InboxScreenContent(
 
     if (showCreateFolderDialog) {
         AlertDialog(
-            onDismissRequest = { showCreateFolderDialog = false; newFolderName = "" },
+            onDismissRequest = { if (!isCreatingFolder) { showCreateFolderDialog = false; newFolderName = "" } },
             title = { Text(stringResource(R.string.inbox_folder_create)) },
             text = {
                 androidx.compose.material3.OutlinedTextField(
@@ -745,9 +746,11 @@ private fun InboxScreenContent(
             },
             confirmButton = {
                 Button(
-                    enabled = newFolderName.isNotBlank(),
+                    enabled = newFolderName.isNotBlank() && !isCreatingFolder,
                     onClick = {
+                        isCreatingFolder = true
                         viewModel.createFolderAndAssign(newFolderName, selectedChatIds) { success ->
+                            isCreatingFolder = false
                             if (success) {
                                 showCreateFolderDialog = false
                                 newFolderName = ""
@@ -758,7 +761,12 @@ private fun InboxScreenContent(
                     }
                 ) { Text(stringResource(R.string.inbox_folder_save)) }
             },
-            dismissButton = { TextButton(onClick = { showCreateFolderDialog = false; newFolderName = "" }) { Text(stringResource(R.string.inbox_cancel)) } }
+            dismissButton = {
+                TextButton(
+                    onClick = { if (!isCreatingFolder) { showCreateFolderDialog = false; newFolderName = "" } },
+                    enabled = !isCreatingFolder
+                ) { Text(stringResource(R.string.inbox_cancel)) }
+            }
         )
     }
 
