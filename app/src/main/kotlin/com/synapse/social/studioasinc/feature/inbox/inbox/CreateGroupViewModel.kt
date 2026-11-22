@@ -89,6 +89,9 @@ class CreateGroupViewModel @Inject constructor(
     private val _isUpdatingInvite = MutableStateFlow(false)
     val isUpdatingInvite: StateFlow<Boolean> = _isUpdatingInvite.asStateFlow()
 
+    private val _requestActionInProgress = MutableStateFlow<Set<String>>(emptySet())
+    val requestActionInProgress: StateFlow<Set<String>> = _requestActionInProgress.asStateFlow()
+
     private val _saveStatus = MutableStateFlow<GroupHubSaveStatus>(GroupHubSaveStatus.Idle)
     val saveStatus: StateFlow<GroupHubSaveStatus> = _saveStatus.asStateFlow()
 
@@ -278,18 +281,24 @@ class CreateGroupViewModel @Inject constructor(
     fun declineRequest(requestId: String) = updateRequest(requestId, approve = false)
 
     private fun updateRequest(requestId: String, approve: Boolean) {
+        if (_requestActionInProgress.value.contains(requestId)) return
         val chatId = _createdChatId.value ?: return
+        _requestActionInProgress.value = _requestActionInProgress.value + requestId
         viewModelScope.launch {
-            val result = if (approve) groupCreationRepository.approveGroupJoinRequest(requestId)
-                else groupCreationRepository.declineGroupJoinRequest(requestId)
-            result.onSuccess {
-                loadPendingRequests(chatId)
-                if (approve) {
-                    loadGroupMembers(chatId)
-                    // Re-fan-out encrypted metadata so the newly approved member can decrypt it.
-                    chatRepository.resyncGroupMetadata(chatId)
-                }
-            }.onFailure { _error.value = GroupCreationError.LOAD_REQUESTS_FAILED }
+            try {
+                val result = if (approve) groupCreationRepository.approveGroupJoinRequest(requestId)
+                    else groupCreationRepository.declineGroupJoinRequest(requestId)
+                result.onSuccess {
+                    loadPendingRequests(chatId)
+                    if (approve) {
+                        loadGroupMembers(chatId)
+                        // Re-fan-out encrypted metadata so the newly approved member can decrypt it.
+                        chatRepository.resyncGroupMetadata(chatId)
+                    }
+                }.onFailure { _error.value = GroupCreationError.LOAD_REQUESTS_FAILED }
+            } finally {
+                _requestActionInProgress.value = _requestActionInProgress.value - requestId
+            }
         }
     }
 

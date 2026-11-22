@@ -127,6 +127,7 @@ internal fun GroupHubStage(
     members: List<Pair<User, Boolean>>,
     requests: List<GroupJoinRequest>,
     requestsLoading: Boolean,
+    requestActionInProgress: Set<String>,
     inviteUpdating: Boolean,
     saveStatus: GroupHubSaveStatus,
     currentUserId: String?,
@@ -189,6 +190,7 @@ internal fun GroupHubStage(
         JoinRequestsDialog(
             requests = requests,
             isLoading = requestsLoading,
+            requestActionInProgress = requestActionInProgress,
             onApprove = onApproveRequest,
             onDecline = onDeclineRequest,
             onDismiss = { showRequestsDialog = false }
@@ -351,6 +353,7 @@ internal fun GroupHubStage(
 private fun JoinRequestsDialog(
     requests: List<GroupJoinRequest>,
     isLoading: Boolean,
+    requestActionInProgress: Set<String>,
     onApprove: (String) -> Unit,
     onDecline: (String) -> Unit,
     onDismiss: () -> Unit
@@ -368,8 +371,14 @@ private fun JoinRequestsDialog(
                             Text(userDisplayName(request.user), style = MaterialTheme.typography.titleSmall)
                             Text(request.user.username?.let { "@$it" } ?: stringResource(R.string.group_member_request), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                             Row(horizontalArrangement = Arrangement.spacedBy(Spacing.space8)) {
-                                TextButton(onClick = { onApprove(request.id) }) { Text(stringResource(R.string.group_approve)) }
-                                TextButton(onClick = { onDecline(request.id) }) { Text(stringResource(R.string.group_decline), color = MaterialTheme.colorScheme.error) }
+                                TextButton(
+                                    onClick = { onApprove(request.id) },
+                                    enabled = request.id !in requestActionInProgress
+                                ) { Text(stringResource(R.string.group_approve)) }
+                                TextButton(
+                                    onClick = { onDecline(request.id) },
+                                    enabled = request.id !in requestActionInProgress
+                                ) { Text(stringResource(R.string.group_decline), color = MaterialTheme.colorScheme.error) }
                             }
                         }
                     }
