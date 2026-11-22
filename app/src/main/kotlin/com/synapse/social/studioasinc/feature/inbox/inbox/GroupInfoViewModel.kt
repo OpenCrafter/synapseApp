@@ -386,6 +386,7 @@ class GroupInfoViewModel @Inject constructor(
 
     fun rotateInviteCode(onResult: (Boolean) -> Unit = {}) {
         val chatId = currentChatId ?: return
+        if (_uiState.value.isRevokingInvite) return
         _uiState.value = _uiState.value.copy(isRevokingInvite = true)
         viewModelScope.launch {
             groupCreationRepository.rotateGroupInviteCode(chatId)
@@ -509,6 +510,7 @@ class GroupInfoViewModel @Inject constructor(
 
     fun removeMember(userId: String, onResult: (Boolean) -> Unit = {}) {
         val chatId = currentChatId ?: return
+        if (_uiState.value.isRemoving) return
         _uiState.value = _uiState.value.copy(isRemoving = true)
         viewModelScope.launch {
             chatRepository.removeGroupMember(chatId, userId)
@@ -609,6 +611,7 @@ class GroupInfoViewModel @Inject constructor(
 
     fun leaveGroup(onLeft: () -> Unit) {
         val chatId = currentChatId ?: return
+        if (_uiState.value.isLeaving) return
         _uiState.value = _uiState.value.copy(isLeaving = true)
         viewModelScope.launch {
             chatRepository.leaveGroup(chatId)
@@ -638,6 +641,7 @@ class GroupInfoViewModel @Inject constructor(
 
     fun reportGroup(reason: String, onResult: (Boolean) -> Unit = {}) {
         val chatId = currentChatId ?: return
+        if (_uiState.value.isReporting) return
         _uiState.value = _uiState.value.copy(isReporting = true)
         viewModelScope.launch {
             chatRepository.reportChat(chatId, reason)
