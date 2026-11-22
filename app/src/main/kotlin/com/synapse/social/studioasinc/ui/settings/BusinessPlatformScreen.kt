@@ -157,6 +157,7 @@ private fun AccountTypeSection(
             if (!state.isBusinessAccount) {
                 Button(
                     onClick = onSwitchToBusiness,
+                    enabled = !isLoading,
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = AppSpacing.itemHorizontalPadding)
@@ -282,6 +283,7 @@ private fun MonetizationSection(
                 subtitle = stringResource(R.string.business_monetization_subtitle),
                 checked = state.monetizationEnabled,
                 onCheckedChange = onToggleMonetization,
+                enabled = !isLoading,
                 position = if (state.monetizationEnabled && state.revenue != null)
                     SettingsItemPosition.Top else SettingsItemPosition.Single
             )
@@ -414,7 +416,7 @@ private fun VerificationSection(
             }
             when (status) {
                 VerificationStatus.NOT_APPLIED, VerificationStatus.REJECTED -> {
-                    Button(onClick = onApply) {
+                    Button(onClick = onApply, enabled = !isLoading) {
                         Text(stringResource(R.string.action_apply))
                     }
                 }
