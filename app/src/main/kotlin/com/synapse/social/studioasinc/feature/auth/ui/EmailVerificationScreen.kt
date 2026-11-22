@@ -89,6 +89,7 @@ fun EmailVerificationScreen(
             if (state.canResend) {
                 AuthButton(
                     text = stringResource(R.string.resend_email),
+                    loading = state.isLoading,
                     onClick = onResendClick
                 )
             } else {
