@@ -515,7 +515,7 @@ fun ChatInfoScreen(
             stringResource(R.string.chat_info_block_user_confirm, displayName)
         }
         AlertDialog(
-            onDismissRequest = { showBlockConfirmDialog = false },
+            onDismissRequest = { if (!blockOperationInProgress) showBlockConfirmDialog = false },
             title = { Text(title) },
             text = { Text(message) },
             confirmButton = {
