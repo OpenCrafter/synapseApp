@@ -189,6 +189,7 @@ class GroupInfoViewModel @Inject constructor(
 
     fun updateGroupName(name: String, onResult: () -> Unit) {
         val chatId = currentChatId ?: return
+        if (_uiState.value.isUpdatingName) return
         _uiState.value = _uiState.value.copy(isUpdatingName = true)
         viewModelScope.launch {
             chatRepository.updateGroupInfo(chatId, name = name)
@@ -204,6 +205,7 @@ class GroupInfoViewModel @Inject constructor(
 
     fun updateGroupDescription(description: String, onResult: () -> Unit) {
         val chatId = currentChatId ?: return
+        if (_uiState.value.isUpdatingDescription) return
         _uiState.value = _uiState.value.copy(isUpdatingDescription = true)
         viewModelScope.launch {
             chatRepository.updateGroupInfo(chatId, description = description)
@@ -340,6 +342,7 @@ class GroupInfoViewModel @Inject constructor(
 
     fun setDisappearingMode(mode: DisappearingMode, onResult: (Boolean) -> Unit) {
         val chatId = currentChatId ?: return
+        if (_uiState.value.isUpdatingDisappearingMode) return
         _uiState.value = _uiState.value.copy(isUpdatingDisappearingMode = true)
         viewModelScope.launch {
             chatRepository.setDisappearingMode(chatId, mode)
