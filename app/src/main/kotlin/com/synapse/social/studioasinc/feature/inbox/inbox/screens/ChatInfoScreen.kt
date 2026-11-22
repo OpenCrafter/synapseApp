@@ -542,7 +542,7 @@ fun ChatInfoScreen(
 
     if (showReportConfirmDialog) {
         AlertDialog(
-            onDismissRequest = { showReportConfirmDialog = false },
+            onDismissRequest = { if (!reportOperationInProgress) showReportConfirmDialog = false },
             title = { Text(stringResource(R.string.chat_info_report_contact)) },
             text = { Text(stringResource(R.string.chat_info_report_user_confirm, displayName)) },
             confirmButton = {
