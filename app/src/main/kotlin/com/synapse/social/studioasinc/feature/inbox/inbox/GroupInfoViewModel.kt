@@ -52,6 +52,8 @@ data class GroupInfoUiState(
     val isRevokingInvite: Boolean = false,
     /** True while a member removal is in flight; used to keep the confirmation dialog open until the result is known. */
     val isRemoving: Boolean = false,
+    /** True while a group leave is in flight; used to keep the confirmation dialog open until the result is known. */
+    val isLeaving: Boolean = false,
     /** True while a group name update is in flight; used to disable the confirm button and prevent double-tap. */
     val isUpdatingName: Boolean = false,
     /** True while a group description update is in flight; used to disable the confirm button and prevent double-tap. */
@@ -607,11 +609,18 @@ class GroupInfoViewModel @Inject constructor(
 
     fun leaveGroup(onLeft: () -> Unit) {
         val chatId = currentChatId ?: return
+        _uiState.value = _uiState.value.copy(isLeaving = true)
         viewModelScope.launch {
             chatRepository.leaveGroup(chatId)
-                .onSuccess { onLeft() }
+                .onSuccess {
+                    _uiState.value = _uiState.value.copy(isLeaving = false)
+                    onLeft()
+                }
                 .onFailure {
-                    _uiState.value = _uiState.value.copy(errorRes = R.string.group_error_create)
+                    _uiState.value = _uiState.value.copy(
+                        errorRes = R.string.group_error_create,
+                        isLeaving = false
+                    )
                 }
         }
     }
