@@ -213,7 +213,10 @@ fun PostOptionsBottomSheet(
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showDeleteDialog = false }) {
+                TextButton(
+                    onClick = { if (!isDeleting) showDeleteDialog = false },
+                    enabled = !isDeleting
+                ) {
                     Text(stringResource(R.string.cancel))
                 }
             }
