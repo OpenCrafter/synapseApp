@@ -221,6 +221,7 @@ class FeedViewModel @Inject constructor(
             revokeVoteUseCase(post).collect { result ->
                 result.onSuccess { updatedPost ->
                     cacheModifiedPost(updatedPost)
+                    PostEventBus.emit(PostEvent.Updated(updatedPost))
                 }.onFailure {
                     _modifiedPosts.update { it - post.id }
                 }

@@ -184,13 +184,15 @@ fun PostContent(
             useCase = getLinkMetadataUseCase
         )
 
-        if (pollQuestion != null && pollOptions != null) {
+        if (pollQuestion != null && pollOptions != null && (post?.isPollStateAvailable == true || userPollVote != null)) {
             PollContent(
                 question = pollQuestion,
-                options = pollOptions,
+                options = pollOptions.map { it.copy(isSelected = it.id.toIntOrNull()?.let { index -> index == userPollVote } ?: false) },
                 totalVotes = pollOptions.sumOf { it.voteCount },
                 onVote = onPollVote
             )
+        } else if (pollQuestion != null && pollOptions != null) {
+            Text(stringResource(R.string.poll_state_unavailable), modifier = Modifier.padding(horizontal = Spacing.space12))
         }
  
         if (quotedPost != null) {

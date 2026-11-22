@@ -178,6 +178,8 @@ data class Post(
     @Transient
     var userPollVote: Int? = null,
     @Transient
+    val isPollStateAvailable: Boolean = false,
+    @Transient
     var latestCommentText: String? = null,
     @Transient
     var latestCommentAuthor: String? = null,
