@@ -530,11 +530,7 @@ fun GroupInfoScreen(
                         ) {
                             RadioButton(
                                 selected = mode == currentMode,
-                                onClick = {
-                                    viewModel.setDisappearingMode(mode) { success ->
-                                        if (success) showDisappearingDialog = false
-                                    }
-                                },
+                                onClick = null,
                                 enabled = !isUpdatingDisappearingMode
                             )
                             Spacer(Modifier.width(Spacing.space8))
@@ -615,23 +611,29 @@ fun GroupInfoScreen(
 
     if (showDeleteConfirmDialog) {
         AlertDialog(
-            onDismissRequest = { showDeleteConfirmDialog = false },
+            onDismissRequest = { if (!uiState.isDeleting) showDeleteConfirmDialog = false },
             title = { Text(stringResource(R.string.group_delete_confirm_title)) },
             text = { Text(stringResource(R.string.group_delete_confirm_body)) },
             confirmButton = {
                 PressScaleTextButton(
                     onClick = {
-                        viewModel.deleteGroup {
-                            showDeleteConfirmDialog = false
-                            onNavigateBack()
+                        viewModel.deleteGroup { success ->
+                            if (success) {
+                                showDeleteConfirmDialog = false
+                                onNavigateBack()
+                            }
                         }
-                    }
+                    },
+                    enabled = !uiState.isDeleting
                 ) {
                     Text(stringResource(R.string.group_delete), color = MaterialTheme.colorScheme.error)
                 }
             },
             dismissButton = {
-                PressScaleTextButton(onClick = { showDeleteConfirmDialog = false }) {
+                PressScaleTextButton(
+                    onClick = { if (!uiState.isDeleting) showDeleteConfirmDialog = false },
+                    enabled = !uiState.isDeleting
+                ) {
                     Text(stringResource(R.string.cancel))
                 }
             }
