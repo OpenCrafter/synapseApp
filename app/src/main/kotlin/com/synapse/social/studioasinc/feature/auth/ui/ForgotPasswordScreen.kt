@@ -112,6 +112,7 @@ fun ForgotPasswordScreen(
 
                 AuthButton(
                     text = stringResource(R.string.forgot_password_continue),
+                    loading = state.isLoading,
                     onClick = {
                         focusManager.clearFocus()
                         onSendResetLinkClick()
