@@ -95,6 +95,7 @@ data class ProfileScreenState(
     val blockSuccess: Boolean = false,
     val blockError: String? = null,
     val isBlocking: Boolean = false,
+    val isMuting: Boolean = false,
     val reportPostSuccess: Boolean = false,
     val reportPostError: String? = null,
     val isSummarizing: Boolean = false,
@@ -683,8 +684,15 @@ class ProfileViewModel @Inject constructor(
     }
 
     fun muteUser(mutedUserId: String) {
+        // Guard against duplicate concurrent mute requests from rapid taps.
+        if (_state.value.isMuting) return
         viewModelScope.launch {
-            muteUserUseCase(_state.value.currentUserId, mutedUserId).collect {}
+            _state.update { it.copy(isMuting = true) }
+            try {
+                muteUserUseCase(_state.value.currentUserId, mutedUserId).collect {}
+            } finally {
+                _state.update { it.copy(isMuting = false) }
+            }
         }
     }
 
