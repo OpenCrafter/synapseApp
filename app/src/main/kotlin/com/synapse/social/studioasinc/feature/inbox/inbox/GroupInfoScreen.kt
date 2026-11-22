@@ -688,6 +688,7 @@ fun GroupInfoScreen(
     if (showRequestsDialog) {
         JoinRequestsDialog(
             requests = uiState.pendingRequests,
+            isLoading = uiState.isProcessingJoinRequest,
             onApprove = { viewModel.approveRequest(it) },
             onDecline = { viewModel.declineRequest(it) },
             onDismiss = { showRequestsDialog = false }
@@ -1293,18 +1294,24 @@ internal fun ErrorBanner(message: String, onRetry: () -> Unit) {
 @Composable
 private fun JoinRequestsDialog(
     requests: List<GroupJoinRequest>,
+    isLoading: Boolean = false,
     onApprove: (String) -> Unit,
     onDecline: (String) -> Unit,
     onDismiss: () -> Unit
 ) {
     AlertDialog(
-        onDismissRequest = onDismiss,
+        onDismissRequest = { if (!isLoading) onDismiss() },
         title = { Text(stringResource(R.string.group_pending_dialog_title)) },
         text = {
-            if (requests.isEmpty()) {
-                Text(stringResource(R.string.group_no_pending_requests))
-            } else {
-                Column(
+            when {
+                isLoading -> Box(
+                    Modifier.fillMaxWidth().padding(Spacing.space16),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator()
+                }
+                requests.isEmpty() -> Text(stringResource(R.string.group_no_pending_requests))
+                else -> Column(
                     modifier = Modifier
                         .heightIn(max = Sizes.HeightSheetContent)
                         .verticalScroll(rememberScrollState()),
@@ -1320,10 +1327,16 @@ private fun JoinRequestsDialog(
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                             Row(horizontalArrangement = Arrangement.spacedBy(Spacing.space8)) {
-                                TextButton(onClick = { onApprove(request.id) }) {
+                                TextButton(
+                                    onClick = { onApprove(request.id) },
+                                    enabled = !isLoading
+                                ) {
                                     Text(stringResource(R.string.group_approve))
                                 }
-                                TextButton(onClick = { onDecline(request.id) }) {
+                                TextButton(
+                                    onClick = { onDecline(request.id) },
+                                    enabled = !isLoading
+                                ) {
                                     Text(
                                         text = stringResource(R.string.group_decline),
                                         color = MaterialTheme.colorScheme.error

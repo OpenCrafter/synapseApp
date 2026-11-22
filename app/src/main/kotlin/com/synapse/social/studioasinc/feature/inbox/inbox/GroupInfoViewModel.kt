@@ -50,6 +50,8 @@ data class GroupInfoUiState(
     val isReporting: Boolean = false,
     /** True while an invite link rotation is in flight; used to disable the confirm button. */
     val isRevokingInvite: Boolean = false,
+    /** True while a join-request approve or decline is in flight; used to disable the confirm buttons. */
+    val isProcessingJoinRequest: Boolean = false,
     /** True while a member removal is in flight; used to keep the confirmation dialog open until the result is known. */
     val isRemoving: Boolean = false,
     /** True while a group leave is in flight; used to keep the confirmation dialog open until the result is known. */
@@ -571,17 +573,19 @@ class GroupInfoViewModel @Inject constructor(
 
     fun approveRequest(requestId: String) {
         val chatId = currentChatId ?: return
+        if (_uiState.value.isProcessingJoinRequest) return
         viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isProcessingJoinRequest = true)
             groupCreationRepository.approveGroupJoinRequest(requestId)
                 .onSuccess {
-                    _uiState.value = _uiState.value.copy(errorRes = null)
+                    _uiState.value = _uiState.value.copy(errorRes = null, isProcessingJoinRequest = false)
                     reloadMembers(chatId)
                     reloadPendingRequests(chatId)
                     // Re-fan-out encrypted metadata so the newly approved member can decrypt it.
                     chatRepository.resyncGroupMetadata(chatId)
                 }
                 .onFailure {
-                    _uiState.value = _uiState.value.copy(errorRes = R.string.group_error_requests)
+                    _uiState.value = _uiState.value.copy(errorRes = R.string.group_error_requests, isProcessingJoinRequest = false)
                 }
         }
     }
@@ -589,16 +593,19 @@ class GroupInfoViewModel @Inject constructor(
     fun declineRequest(requestId: String) {
         // declineGroupJoinRequest keys off the request id only; guard against acting before load.
         if (currentChatId == null) return
+        if (_uiState.value.isProcessingJoinRequest) return
         viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isProcessingJoinRequest = true)
             groupCreationRepository.declineGroupJoinRequest(requestId)
                 .onSuccess {
                     _uiState.value = _uiState.value.copy(
                         pendingRequests = _uiState.value.pendingRequests.filterNot { it.id == requestId },
-                        errorRes = null
+                        errorRes = null,
+                        isProcessingJoinRequest = false
                     )
                 }
                 .onFailure {
-                    _uiState.value = _uiState.value.copy(errorRes = R.string.group_error_requests)
+                    _uiState.value = _uiState.value.copy(errorRes = R.string.group_error_requests, isProcessingJoinRequest = false)
                 }
         }
     }
