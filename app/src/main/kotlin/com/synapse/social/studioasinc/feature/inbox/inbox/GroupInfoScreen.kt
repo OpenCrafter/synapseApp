@@ -200,7 +200,6 @@ fun GroupInfoScreen(
     val isAdmin = uiState.currentUserIsAdmin
     val canEditGroupInfo = uiState.canEditGroupInfo
     val isUpdatingDisappearingMode = uiState.isUpdatingDisappearingMode
-    val isRemoving = uiState.isRemoving
     val isLeaving = uiState.isLeaving
     val isCreator = uiState.currentUserIsCreator
     val inviteCode = uiState.inviteCode
@@ -551,8 +550,9 @@ fun GroupInfoScreen(
     }
 
     memberToRemove?.let { member ->
+        val memberIsRemoving = uiState.removingMemberIds.contains(member.uid)
         AlertDialog(
-            onDismissRequest = { if (!isRemoving) memberToRemove = null },
+            onDismissRequest = { if (!memberIsRemoving) memberToRemove = null },
             title = { Text(stringResource(R.string.group_remove_member_title)) },
             text = { Text(stringResource(R.string.group_remove_member_body, userDisplayName(member))) },
             confirmButton = {
@@ -572,8 +572,8 @@ fun GroupInfoScreen(
             },
             dismissButton = {
                 PressScaleTextButton(
-                    onClick = { if (!isRemoving) memberToRemove = null },
-                    enabled = !isRemoving
+                    onClick = { if (!memberIsRemoving) memberToRemove = null },
+                    enabled = !memberIsRemoving
                 ) {
                     Text(stringResource(R.string.cancel))
                 }
