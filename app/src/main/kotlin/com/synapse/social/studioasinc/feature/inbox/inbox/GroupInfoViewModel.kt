@@ -51,7 +51,7 @@ data class GroupInfoUiState(
     /** True while an invite link rotation is in flight; used to disable the confirm button. */
     val isRevokingInvite: Boolean = false,
     /** True while a member removal is in flight; used to keep the confirmation dialog open until the result is known. */
-    val isRemoving: Boolean = false,
+    val removingMemberIds: Set<String> = emptySet(),
     /** True while a group leave is in flight; used to keep the confirmation dialog open until the result is known. */
     val isLeaving: Boolean = false,
     /** True while a group name update is in flight; used to disable the confirm button and prevent double-tap. */
@@ -510,8 +510,10 @@ class GroupInfoViewModel @Inject constructor(
 
     fun removeMember(userId: String, onResult: (Boolean) -> Unit = {}) {
         val chatId = currentChatId ?: return
-        if (_uiState.value.isRemoving) return
-        _uiState.value = _uiState.value.copy(isRemoving = true)
+        if (_uiState.value.removingMemberIds.contains(userId)) return
+        _uiState.value = _uiState.value.copy(
+            removingMemberIds = _uiState.value.removingMemberIds + userId
+        )
         viewModelScope.launch {
             chatRepository.removeGroupMember(chatId, userId)
                 .onSuccess {
@@ -520,12 +522,15 @@ class GroupInfoViewModel @Inject constructor(
                         members = remaining,
                         filteredMembers = _uiState.value.filteredMembers.filterNot { it.first.uid == userId },
                         errorRes = null,
-                        isRemoving = false
+                        removingMemberIds = _uiState.value.removingMemberIds - userId
                     )
                     onResult(true)
                 }
                 .onFailure {
-                    _uiState.value = _uiState.value.copy(errorRes = R.string.group_error_member_update, isRemoving = false)
+                    _uiState.value = _uiState.value.copy(
+                        errorRes = R.string.group_error_member_update,
+                        removingMemberIds = _uiState.value.removingMemberIds - userId
+                    )
                     onResult(false)
                 }
         }
