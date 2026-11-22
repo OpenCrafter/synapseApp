@@ -560,7 +560,8 @@ fun GroupInfoScreen(
                             // On failure the dialog stays open so the user can retry;
                             // the error is surfaced via the existing errorRes snackbar.
                         }
-                    }
+                    },
+                    enabled = !isRemoving
                 ) {
                     Text(stringResource(R.string.action_remove), color = MaterialTheme.colorScheme.error)
                 }
@@ -597,7 +598,10 @@ fun GroupInfoScreen(
                 }
             },
             dismissButton = {
-                PressScaleTextButton(onClick = { showLeaveConfirmDialog = false }) {
+                PressScaleTextButton(
+                    onClick = { showLeaveConfirmDialog = false },
+                    enabled = !isLeaving
+                ) {
                     Text(stringResource(R.string.cancel))
                 }
             }
@@ -651,7 +655,10 @@ fun GroupInfoScreen(
                 }
             },
             dismissButton = {
-                PressScaleTextButton(onClick = { showReportConfirmDialog = false }) {
+                PressScaleTextButton(
+                    onClick = { showReportConfirmDialog = false },
+                    enabled = !uiState.isReporting
+                ) {
                     Text(stringResource(R.string.cancel))
                 }
             }
@@ -678,7 +685,10 @@ fun GroupInfoScreen(
                 ) { Text(stringResource(R.string.group_revoke_confirm)) }
             },
             dismissButton = {
-                PressScaleTextButton(onClick = { showInviteRevokeDialog = false }) {
+                PressScaleTextButton(
+                    onClick = { showInviteRevokeDialog = false },
+                    enabled = !uiState.isRevokingInvite
+                ) {
                     Text(stringResource(R.string.cancel))
                 }
             }
