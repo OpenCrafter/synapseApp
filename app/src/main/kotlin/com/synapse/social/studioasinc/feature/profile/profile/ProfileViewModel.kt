@@ -94,6 +94,7 @@ data class ProfileScreenState(
     val isRefreshing: Boolean = false,
     val blockSuccess: Boolean = false,
     val blockError: String? = null,
+    val isBlocking: Boolean = false,
     val reportPostSuccess: Boolean = false,
     val reportPostError: String? = null,
     val isSummarizing: Boolean = false,
@@ -637,18 +638,23 @@ class ProfileViewModel @Inject constructor(
     }
 
     suspend fun blockUser(blockedUserId: String): Result<Unit> {
+        // Guard against duplicate concurrent block requests from rapid taps.
+        if (_state.value.isBlocking) return Result.failure(IllegalStateException("Block already in progress"))
         return viewModelScope.async {
-            _state.update { it.copy(blockSuccess = false, blockError = null) }
-            
-            blockUserUseCase(blockedUserId).also { result ->
-                result.onSuccess {
-                    _state.update { it.copy(blockSuccess = true) }
-                }
-                .onFailure { error ->
-                    _state.update { 
-                        it.copy(blockError = error.message ?: "Failed to block user")
+            _state.update { it.copy(isBlocking = true, blockSuccess = false, blockError = null) }
+            try {
+                blockUserUseCase(blockedUserId).also { result ->
+                    result.onSuccess {
+                        _state.update { it.copy(blockSuccess = true) }
+                    }
+                    .onFailure { error ->
+                        _state.update { 
+                            it.copy(blockError = error.message ?: "Failed to block user")
+                        }
                     }
                 }
+            } finally {
+                _state.update { it.copy(isBlocking = false) }
             }
         }.await()
     }

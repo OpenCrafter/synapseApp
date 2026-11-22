@@ -40,10 +40,13 @@ internal fun ProfileMoreMenuSection(
             },
             onSettings = onNavigateToSettings,
             onBlockUser = {
-                val target = profile
-                scope.launch {
-                    target?.let { viewModel.blockUser(it.id) }
-                    Unit
+                // Do not fire another block request while one is already in flight.
+                if (!state.isBlocking) {
+                    val target = profile
+                    scope.launch {
+                        target?.let { viewModel.blockUser(it.id) }
+                        Unit
+                    }
                 }
                 Unit
             },
