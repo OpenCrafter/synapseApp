@@ -223,12 +223,15 @@ class FeedViewModel @Inject constructor(
         // Guard against rapid-tap duplicate requests: ignore a second tap on the same post while its
         // vote revocation is in flight. Other posts remain tappable.
         if (currentState.inFlightRevokeVoteIds.contains(post.id)) return
+        // Mark in flight synchronously before launching so a near-simultaneous second tap cannot pass
+        // the guard before the coroutine sets the marker (TOCTOU). Mirrors bookmarkPost.
+        updateState { it.copy(inFlightRevokeVoteIds = it.inFlightRevokeVoteIds + post.id) }
         viewModelScope.launch {
             try {
-                updateState { it.copy(inFlightRevokeVoteIds = it.inFlightRevokeVoteIds + post.id) }
                 revokeVoteUseCase(post).collect { result ->
                     result.onSuccess { updatedPost ->
                         cacheModifiedPost(updatedPost)
+                        PostEventBus.emit(PostEvent.Updated(updatedPost))
                     }.onFailure { e ->
                         updateState { it.copy(error = e.message ?: "Failed to revoke vote") }
                     }

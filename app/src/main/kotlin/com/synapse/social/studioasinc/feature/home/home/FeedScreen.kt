@@ -404,7 +404,7 @@ fun FeedScreen(
             onToggleComments = { val result = viewModel.toggleComments(post); if (result.isSuccess) { selectedPost = null }; result },
             onReport = { postToReport = post; showReportDialog = true; selectedPost = null; Result.success(Unit) },
             onBlock = { val result = viewModel.blockUser(post.authorUid); if (result.isSuccess) { selectedPost = null }; result },
-            onRevokeVote = { if (!uiState.inFlightRevokeVoteIds.contains(post.id)) viewModel.revokeVote(post) },
+            onRevokeVote = { if (!uiState.inFlightRevokeVoteIds.contains(post.id)) { viewModel.revokeVote(post); selectedPost = null } },
             onSummarize = {
                 showSummarySheet = true
                 viewModel.summarizePost(post)
