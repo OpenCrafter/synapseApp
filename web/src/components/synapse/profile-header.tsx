@@ -1,3 +1,4 @@
+import { UserBadge } from "./user-badge";
 import Image from "next/image";
 import type { ReactNode } from "react";
 import {
@@ -78,7 +79,7 @@ export const ProfileHeader = ({
                         <h1 className="min-w-0 truncate font-heading text-2xl font-semibold tracking-tight" title={profile.display_name ?? profile.username ?? undefined}>
                             {profile.display_name ?? profile.username}
                         </h1>
-                        {profile.verify ? <BadgeCheckIcon className="size-5 shrink-0 text-cyan-600 dark:text-cyan-400" aria-label="Verified" /> : null}
+                        {profile.badge_type ? <UserBadge type={profile.badge_type} /> : profile.verify ? <BadgeCheckIcon className="size-5 shrink-0 text-cyan-600 dark:text-cyan-400" aria-label="Verified" /> : null}
                         {profile.is_private ? (
                             <span className="flex items-center gap-1 text-xs text-muted-foreground">
                                 <LockIcon className="size-3.5" /> Private

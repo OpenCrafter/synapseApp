@@ -2,6 +2,7 @@
 // follow the supabase-kt DTOs in synapseApp/shared, so treat widths as advisory.
 
 export interface ProfileRow {
+    badge_type?: string | null;
     uid: string;
     username: string | null;
     nickname: string | null;

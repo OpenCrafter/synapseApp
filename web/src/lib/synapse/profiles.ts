@@ -5,6 +5,12 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { ensureProfileRow } from "./auth";
 import type { OwnProfileRow, ProfileRow } from "./types";
 
+const withBadge = async <T extends ProfileRow>(profile: T | null): Promise<T | null> => {
+    if (!profile) return null;
+    const { data, error } = await createSupabaseServerClient().rpc("get_profile_badge_types", { p_uids: [profile.uid] });
+    return { ...profile, badge_type: error ? null : data?.[0]?.badge_type ?? null };
+};
+
 const OWN_PROFILE_FIELDS =
     "uid,username,nickname,display_name,bio,avatar,verify,is_private,followers_count,following_count,posts_count,profile_cover_image,join_date,created_at,website,location,pronouns,work,education,relationship_status";
 
@@ -17,7 +23,7 @@ export const getProfileByUsername = async (username: string): Promise<ProfileRow
 
     if (error) throw new Error(`Profile lookup failed: ${error.message}`);
 
-    return (data as ProfileRow | null) ?? null;
+    return withBadge(data as ProfileRow | null);
 };
 
 export const getProfileByUid = async (uid: string): Promise<ProfileRow | null> => {
@@ -29,7 +35,7 @@ export const getProfileByUid = async (uid: string): Promise<ProfileRow | null> =
 
     if (error) throw new Error(`Profile lookup failed: ${error.message}`);
 
-    return (data as ProfileRow | null) ?? null;
+    return withBadge(data as ProfileRow | null);
 };
 
 export const getOwnProfile = async (uid: string): Promise<OwnProfileRow | null> => {
@@ -41,7 +47,7 @@ export const getOwnProfile = async (uid: string): Promise<OwnProfileRow | null> 
 
     if (error) throw new Error(`Profile lookup failed: ${error.message}`);
 
-    return (data as OwnProfileRow | null) ?? null;
+    return withBadge(data as OwnProfileRow | null);
 };
 
 export const getOrCreateOwnProfile = async (user: User): Promise<OwnProfileRow | null> => {
