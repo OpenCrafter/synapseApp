@@ -584,8 +584,8 @@ fun GroupInfoScreen(
             confirmButton = {
                 PressScaleTextButton(
                     enabled = !isLeaving,
-                    onClick = {
-                        if (isLeaving) return@PressScaleTextButton
+                    onClick = click@ {
+                        if (isLeaving) return@click
                         viewModel.leaveGroup {
                             showLeaveConfirmDialog = false
                             onNavigateBack()
