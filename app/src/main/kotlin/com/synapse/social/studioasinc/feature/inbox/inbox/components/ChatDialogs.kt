@@ -21,7 +21,7 @@ fun DisappearingModeDialog(
     isSaving: Boolean = false
 ) {
     AlertDialog(
-        onDismissRequest = onDismissRequest,
+        onDismissRequest = { if (!isSaving) onDismissRequest() },
         title = { Text(stringResource(R.string.disappearing_messages_title)) },
         text = {
             Column {
