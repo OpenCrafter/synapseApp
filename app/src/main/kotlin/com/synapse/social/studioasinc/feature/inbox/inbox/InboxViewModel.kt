@@ -74,6 +74,10 @@ class InboxViewModel @Inject constructor(
     private val _isRefreshing = MutableStateFlow(false)
     val isRefreshing: StateFlow<Boolean> = _isRefreshing.asStateFlow()
 
+    /** True while assigning selected conversations to a folder is in flight; used to keep the folder sheet open until the result is known. */
+    private val _isAssigningToFolder = MutableStateFlow(false)
+    val isAssigningToFolder: StateFlow<Boolean> = _isAssigningToFolder.asStateFlow()
+
     private val _isCreatingFolder = MutableStateFlow(false)
     val isCreatingFolder: StateFlow<Boolean> = _isCreatingFolder.asStateFlow()
 
@@ -302,7 +306,9 @@ class InboxViewModel @Inject constructor(
 
     fun selectFilter(filter: InboxFilter) { _selectedFilter.value = filter }
 
-    fun assignConversationsToFolder(chatIds: Set<String>, folderId: String) {
+    fun assignConversationsToFolder(chatIds: Set<String>, folderId: String, onResult: (Boolean) -> Unit = {}) {
+        if (_isAssigningToFolder.value) return
+        _isAssigningToFolder.value = true
         viewModelScope.launch {
             val updated = chatFolders.value.map { folder ->
                 if (folder.id == folderId) {
@@ -317,7 +323,9 @@ class InboxViewModel @Inject constructor(
                     )
                 }
             }
-            persistFolders(updated)
+            val saved = persistFolders(updated)
+            _isAssigningToFolder.value = false
+            onResult(saved)
         }
     }
 
