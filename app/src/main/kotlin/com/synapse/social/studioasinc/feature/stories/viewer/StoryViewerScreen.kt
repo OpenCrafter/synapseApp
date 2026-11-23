@@ -136,14 +136,16 @@ fun StoryReplyBar(
         )
 
         if (replyText.isNotEmpty()) {
-            IconButton(onClick = onSendReply) {
+            IconButton(
+                onClick = onSendReply,
+                enabled = !isSendingReply
+            ) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.Send,
                     contentDescription = stringResource(R.string.cd_send),
                     tint = Color.White
                 )
             }
-            .enabled(!isSendingReply)
         }
     }
 }
