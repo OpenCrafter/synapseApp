@@ -152,6 +152,8 @@ private fun AssignProvidersTab(
     storageConfig: StorageConfig,
     viewModel: SettingsViewModel
 ) {
+    val isUpdatingProvider by viewModel.isUpdatingProvider.collectAsState()
+
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(
@@ -169,6 +171,7 @@ private fun AssignProvidersTab(
                             icon = Icons.Default.Image,
                             selectedProvider = storageConfig.photoProvider,
                             isPhotos = true,
+                            isUpdatingProvider = isUpdatingProvider,
                             onProviderSelect = { viewModel.updatePhotoProvider(it) }
                         )
                         SettingsDivider()
@@ -177,6 +180,7 @@ private fun AssignProvidersTab(
                             icon = Icons.Default.Videocam,
                             selectedProvider = storageConfig.videoProvider,
                             isPhotos = false,
+                            isUpdatingProvider = isUpdatingProvider,
                             onProviderSelect = { viewModel.updateVideoProvider(it) }
                         )
                         SettingsDivider()
@@ -185,6 +189,7 @@ private fun AssignProvidersTab(
                             icon = Icons.Default.CloudUpload,
                             selectedProvider = storageConfig.otherProvider,
                             isPhotos = false,
+                            isUpdatingProvider = isUpdatingProvider,
                             onProviderSelect = { viewModel.updateOtherProvider(it) }
                         )
                     }
@@ -212,6 +217,7 @@ private fun MediaAssignmentRow(
     icon: ImageVector,
     selectedProvider: StorageProvider,
     isPhotos: Boolean = true,
+    isUpdatingProvider: Boolean = false,
     onProviderSelect: (String) -> Unit
 ) {
     var showSheet by remember { mutableStateOf(false) }
@@ -221,7 +227,7 @@ private fun MediaAssignmentRow(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { showSheet = true }
+            .clickable(enabled = !isUpdatingProvider, onClick = { showSheet = true })
             .padding(
                 horizontal = AppSpacing.itemHorizontalPadding,
                 vertical = AppSpacing.itemVerticalPadding
@@ -256,8 +262,15 @@ private fun MediaAssignmentRow(
     }
 
     if (showSheet) {
+        var wasUpdating by remember { mutableStateOf(false) }
+        LaunchedEffect(isUpdatingProvider) {
+            if (wasUpdating && !isUpdatingProvider) {
+                showSheet = false
+            }
+            wasUpdating = isUpdatingProvider
+        }
         ModalBottomSheet(
-            onDismissRequest = { showSheet = false },
+            onDismissRequest = { if (!isUpdatingProvider) showSheet = false },
             sheetState = sheetState,
             containerColor = AppColors.cardBackgroundElevated
         ) {
@@ -267,7 +280,9 @@ private fun MediaAssignmentRow(
                 isPhotos = isPhotos,
                 onProviderSelect = {
                     onProviderSelect(it)
-                    showSheet = false
+                    // Do not dismiss here: dismissal is gated on isUpdatingProvider becoming false.
+                    // The sheet stays open while the async provider update is in flight so the user
+                    // cannot tap again and see no feedback on failure.
                 }
             )
         }
