@@ -61,7 +61,7 @@ fun CreateEchoRoomSheet(
     )
 
     ModalBottomSheet(
-        onDismissRequest = onDismiss,
+        onDismissRequest = { if (!state.isSubmitting) onDismiss() },
         sheetState = sheetState,
         containerColor = MaterialTheme.colorScheme.surfaceContainerLow
     ) {
