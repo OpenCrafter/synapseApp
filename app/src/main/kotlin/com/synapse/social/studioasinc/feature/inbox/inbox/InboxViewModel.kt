@@ -306,7 +306,7 @@ class InboxViewModel @Inject constructor(
 
     fun selectFilter(filter: InboxFilter) { _selectedFilter.value = filter }
 
-    fun assignConversationsToFolder(chatIds: Set<String>, folderId: String) {
+    fun assignConversationsToFolder(chatIds: Set<String>, folderId: String, onResult: (Boolean) -> Unit = {}) {
         if (_isAssigningToFolder.value) return
         _isAssigningToFolder.value = true
         viewModelScope.launch {
@@ -323,8 +323,9 @@ class InboxViewModel @Inject constructor(
                     )
                 }
             }
-            persistFolders(updated)
+            val saved = persistFolders(updated)
             _isAssigningToFolder.value = false
+            onResult(saved)
         }
     }
 

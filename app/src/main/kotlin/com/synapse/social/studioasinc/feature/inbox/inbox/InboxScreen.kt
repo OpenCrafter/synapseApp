@@ -720,8 +720,13 @@ private fun InboxScreenContent(
                     leadingContent = { Icon(Icons.Rounded.Archive, contentDescription = null, tint = MaterialTheme.colorScheme.primary) },
                     modifier = Modifier.fillMaxWidth().clickable {
                         if (!isAssigningToFolder) {
-                            viewModel.assignConversationsToFolder(selectedChatIds, folder.id)
-                            showFolderSheet = false
+                            viewModel.assignConversationsToFolder(selectedChatIds, folder.id) { success ->
+                                if (success) {
+                                    showFolderSheet = false
+                                }
+                                // On failure the sheet stays open so the user can retry;
+                                // the error is surfaced via the existing error snackbar.
+                            }
                         }
                     }
                 )
