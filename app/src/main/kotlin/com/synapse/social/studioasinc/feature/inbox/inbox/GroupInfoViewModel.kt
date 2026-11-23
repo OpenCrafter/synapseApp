@@ -642,7 +642,10 @@ class GroupInfoViewModel @Inject constructor(
         viewModelScope.launch {
             chatRepository.deleteGroup(chatId)
                 .onSuccess {
-                    _uiState.value = _uiState.value.copy(isDeleting = false)
+                    _uiState.value = _uiState.value.copy(
+                        isDeleting = false,
+                        errorRes = null
+                    )
                     onDeleted()
                 }
                 .onFailure {

@@ -617,9 +617,11 @@ fun GroupInfoScreen(
             confirmButton = {
                 PressScaleTextButton(
                     onClick = {
-                        viewModel.deleteGroup {
-                            showDeleteConfirmDialog = false
-                            onNavigateBack()
+                        if (!isDeleting) {
+                            viewModel.deleteGroup {
+                                showDeleteConfirmDialog = false
+                                onNavigateBack()
+                            }
                         }
                     },
                     enabled = !isDeleting
