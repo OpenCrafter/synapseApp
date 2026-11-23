@@ -77,6 +77,9 @@ class InboxViewModel @Inject constructor(
     private val _isCreatingFolder = MutableStateFlow(false)
     val isCreatingFolder: StateFlow<Boolean> = _isCreatingFolder.asStateFlow()
 
+    private val _isDeletingConversations = MutableStateFlow(false)
+    val isDeletingConversations: StateFlow<Boolean> = _isDeletingConversations.asStateFlow()
+
     private val _error = MutableStateFlow<String?>(null)
     val error: StateFlow<String?> = _error.asStateFlow()
 
@@ -425,6 +428,7 @@ class InboxViewModel @Inject constructor(
             return
         }
         viewModelScope.launch {
+            _isDeletingConversations.value = true
             var failures = 0
             chatIds.forEach { chatId ->
                 chatRepository.deleteConversation(chatId)
@@ -433,6 +437,7 @@ class InboxViewModel @Inject constructor(
                     }
                     .onFailure { failures++ }
             }
+            _isDeletingConversations.value = false
             if (failures > 0) {
                 _error.value = "Failed to delete $failures conversation(s)."
                 onResult(false)
