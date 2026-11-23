@@ -54,7 +54,7 @@ fun DisappearingModeDialog(
             }
         },
         confirmButton = {
-            TextButton(onClick = onDismissRequest) {
+            TextButton(onClick = { if (!isSaving) onDismissRequest() }) {
                 Text(stringResource(R.string.action_cancel))
             }
         }
