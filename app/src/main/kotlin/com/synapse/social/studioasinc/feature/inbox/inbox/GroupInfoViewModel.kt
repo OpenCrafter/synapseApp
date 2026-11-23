@@ -72,7 +72,9 @@ data class GroupInfoUiState(
     val addableUsers: List<User> = emptyList(),
     val selectedUsersToAdd: List<User> = emptyList(),
     val addMemberSearchQuery: String = "",
-    val isLoadingContacts: Boolean = false
+    val isLoadingContacts: Boolean = false,
+    /** True while adding members is in flight; used to keep the sheet open and prevent rapid-tap. */
+    val isAddingMembers: Boolean = false
 )
 
 @HiltViewModel
@@ -502,15 +504,17 @@ class GroupInfoViewModel @Inject constructor(
         val chatId = currentChatId ?: return
         val ids = _uiState.value.selectedUsersToAdd.map { it.uid }.distinct()
         if (ids.isEmpty()) { onDone(); return }
+        if (_uiState.value.isAddingMembers) return
+        _uiState.value = _uiState.value.copy(isAddingMembers = true)
         viewModelScope.launch {
             chatRepository.addGroupMembers(chatId, ids)
                 .onSuccess {
-                    _uiState.value = _uiState.value.copy(selectedUsersToAdd = emptyList(), errorRes = null)
+                    _uiState.value = _uiState.value.copy(selectedUsersToAdd = emptyList(), errorRes = null, isAddingMembers = false)
                     reloadMembers(chatId)
                     onDone()
                 }
                 .onFailure {
-                    _uiState.value = _uiState.value.copy(errorRes = R.string.group_error_member_update)
+                    _uiState.value = _uiState.value.copy(errorRes = R.string.group_error_member_update, isAddingMembers = false)
                 }
         }
     }

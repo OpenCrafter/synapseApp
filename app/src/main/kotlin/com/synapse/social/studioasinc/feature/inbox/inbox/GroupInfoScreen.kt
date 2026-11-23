@@ -720,7 +720,7 @@ fun GroupInfoScreen(
             enabledValues = setOf(SheetValue.Hidden, SheetValue.Expanded)
         )
         ModalBottomSheet(
-            onDismissRequest = { showAddMemberDialog = false },
+            onDismissRequest = { if (!uiState.isAddingMembers) showAddMemberDialog = false },
             sheetState = addMemberSheetState,
             containerColor = AppColors.screenBackground
         ) {
@@ -754,7 +754,7 @@ fun GroupInfoScreen(
                 }
                 Button(
                     onClick = { viewModel.confirmAddMembers { showAddMemberDialog = false } },
-                    enabled = uiState.selectedUsersToAdd.isNotEmpty(),
+                    enabled = uiState.selectedUsersToAdd.isNotEmpty() && !uiState.isAddingMembers,
                     shape = MaterialTheme.shapes.extraLarge,
                     modifier = Modifier
                         .fillMaxWidth()
