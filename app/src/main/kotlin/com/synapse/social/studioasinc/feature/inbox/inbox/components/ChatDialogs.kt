@@ -21,7 +21,7 @@ fun DisappearingModeDialog(
     isSaving: Boolean = false
 ) {
     AlertDialog(
-        onDismissRequest = onDismissRequest,
+        onDismissRequest = { if (!isSaving) onDismissRequest() },
         title = { Text(stringResource(R.string.disappearing_messages_title)) },
         text = {
             Column {
@@ -54,7 +54,7 @@ fun DisappearingModeDialog(
             }
         },
         confirmButton = {
-            TextButton(onClick = onDismissRequest) {
+            TextButton(onClick = { if (!isSaving) onDismissRequest() }) {
                 Text(stringResource(R.string.action_cancel))
             }
         }
