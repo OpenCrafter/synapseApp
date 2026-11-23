@@ -268,6 +268,7 @@ private fun InboxScreenContent(
     var showFolderSheet by remember { mutableStateOf(false) }
     var showCreateFolderDialog by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf(false) }
+    var deleteOperationInProgress by remember { mutableStateOf(false) }
     var showSelectionMenu by remember { mutableStateOf(false) }
     var showInboxMenu by remember { mutableStateOf(false) }
     var showArchivedMenu by remember { mutableStateOf(false) }
@@ -764,23 +765,27 @@ private fun InboxScreenContent(
 
     if (showDeleteDialog) {
         AlertDialog(
-            onDismissRequest = { showDeleteDialog = false },
+            onDismissRequest = { if (!deleteOperationInProgress) showDeleteDialog = false },
             title = { Text(stringResource(R.string.inbox_delete_title)) },
             text = { Text(stringResource(R.string.inbox_delete_message, selectedChatIds.size)) },
             confirmButton = {
-                TextButton(onClick = {
-                    viewModel.deleteConversations(selectedChatIds) { success ->
-                        if (success) {
-                            showDeleteDialog = false
-                            returnToInbox()
+                TextButton(
+                    enabled = !deleteOperationInProgress,
+                    onClick = {
+                        deleteOperationInProgress = true
+                        viewModel.deleteConversations(selectedChatIds) { success ->
+                            deleteOperationInProgress = false
+                            if (success) {
+                                showDeleteDialog = false
+                                returnToInbox()
+                            }
+                            // On failure the dialog stays open so the user can retry;
+                            // the error is surfaced via the existing error snackbar.
                         }
-                        // On failure the dialog stays open so the user can retry;
-                        // the error is surfaced via the existing error snackbar.
-                    }
                     }
                 ) { Text(stringResource(R.string.inbox_delete_confirm), color = MaterialTheme.colorScheme.error) }
             },
-            dismissButton = { TextButton(onClick = { showDeleteDialog = false }) { Text(stringResource(R.string.inbox_cancel)) } }
+            dismissButton = { TextButton(onClick = { if (!deleteOperationInProgress) showDeleteDialog = false }) { Text(stringResource(R.string.inbox_cancel)) } }
         )
     }
 }
