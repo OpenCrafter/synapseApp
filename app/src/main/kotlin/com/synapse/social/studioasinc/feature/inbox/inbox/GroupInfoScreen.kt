@@ -441,7 +441,7 @@ fun GroupInfoScreen(
     if (showEditNameDialog) {
         var nameText by remember { mutableStateOf(groupInfo?.name ?: groupName) }
         AlertDialog(
-            onDismissRequest = { showEditNameDialog = false },
+            onDismissRequest = { if (!uiState.isUpdatingName) showEditNameDialog = false },
             title = { Text(stringResource(R.string.group_edit_name)) },
             text = {
                 OutlinedTextField(
@@ -464,7 +464,10 @@ fun GroupInfoScreen(
                 ) { Text(stringResource(R.string.group_save)) }
             },
             dismissButton = {
-                PressScaleTextButton(onClick = { showEditNameDialog = false }) {
+                PressScaleTextButton(
+                    onClick = { if (!uiState.isUpdatingName) showEditNameDialog = false },
+                    enabled = !uiState.isUpdatingName
+                ) {
                     Text(stringResource(R.string.cancel))
                 }
             }
@@ -474,7 +477,7 @@ fun GroupInfoScreen(
     if (showEditDescriptionDialog) {
         var descriptionText by remember { mutableStateOf(groupInfo?.description ?: "") }
         AlertDialog(
-            onDismissRequest = { showEditDescriptionDialog = false },
+            onDismissRequest = { if (!uiState.isUpdatingDescription) showEditDescriptionDialog = false },
             title = { Text(stringResource(R.string.group_edit_description)) },
             text = {
                 OutlinedTextField(
@@ -497,7 +500,10 @@ fun GroupInfoScreen(
                 ) { Text(stringResource(R.string.group_save)) }
             },
             dismissButton = {
-                PressScaleTextButton(onClick = { showEditDescriptionDialog = false }) {
+                PressScaleTextButton(
+                    onClick = { if (!uiState.isUpdatingDescription) showEditDescriptionDialog = false },
+                    enabled = !uiState.isUpdatingDescription
+                ) {
                     Text(stringResource(R.string.cancel))
                 }
             }
