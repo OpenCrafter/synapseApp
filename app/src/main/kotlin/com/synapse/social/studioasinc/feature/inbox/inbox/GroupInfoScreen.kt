@@ -702,7 +702,7 @@ fun GroupInfoScreen(
             enabledValues = setOf(SheetValue.Hidden, SheetValue.Expanded)
         )
         ModalBottomSheet(
-            onDismissRequest = { showAddMemberDialog = false },
+            onDismissRequest = { if (!uiState.isAddingMembers) showAddMemberDialog = false },
             sheetState = addMemberSheetState,
             containerColor = AppColors.screenBackground
         ) {
@@ -736,13 +736,21 @@ fun GroupInfoScreen(
                 }
                 Button(
                     onClick = { viewModel.confirmAddMembers { showAddMemberDialog = false } },
-                    enabled = uiState.selectedUsersToAdd.isNotEmpty(),
+                    enabled = uiState.selectedUsersToAdd.isNotEmpty() && !uiState.isAddingMembers,
                     shape = MaterialTheme.shapes.extraLarge,
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(Spacing.space16)
                 ) {
-                    Text(stringResource(R.string.group_add_members_confirm, uiState.selectedUsersToAdd.size))
+                    if (uiState.isAddingMembers) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(Sizes.IconSmall),
+                            color = MaterialTheme.colorScheme.onPrimary,
+                            strokeWidth = Sizes.BorderDefault
+                        )
+                    } else {
+                        Text(stringResource(R.string.group_add_members_confirm, uiState.selectedUsersToAdd.size))
+                    }
                 }
             }
         }
