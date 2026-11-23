@@ -151,6 +151,7 @@ fun ScheduledPostsScreen(
                         items(uiState.posts, key = { it.id }) { scheduledPost ->
                             ScheduledPostCard(
                                 scheduledPost = scheduledPost,
+                                inFlight = uiState.inFlightPostIds.contains(scheduledPost.id),
                                 onEdit = {
                                     val intent = Intent(context, CreatePostActivity::class.java).apply {
                                         putExtra("scheduled_post_id", scheduledPost.id)
@@ -221,6 +222,7 @@ fun ScheduledPostsScreen(
 @Composable
 private fun ScheduledPostCard(
     scheduledPost: ScheduledPost,
+    inFlight: Boolean = false,
     onEdit: () -> Unit,
     onReschedule: () -> Unit,
     onRetry: () -> Unit,
@@ -266,6 +268,7 @@ private fun ScheduledPostCard(
                                 menuExpanded = false
                                 onReschedule()
                             },
+                            enabled = !inFlight,
                             leadingIcon = { Icon(Icons.Default.Schedule, contentDescription = null) }
                         )
                         if (scheduledPost.status == ScheduledPost.STATUS_FAILED) {
@@ -275,6 +278,7 @@ private fun ScheduledPostCard(
                                     menuExpanded = false
                                     onRetry()
                                 },
+                                enabled = !inFlight,
                                 leadingIcon = { Icon(Icons.Default.Refresh, contentDescription = null) }
                             )
                         }

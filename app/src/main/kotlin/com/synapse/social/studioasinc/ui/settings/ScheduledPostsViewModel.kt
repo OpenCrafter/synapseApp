@@ -18,7 +18,8 @@ data class ScheduledPostsUiState(
     val isLoading: Boolean = false,
     val error: String? = null,
     val posts: List<ScheduledPost> = emptyList(),
-    val isOffline: Boolean = false
+    val isOffline: Boolean = false,
+    val inFlightPostIds: Set<String> = emptySet()
 )
 
 @HiltViewModel
@@ -84,30 +85,42 @@ class ScheduledPostsViewModel @Inject constructor(
     }
 
     fun retryScheduledPost(id: String) {
+        if (_uiState.value.inFlightPostIds.contains(id)) return
         viewModelScope.launch {
-            val post = _uiState.value.posts.find { it.id == id }
-            scheduledPostRepository.retryScheduledPost(id)
-                .onSuccess {
-                    post?.let { ScheduledPostPublisherWorker.scheduleAt(getApplication(), it.scheduledAt) }
-                    loadScheduledPosts()
-                }
-                .onFailure { error ->
-                    _uiState.update { it.copy(error = "Retry failed: ${error.message}") }
-                }
+            _uiState.update { it.copy(inFlightPostIds = it.inFlightPostIds + id) }
+            try {
+                val post = _uiState.value.posts.find { it.id == id }
+                scheduledPostRepository.retryScheduledPost(id)
+                    .onSuccess {
+                        post?.let { ScheduledPostPublisherWorker.scheduleAt(getApplication(), it.scheduledAt) }
+                        loadScheduledPosts()
+                    }
+                    .onFailure { error ->
+                        _uiState.update { it.copy(error = "Retry failed: ${error.message}") }
+                    }
+            } finally {
+                _uiState.update { it.copy(inFlightPostIds = it.inFlightPostIds - id) }
+            }
         }
     }
 
     fun reschedulePost(id: String, newScheduledAt: String) {
+        if (_uiState.value.inFlightPostIds.contains(id)) return
         viewModelScope.launch {
-            val post = _uiState.value.posts.find { it.id == id } ?: return@launch
-            scheduledPostRepository.updateScheduledPost(id, newScheduledAt, post.postRequest)
-                .onSuccess {
-                    ScheduledPostPublisherWorker.scheduleAt(getApplication(), newScheduledAt)
-                    loadScheduledPosts()
-                }
-                .onFailure { error ->
-                    _uiState.update { it.copy(error = "Reschedule failed: ${error.message}") }
-                }
+            _uiState.update { it.copy(inFlightPostIds = it.inFlightPostIds + id) }
+            try {
+                val post = _uiState.value.posts.find { it.id == id } ?: return@launch
+                scheduledPostRepository.updateScheduledPost(id, newScheduledAt, post.postRequest)
+                    .onSuccess {
+                        ScheduledPostPublisherWorker.scheduleAt(getApplication(), newScheduledAt)
+                        loadScheduledPosts()
+                    }
+                    .onFailure { error ->
+                        _uiState.update { it.copy(error = "Reschedule failed: ${error.message}") }
+                    }
+            } finally {
+                _uiState.update { it.copy(inFlightPostIds = it.inFlightPostIds - id) }
+            }
         }
     }
 }
