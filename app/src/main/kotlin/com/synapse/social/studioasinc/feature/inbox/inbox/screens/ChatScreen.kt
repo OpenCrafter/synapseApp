@@ -1279,9 +1279,11 @@ val currentUserId = currentUserIdState ?: ""
         if (showCreateFolderDialog) {
             AlertDialog(
                 onDismissRequest = {
-                    showCreateFolderDialog = false
-                    newFolderName = ""
-                    viewModel.resetCreateFolderSaveStatus()
+                    if (createFolderSaveStatus !is ChatViewModel.CreateFolderSaveStatus.Saving) {
+                        showCreateFolderDialog = false
+                        newFolderName = ""
+                        viewModel.resetCreateFolderSaveStatus()
+                    }
                 },
                 title = { Text(stringResource(R.string.inbox_folder_create)) },
                 text = {
@@ -1306,10 +1308,13 @@ val currentUserId = currentUserIdState ?: ""
                 dismissButton = {
                     TextButton(
                         onClick = {
-                            showCreateFolderDialog = false
-                            newFolderName = ""
-                            viewModel.resetCreateFolderSaveStatus()
-                        }
+                            if (createFolderSaveStatus !is ChatViewModel.CreateFolderSaveStatus.Saving) {
+                                showCreateFolderDialog = false
+                                newFolderName = ""
+                                viewModel.resetCreateFolderSaveStatus()
+                            }
+                        },
+                        enabled = createFolderSaveStatus !is ChatViewModel.CreateFolderSaveStatus.Saving
                     ) { Text(stringResource(R.string.action_cancel)) }
                 }
             )
