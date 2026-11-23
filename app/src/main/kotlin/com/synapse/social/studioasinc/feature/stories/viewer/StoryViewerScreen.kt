@@ -76,8 +76,7 @@ fun QuickReactionsRow(
                         if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
                         else Color.Transparent
                     )
-                    .clickable { onEmojiClick(emoji) }
-                    .enabled(!isReacting),
+                    .clickable(enabled = !isReacting) { onEmojiClick(emoji) },
                 contentAlignment = Alignment.Center
             ) {
                 Text(
