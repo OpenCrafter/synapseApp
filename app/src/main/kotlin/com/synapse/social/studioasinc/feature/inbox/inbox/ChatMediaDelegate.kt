@@ -38,6 +38,11 @@ class ChatMediaDelegate(
 
     private val activeUploadJobs = ConcurrentHashMap<Job, Unit>()
 
+    /** True while any media upload/send job is in flight. Used by ChatScreen to guard the
+     *  MediaPreviewDialog dismissal and send button while uploads are running. */
+    val isMediaUploading: Boolean
+        get() = activeUploadJobs.isNotEmpty()
+
     suspend fun uploadAndSendVoiceMessageSuspend(
         audioFile: java.io.File,
         durationMs: Long = 0L,
