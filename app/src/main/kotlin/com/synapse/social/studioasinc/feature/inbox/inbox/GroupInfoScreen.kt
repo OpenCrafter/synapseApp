@@ -201,6 +201,7 @@ fun GroupInfoScreen(
     val canEditGroupInfo = uiState.canEditGroupInfo
     val isUpdatingDisappearingMode = uiState.isUpdatingDisappearingMode
     val isRemoving = uiState.isRemoving
+    val isLeaving = uiState.isLeaving
     val isCreator = uiState.currentUserIsCreator
     val inviteCode = uiState.inviteCode
     val allowMemberInvites = groupInfo?.allowMemberInvites ?: false
@@ -577,12 +578,14 @@ fun GroupInfoScreen(
 
     if (showLeaveConfirmDialog) {
         AlertDialog(
-            onDismissRequest = { showLeaveConfirmDialog = false },
+            onDismissRequest = { if (!isLeaving) showLeaveConfirmDialog = false },
             title = { Text(stringResource(R.string.leave_group)) },
             text = { Text(stringResource(R.string.leave_group_confirm)) },
             confirmButton = {
                 PressScaleTextButton(
-                    onClick = {
+                    enabled = !isLeaving,
+                    onClick = click@ {
+                        if (isLeaving) return@click
                         viewModel.leaveGroup {
                             showLeaveConfirmDialog = false
                             onNavigateBack()
@@ -593,7 +596,10 @@ fun GroupInfoScreen(
                 }
             },
             dismissButton = {
-                PressScaleTextButton(onClick = { showLeaveConfirmDialog = false }) {
+                PressScaleTextButton(
+                    enabled = !isLeaving,
+                    onClick = { if (!isLeaving) showLeaveConfirmDialog = false }
+                ) {
                     Text(stringResource(R.string.cancel))
                 }
             }
