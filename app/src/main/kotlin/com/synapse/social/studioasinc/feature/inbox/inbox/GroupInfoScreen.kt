@@ -202,6 +202,7 @@ fun GroupInfoScreen(
     val isUpdatingDisappearingMode = uiState.isUpdatingDisappearingMode
     val isRemoving = uiState.isRemoving
     val isLeaving = uiState.isLeaving
+    val isDeleting = uiState.isDeleting
     val isCreator = uiState.currentUserIsCreator
     val inviteCode = uiState.inviteCode
     val allowMemberInvites = groupInfo?.allowMemberInvites ?: false
@@ -608,7 +609,9 @@ fun GroupInfoScreen(
 
     if (showDeleteConfirmDialog) {
         AlertDialog(
-            onDismissRequest = { showDeleteConfirmDialog = false },
+            // Keep the dialog open while the async group deletion is in flight so a backdrop/back
+            // tap cannot dismiss it before the result is known (and hide a failure).
+            onDismissRequest = { if (!isDeleting) showDeleteConfirmDialog = false },
             title = { Text(stringResource(R.string.group_delete_confirm_title)) },
             text = { Text(stringResource(R.string.group_delete_confirm_body)) },
             confirmButton = {
@@ -618,13 +621,17 @@ fun GroupInfoScreen(
                             showDeleteConfirmDialog = false
                             onNavigateBack()
                         }
-                    }
+                    },
+                    enabled = !isDeleting
                 ) {
                     Text(stringResource(R.string.group_delete), color = MaterialTheme.colorScheme.error)
                 }
             },
             dismissButton = {
-                PressScaleTextButton(onClick = { showDeleteConfirmDialog = false }) {
+                PressScaleTextButton(
+                    onClick = { if (!isDeleting) showDeleteConfirmDialog = false },
+                    enabled = !isDeleting
+                ) {
                     Text(stringResource(R.string.cancel))
                 }
             }
