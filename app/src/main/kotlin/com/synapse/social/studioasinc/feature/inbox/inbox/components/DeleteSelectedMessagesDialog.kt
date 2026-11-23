@@ -19,6 +19,7 @@ import com.synapse.social.studioasinc.feature.shared.theme.Spacing
  *
  * @param messageCount The number of messages selected for deletion.
  * @param canDeleteForEveryone Whether every selected message can be deleted for all participants.
+ * @param deleteInProgress Whether a bulk delete is currently in flight; confirm actions are disabled while true.
  * @param onDismissRequest Called when the dialog is dismissed.
  * @param onDeleteForMe Called when the user selects "Delete for me".
  * @param onDeleteForEveryone Called when the user selects "Delete for everyone".
@@ -28,6 +29,7 @@ import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 fun DeleteSelectedMessagesDialog(
     messageCount: Int,
     canDeleteForEveryone: Boolean,
+    deleteInProgress: Boolean = false,
     onDismissRequest: () -> Unit,
     onDeleteForMe: () -> Unit,
     onDeleteForEveryone: () -> Unit
@@ -63,7 +65,7 @@ fun DeleteSelectedMessagesDialog(
         },
         confirmButton = {
             if (canDeleteForEveryone) {
-                TextButton(onClick = onDeleteForEveryone) {
+                TextButton(enabled = !deleteInProgress, onClick = onDeleteForEveryone) {
                     Text(
                         text = stringResource(R.string.delete_for_everyone),
                         style = MaterialTheme.typography.labelLarge,
@@ -71,7 +73,7 @@ fun DeleteSelectedMessagesDialog(
                     )
                 }
             } else {
-                TextButton(onClick = onDeleteForMe) {
+                TextButton(enabled = !deleteInProgress, onClick = onDeleteForMe) {
                     Text(
                         text = stringResource(R.string.delete_for_me),
                         style = MaterialTheme.typography.labelLarge,
@@ -93,7 +95,7 @@ fun DeleteSelectedMessagesDialog(
                     )
                 }
                 if (canDeleteForEveryone) {
-                    TextButton(onClick = onDeleteForMe) {
+                    TextButton(enabled = !deleteInProgress, onClick = onDeleteForMe) {
                         Text(
                             text = stringResource(R.string.delete_for_me),
                             style = MaterialTheme.typography.labelLarge,

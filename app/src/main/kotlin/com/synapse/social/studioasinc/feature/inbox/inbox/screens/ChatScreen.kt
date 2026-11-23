@@ -115,6 +115,7 @@ import kotlinx.coroutines.withContext
     var isBlocking by remember { mutableStateOf(false) }
     var showClearChatDialog by rememberSaveable(chatId) { mutableStateOf(false) }
     var isClearing by remember { mutableStateOf(false) }
+    var isDeletingSelected by remember { mutableStateOf(false) }
     val snackbarHostState = remember { SnackbarHostState() }
 
     // Initialize the ViewModel with the chat ID
@@ -881,14 +882,18 @@ val currentUserId = currentUserIdState ?: ""
                     messageCount = selectedMessageIds.size,
                     canDeleteForEveryone = selectedMessages.isNotEmpty() &&
                         selectedMessages.all { it.senderId == currentUserId },
-                    onDismissRequest = { showDeleteSelectedDialog = false },
+                    deleteInProgress = isDeletingSelected,
+                    onDismissRequest = { if (!isDeletingSelected) showDeleteSelectedDialog = false },
                     onDeleteForMe = {
+                        isDeletingSelected = true
                         viewModel.deleteSelectedMessagesForMe(
                             onError = { err ->
+                                isDeletingSelected = false
                                 // Error is surfaced via viewModel.error -> LaunchedEffect(error) toast
                                 // (set by the delegate). Keep the dialog open so the user can retry.
                             },
                             onSuccess = {
+                                isDeletingSelected = false
                                 showDeleteSelectedDialog = false
                                 android.widget.Toast.makeText(
                                     context,
@@ -899,12 +904,15 @@ val currentUserId = currentUserIdState ?: ""
                         )
                     },
                     onDeleteForEveryone = {
+                        isDeletingSelected = true
                         viewModel.deleteSelectedMessagesForEveryone(
                             onError = { err ->
+                                isDeletingSelected = false
                                 // Error is surfaced via viewModel.error -> LaunchedEffect(error) toast
                                 // (set by the delegate). Keep the dialog open so the user can retry.
                             },
                             onSuccess = {
+                                isDeletingSelected = false
                                 showDeleteSelectedDialog = false
                                 android.widget.Toast.makeText(
                                     context,
