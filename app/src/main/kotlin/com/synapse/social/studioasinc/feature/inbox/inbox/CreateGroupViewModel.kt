@@ -73,6 +73,8 @@ class CreateGroupViewModel @Inject constructor(
     val isLoadingUsers: StateFlow<Boolean> = _isLoadingUsers.asStateFlow()
     private val _isCreating = MutableStateFlow(false)
     val isCreating: StateFlow<Boolean> = _isCreating.asStateFlow()
+    private val _isChangingRole = MutableStateFlow(false)
+    val isChangingRole: StateFlow<Boolean> = _isChangingRole.asStateFlow()
     private val _error = MutableStateFlow<GroupCreationError?>(null)
     val error: StateFlow<GroupCreationError?> = _error.asStateFlow()
 
@@ -294,12 +296,19 @@ class CreateGroupViewModel @Inject constructor(
     }
 
     fun changeMemberRole(userId: String, makeAdmin: Boolean) {
+        if (_isChangingRole.value) return
         val chatId = _createdChatId.value ?: return
+        _isChangingRole.value = true
         viewModelScope.launch {
             val result = if (makeAdmin) chatRepository.promoteToAdmin(chatId, userId)
                 else chatRepository.demoteAdmin(chatId, userId)
-            result.onSuccess { loadGroupMembers(chatId) }
-                .onFailure { _error.value = GroupCreationError.UPDATE_MEMBER_FAILED }
+            result.onSuccess {
+                loadGroupMembers(chatId)
+                _isChangingRole.value = false
+            }.onFailure {
+                _error.value = GroupCreationError.UPDATE_MEMBER_FAILED
+                _isChangingRole.value = false
+            }
         }
     }
 
