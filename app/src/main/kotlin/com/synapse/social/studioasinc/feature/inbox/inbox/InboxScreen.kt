@@ -288,6 +288,7 @@ private fun InboxScreenContent(
     val isRefreshing by viewModel.isRefreshing.collectAsState()
     val isLoadingArchived by viewModel.isLoadingArchived.collectAsState()
     val isCreatingFolder by viewModel.isCreatingFolder.collectAsState()
+    val isDeletingConversations by viewModel.isDeletingConversations.collectAsState()
     val error by viewModel.error.collectAsState()
     val selectedFilter by viewModel.selectedFilter.collectAsState()
     val selectedFolderId by viewModel.selectedFolderId.collectAsState()
@@ -749,7 +750,7 @@ private fun InboxScreenContent(
             },
             confirmButton = {
                 Button(
-                    enabled = newFolderName.isNotBlank() && !isCreatingFolder,
+                    enabled = newFolderName.isNotBlank(),
                     onClick = {
                         viewModel.createFolderAndAssign(newFolderName, selectedChatIds) { success ->
                             if (success) {
@@ -762,34 +763,38 @@ private fun InboxScreenContent(
                     }
                 ) { Text(stringResource(R.string.inbox_folder_save)) }
             },
-            dismissButton = {
-                TextButton(
-                    onClick = { if (!isCreatingFolder) { showCreateFolderDialog = false; newFolderName = "" } },
-                    enabled = !isCreatingFolder
-                ) { Text(stringResource(R.string.inbox_cancel)) }
-            }
+            dismissButton = { TextButton(onClick = { showCreateFolderDialog = false; newFolderName = "" }) { Text(stringResource(R.string.inbox_cancel)) } }
         )
     }
 
     if (showDeleteDialog) {
         AlertDialog(
-            onDismissRequest = { showDeleteDialog = false },
+            // Keep the dialog open while the async delete is in flight so a backdrop/back tap
+            // cannot dismiss it before the result is known (and hide a failure).
+            onDismissRequest = { if (!isDeletingConversations) showDeleteDialog = false },
             title = { Text(stringResource(R.string.inbox_delete_title)) },
             text = { Text(stringResource(R.string.inbox_delete_message, selectedChatIds.size)) },
             confirmButton = {
-                TextButton(onClick = {
-                    viewModel.deleteConversations(selectedChatIds) { success ->
-                        if (success) {
-                            showDeleteDialog = false
-                            returnToInbox()
+                TextButton(
+                    onClick = {
+                        viewModel.deleteConversations(selectedChatIds) { success ->
+                            if (success) {
+                                showDeleteDialog = false
+                                returnToInbox()
+                            }
+                            // On failure the dialog stays open so the user can retry;
+                            // the error is surfaced via the existing error snackbar.
                         }
-                        // On failure the dialog stays open so the user can retry;
-                        // the error is surfaced via the existing error snackbar.
-                    }
-                    }
+                    },
+                    enabled = !isDeletingConversations
                 ) { Text(stringResource(R.string.inbox_delete_confirm), color = MaterialTheme.colorScheme.error) }
             },
-            dismissButton = { TextButton(onClick = { showDeleteDialog = false }) { Text(stringResource(R.string.inbox_cancel)) } }
+            dismissButton = {
+                TextButton(
+                    onClick = { if (!isDeletingConversations) showDeleteDialog = false },
+                    enabled = !isDeletingConversations
+                ) { Text(stringResource(R.string.inbox_cancel)) }
+            }
         )
     }
 }
