@@ -44,6 +44,7 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Tab
+import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberBottomSheetState
 import androidx.compose.runtime.Composable
@@ -139,7 +140,7 @@ fun StorageProviderScreen(
             ) { page ->
                 when (page) {
                     0 -> AssignProvidersTab(storageConfig, viewModel)
-                    1 -> ProviderSetupTab(storageConfig, viewModel)
+                    1 -> ProviderSetupTab(storageConfig, viewModel, snackbarHostState)
                 }
             }
         }
@@ -342,7 +343,8 @@ private fun ProviderSelectionList(
 @Composable
 private fun ProviderSetupTab(
     storageConfig: StorageConfig,
-    viewModel: SettingsViewModel
+    viewModel: SettingsViewModel,
+    snackbarHostState: SnackbarHostState
 ) {
     val providers = listOf(
         StorageProvider.IMGBB,
@@ -381,7 +383,8 @@ private fun ProviderSetupTab(
                                 isConfigured = storageConfig.isProviderConfigured(provider),
                                 usage = usage,
                                 storageConfig = storageConfig,
-                                viewModel = viewModel
+                                viewModel = viewModel,
+                                snackbarHostState = snackbarHostState
                             )
 
                             if (index < providers.size - 1) {
@@ -402,11 +405,14 @@ private fun ProviderRow(
     isConfigured: Boolean,
     usage: String,
     storageConfig: StorageConfig,
-    viewModel: SettingsViewModel
+    viewModel: SettingsViewModel,
+    snackbarHostState: SnackbarHostState
 ) {
     var showSheet by remember { mutableStateOf(false) }
     val sheetState = rememberBottomSheetState(initialValue = SheetValue.Hidden)
     val displayName = stringResource(provider.toDisplayNameRes())
+    val isSavingConfig by viewModel.isSavingConfig.collectAsState()
+    val error by viewModel.error.collectAsState()
 
     Row(
         modifier = Modifier
@@ -516,8 +522,9 @@ private fun ProviderRow(
         var wasSaving by remember { mutableStateOf(false) }
         LaunchedEffect(isSavingConfig) {
             if (wasSaving && !isSavingConfig) {
-                if (error != null) {
-                    snackbarHostState.showSnackbar(message = error)
+                val errorMessage = error
+                if (errorMessage != null) {
+                    snackbarHostState.showSnackbar(message = errorMessage)
                     viewModel.clearError()
                     // Keep the sheet open so the user can retry
                 } else {
