@@ -44,6 +44,7 @@ data class StoryViewerState(
     val reactionsCount: Int = 0,
     val replyText: String = "",
     val isReplying: Boolean = false,
+    val isSendingReply: Boolean = false,
     val showOptionsSheet: Boolean = false,
     val showDeleteConfirmation: Boolean = false,
     val isDeletingStory: Boolean = false,
@@ -338,6 +339,8 @@ class StoryViewerViewModel @Inject constructor(
     }
 
     fun sendReply() {
+        // Repeated-tap protection: ignore taps while a reply send request is already in flight.
+        if (_uiState.value.isSendingReply) return
         val currentState = _uiState.value
         val currentStory = currentState.stories.getOrNull(currentState.currentStoryIndex) ?: return
         val storyOwnerId = currentStory.userId
@@ -345,20 +348,21 @@ class StoryViewerViewModel @Inject constructor(
         if (replyText.isBlank()) return
 
         viewModelScope.launch {
+            _uiState.update { it.copy(isSendingReply = true) }
             val chatResult = chatRepository.getOrCreateChat(storyOwnerId)
             val chatId = chatResult.getOrNull()
             if (chatId != null) {
                 val message = "[Story reply] ${currentStory.mediaUrl}\n$replyText"
                 chatRepository.sendMessage(chatId, message).fold(
                     onSuccess = { _ ->
-                        _uiState.update { it.copy(replyText = "", isReplying = false) }
+                        _uiState.update { it.copy(replyText = "", isReplying = false, isSendingReply = false) }
                     },
                     onFailure = { error ->
-                        _uiState.update { it.copy(error = "Failed to send reply: ${error.message ?: "unknown error"}") }
+                        _uiState.update { it.copy(error = "Failed to send reply: ${error.message ?: "unknown error"}", isSendingReply = false) }
                     }
                 )
             } else {
-                _uiState.update { it.copy(error = "Failed to send reply") }
+                _uiState.update { it.copy(error = "Failed to send reply", isSendingReply = false) }
             }
             resume()
         }
