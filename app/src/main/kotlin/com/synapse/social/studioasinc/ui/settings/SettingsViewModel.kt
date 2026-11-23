@@ -38,6 +38,9 @@ class SettingsViewModel @Inject constructor(
     private val _error = MutableStateFlow<String?>(null)
     val error: StateFlow<String?> = _error.asStateFlow()
 
+    private val _isSavingConfig = MutableStateFlow(false)
+    val isSavingConfig: StateFlow<Boolean> = _isSavingConfig.asStateFlow()
+
     fun resetE2EE() {
         viewModelScope.launch {
             _isResettingE2EE.value = true
@@ -110,25 +113,57 @@ class SettingsViewModel @Inject constructor(
 
     fun updateImgBBConfig(apiKey: String) {
         viewModelScope.launch {
-            storageRepository.updateImgBBConfig(apiKey)
+            clearError()
+            _isSavingConfig.value = true
+            try {
+                storageRepository.updateImgBBConfig(apiKey)
+            } catch (e: Exception) {
+                _error.value = e.message ?: "Failed to update ImgBB configuration"
+            } finally {
+                _isSavingConfig.value = false
+            }
         }
     }
 
     fun updateCloudinaryConfig(cloudName: String, apiKey: String, apiSecret: String, uploadPreset: String = "") {
         viewModelScope.launch {
-            storageRepository.updateCloudinaryConfig(cloudName, apiKey, apiSecret, uploadPreset)
+            clearError()
+            _isSavingConfig.value = true
+            try {
+                storageRepository.updateCloudinaryConfig(cloudName, apiKey, apiSecret, uploadPreset)
+            } catch (e: Exception) {
+                _error.value = e.message ?: "Failed to update Cloudinary configuration"
+            } finally {
+                _isSavingConfig.value = false
+            }
         }
     }
 
     fun updateR2Config(accountId: String, accessKeyId: String, secretAccessKey: String, bucketName: String) {
         viewModelScope.launch {
-            storageRepository.updateR2Config(accountId, accessKeyId, secretAccessKey, bucketName)
+            clearError()
+            _isSavingConfig.value = true
+            try {
+                storageRepository.updateR2Config(accountId, accessKeyId, secretAccessKey, bucketName)
+            } catch (e: Exception) {
+                _error.value = e.message ?: "Failed to update Cloudflare R2 configuration"
+            } finally {
+                _isSavingConfig.value = false
+            }
         }
     }
 
     fun updatePrimaryConfig(url: String, apiKey: String, bucketName: String) {
         viewModelScope.launch {
-            storageRepository.updatePrimaryConfig(url, apiKey, bucketName)
+            clearError()
+            _isSavingConfig.value = true
+            try {
+                storageRepository.updatePrimaryConfig(url, apiKey, bucketName)
+            } catch (e: Exception) {
+                _error.value = e.message ?: "Failed to update Supabase configuration"
+            } finally {
+                _isSavingConfig.value = false
+            }
         }
     }
 
