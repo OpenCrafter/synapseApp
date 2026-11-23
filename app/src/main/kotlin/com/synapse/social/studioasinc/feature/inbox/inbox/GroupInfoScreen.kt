@@ -513,7 +513,7 @@ fun GroupInfoScreen(
     if (showDisappearingDialog) {
         val currentMode = groupInfo?.disappearingMode ?: DisappearingMode.OFF
         AlertDialog(
-            onDismissRequest = { showDisappearingDialog = false },
+            onDismissRequest = { if (!isUpdatingDisappearingMode) showDisappearingDialog = false },
             title = { Text(stringResource(R.string.group_disappearing_messages)) },
             text = {
                 Column {
