@@ -750,20 +750,27 @@ private fun InboxScreenContent(
             },
             confirmButton = {
                 Button(
-                    enabled = newFolderName.isNotBlank(),
+                    enabled = newFolderName.isNotBlank() && !isCreatingFolder,
                     onClick = {
-                        viewModel.createFolderAndAssign(newFolderName, selectedChatIds) { success ->
-                            if (success) {
-                                showCreateFolderDialog = false
-                                newFolderName = ""
+                        if (!isCreatingFolder) {
+                            viewModel.createFolderAndAssign(newFolderName, selectedChatIds) { success ->
+                                if (success) {
+                                    showCreateFolderDialog = false
+                                    newFolderName = ""
+                                }
+                                // On failure the dialog stays open so the user can retry;
+                                // the error is surfaced via the existing error snackbar.
                             }
-                            // On failure the dialog stays open so the user can retry;
-                            // the error is surfaced via the existing error snackbar.
                         }
                     }
                 ) { Text(stringResource(R.string.inbox_folder_save)) }
             },
-            dismissButton = { TextButton(onClick = { showCreateFolderDialog = false; newFolderName = "" }) { Text(stringResource(R.string.inbox_cancel)) } }
+            dismissButton = {
+                TextButton(
+                    onClick = { if (!isCreatingFolder) { showCreateFolderDialog = false; newFolderName = "" } },
+                    enabled = !isCreatingFolder
+                ) { Text(stringResource(R.string.inbox_cancel)) }
+            }
         )
     }
 

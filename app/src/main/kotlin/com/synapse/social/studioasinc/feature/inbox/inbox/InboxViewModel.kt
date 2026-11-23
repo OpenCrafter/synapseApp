@@ -322,6 +322,7 @@ class InboxViewModel @Inject constructor(
     }
 
     fun createFolderAndAssign(name: String, chatIds: Set<String>, onResult: (Boolean) -> Unit = {}) {
+        if (_isCreatingFolder.value) return
         val cleanName = name.trim()
         if (cleanName.isBlank()) {
             _error.value = "Folder name cannot be blank"
