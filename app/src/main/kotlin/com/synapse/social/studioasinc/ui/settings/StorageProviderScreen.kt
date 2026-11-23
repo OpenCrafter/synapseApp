@@ -475,7 +475,7 @@ private fun ProviderRow(
 
     if (showSheet) {
         ModalBottomSheet(
-            onDismissRequest = { showSheet = false },
+            onDismissRequest = { if (!isSavingConfig) showSheet = false },
             sheetState = sheetState,
             containerColor = AppColors.cardBackgroundElevated
         ) {
