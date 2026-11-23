@@ -94,7 +94,8 @@ fun StoryReplyBar(
     onReplyTextChange: (String) -> Unit,
     onSendReply: () -> Unit,
     onFocus: () -> Unit,
-    onBlur: () -> Unit
+    onBlur: () -> Unit,
+    isSendingReply: Boolean = false
 ) {
     Row(
         modifier = Modifier
@@ -131,11 +132,15 @@ fun StoryReplyBar(
             ),
             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Send),
             keyboardActions = KeyboardActions(onSend = { onSendReply() }),
-            singleLine = true
+            singleLine = true,
+            enabled = !isSendingReply
         )
 
         if (replyText.isNotEmpty()) {
-            IconButton(onClick = onSendReply) {
+            IconButton(
+                onClick = onSendReply,
+                enabled = !isSendingReply
+            ) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.Send,
                     contentDescription = stringResource(R.string.cd_send),
@@ -310,7 +315,8 @@ fun StoryViewerScreen(
                             onReplyTextChange = { viewModel.updateReplyText(it) },
                             onSendReply = { viewModel.sendReply() },
                             onFocus = { viewModel.pause() },
-                            onBlur = { viewModel.resume() }
+                            onBlur = { viewModel.resume() },
+                            isSendingReply = uiState.isSendingReply
                         )
                     }
                 }
