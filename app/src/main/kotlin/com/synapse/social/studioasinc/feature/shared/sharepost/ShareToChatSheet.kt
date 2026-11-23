@@ -75,8 +75,10 @@ fun ShareToChatSheet(
 
     ModalBottomSheet(
         onDismissRequest = {
-            viewModel.onSheetDismissed()
-            onDismiss()
+            if (uiState.sendingChatId == null) {
+                viewModel.onSheetDismissed()
+                onDismiss()
+            }
         },
         sheetState = rememberBottomSheetState(
             initialValue = SheetValue.Hidden,
