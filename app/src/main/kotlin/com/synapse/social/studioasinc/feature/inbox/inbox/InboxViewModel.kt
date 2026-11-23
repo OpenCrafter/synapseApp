@@ -128,6 +128,9 @@ class InboxViewModel @Inject constructor(
     private val _isLoadingArchived = MutableStateFlow(false)
     val isLoadingArchived: StateFlow<Boolean> = _isLoadingArchived.asStateFlow()
 
+    private val _isAssigningToFolder = MutableStateFlow(false)
+    val isAssigningToFolder: StateFlow<Boolean> = _isAssigningToFolder.asStateFlow()
+
     private val _searchState = MutableStateFlow(InboxSearchState())
     val searchState: StateFlow<InboxSearchState> = _searchState.asStateFlow()
 
@@ -298,20 +301,25 @@ class InboxViewModel @Inject constructor(
 
     fun assignConversationsToFolder(chatIds: Set<String>, folderId: String) {
         viewModelScope.launch {
-            val updated = chatFolders.value.map { folder ->
-                if (folder.id == folderId) {
-                    folder.copy(
-                        includedChatIds = (folder.includedChatIds + chatIds).distinct(),
-                        excludedChatIds = folder.excludedChatIds - chatIds
-                    )
-                } else {
-                    folder.copy(
-                        includedChatIds = folder.includedChatIds - chatIds,
-                        excludedChatIds = (folder.excludedChatIds + chatIds).distinct()
-                    )
+            _isAssigningToFolder.value = true
+            try {
+                val updated = chatFolders.value.map { folder ->
+                    if (folder.id == folderId) {
+                        folder.copy(
+                            includedChatIds = (folder.includedChatIds + chatIds).distinct(),
+                            excludedChatIds = folder.excludedChatIds - chatIds
+                        )
+                    } else {
+                        folder.copy(
+                            includedChatIds = folder.includedChatIds - chatIds,
+                            excludedChatIds = (folder.excludedChatIds + chatIds).distinct()
+                        )
+                    }
                 }
+                persistFolders(updated)
+            } finally {
+                _isAssigningToFolder.value = false
             }
-            persistFolders(updated)
         }
     }
 
