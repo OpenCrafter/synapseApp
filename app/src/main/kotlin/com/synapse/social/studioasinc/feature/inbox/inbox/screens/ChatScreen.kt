@@ -1219,6 +1219,7 @@ val currentUserId = currentUserIdState ?: ""
         }
         val chatFolders by viewModel.chatFolders.collectAsState()
         val createFolderSaveStatus by viewModel.createFolderSaveStatus.collectAsState()
+        val folderAssignmentSaveStatus by viewModel.folderAssignmentSaveStatus.collectAsState()
 
         // Dismiss the create folder dialog only when the async save succeeds.
         // On failure the dialog stays open so the user can see the error and retry.
@@ -1240,13 +1241,31 @@ val currentUserId = currentUserIdState ?: ""
             }
         }
 
+        // Dismiss the folder selection sheet only when the async assignment completes.
+        // On failure the sheet stays open so the user can see the error and retry.
+        LaunchedEffect(folderAssignmentSaveStatus) {
+            when (folderAssignmentSaveStatus) {
+                is ChatViewModel.FolderAssignmentSaveStatus.Success -> {
+                    showChatFolderSheet = false
+                    viewModel.resetFolderAssignmentSaveStatus()
+                }
+                is ChatViewModel.FolderAssignmentSaveStatus.Failure -> {
+                    // Keep sheet open; error is surfaced via snackbar below
+                    snackbarHostState.showSnackbar(
+                        message = context.getString(R.string.chat_folder_save_failed)
+                    )
+                }
+                ChatViewModel.FolderAssignmentSaveStatus.Idle -> Unit
+                ChatViewModel.FolderAssignmentSaveStatus.Saving -> Unit
+            }
+        }
+
         if (showChatFolderSheet) {
             val currentChatId = resolvedChatId ?: chatId
             ChatFolderSelectionBottomSheet(
                 folders = chatFolders,
                 currentFolderId = chatFolders.firstOrNull { currentChatId in it.includedChatIds }?.id,
                 onFolderSelected = { folder ->
-                    showChatFolderSheet = false
                     viewModel.assignCurrentChatToFolder(folder.id)
                 },
                 onCreateNewFolder = {
