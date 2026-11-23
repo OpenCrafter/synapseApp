@@ -48,6 +48,7 @@ fun ScheduledPostsScreen(
 
     var reschedulingPostId by remember { mutableStateOf<String?>(null) }
     var cancelConfirmPostId by remember { mutableStateOf<String?>(null) }
+    var cancelling by remember { mutableStateOf(false) }
 
     Scaffold(
         containerColor = AppColors.screenBackground,
@@ -183,13 +184,18 @@ fun ScheduledPostsScreen(
 
     cancelConfirmPostId?.let { postId ->
         AlertDialog(
-            onDismissRequest = { cancelConfirmPostId = null },
+            // Keep the dialog open while the async cancel is in flight so a backdrop/back tap
+            // cannot dismiss it before the result is known (and hide a failure).
+            onDismissRequest = { if (!cancelling) cancelConfirmPostId = null },
             title = { Text(stringResource(R.string.cancel_scheduled_post)) },
             text = { Text("Are you sure you want to cancel and delete this scheduled post?") },
             confirmButton = {
                 TextButton(
+                    enabled = !cancelling,
                     onClick = {
+                        cancelling = true
                         viewModel.cancelScheduledPost(postId) { success ->
+                            cancelling = false
                             // Dismiss only when the async cancel succeeds. On failure the dialog
                             // stays open so the user can retry; the list is refreshed by the
                             // ViewModel so the post remains visible.
@@ -201,7 +207,10 @@ fun ScheduledPostsScreen(
                 }
             },
             dismissButton = {
-                TextButton(onClick = { cancelConfirmPostId = null }) {
+                TextButton(
+                    enabled = !cancelling,
+                    onClick = { if (!cancelling) cancelConfirmPostId = null }
+                ) {
                     Text(stringResource(R.string.cancel))
                 }
             }
