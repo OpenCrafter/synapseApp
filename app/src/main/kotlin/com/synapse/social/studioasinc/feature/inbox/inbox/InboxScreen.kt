@@ -267,9 +267,7 @@ private fun InboxScreenContent(
     var showCreateMenu by rememberSaveable { mutableStateOf(false) }
     var showFolderSheet by remember { mutableStateOf(false) }
     var showCreateFolderDialog by remember { mutableStateOf(false) }
-    var isCreatingFolder by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf(false) }
-    var isDeletingConversation by remember { mutableStateOf(false) }
     var showSelectionMenu by remember { mutableStateOf(false) }
     var showInboxMenu by remember { mutableStateOf(false) }
     var showArchivedMenu by remember { mutableStateOf(false) }
@@ -289,11 +287,11 @@ private fun InboxScreenContent(
     val isLoading by viewModel.isLoading.collectAsState()
     val isRefreshing by viewModel.isRefreshing.collectAsState()
     val isLoadingArchived by viewModel.isLoadingArchived.collectAsState()
+    val isCreatingFolder by viewModel.isCreatingFolder.collectAsState()
     val error by viewModel.error.collectAsState()
     val selectedFilter by viewModel.selectedFilter.collectAsState()
     val selectedFolderId by viewModel.selectedFolderId.collectAsState()
     val folders by viewModel.chatFolders.collectAsState()
-    val isAssigningToFolder by viewModel.isAssigningToFolder.collectAsState()
     val searchState by viewModel.searchState.collectAsState()
     val unreadThreadCount = conversations.count { it.unreadCount > 0 }
     val selectedConversations = conversations.filter { it.chatId in selectedChatIds }
@@ -709,7 +707,7 @@ private fun InboxScreenContent(
     }
 
     if (showFolderSheet) {
-        ModalBottomSheet(onDismissRequest = { if (!isAssigningToFolder) showFolderSheet = false }) {
+        ModalBottomSheet(onDismissRequest = { showFolderSheet = false }) {
             Text(stringResource(R.string.inbox_folder_picker_title), style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(horizontal = Spacing.space24, vertical = Spacing.space8))
             if (folders.isEmpty()) {
                 Text(stringResource(R.string.inbox_folder_empty), color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(horizontal = Spacing.space24, vertical = Spacing.space8))
@@ -719,10 +717,8 @@ private fun InboxScreenContent(
                     content = { Text(folder.name) },
                     leadingContent = { Icon(Icons.Rounded.Archive, contentDescription = null, tint = MaterialTheme.colorScheme.primary) },
                     modifier = Modifier.fillMaxWidth().clickable {
-                        if (!isAssigningToFolder) {
-                            viewModel.assignConversationsToFolder(selectedChatIds, folder.id)
-                            showFolderSheet = false
-                        }
+                        viewModel.assignConversationsToFolder(selectedChatIds, folder.id)
+                        showFolderSheet = false
                     }
                 )
             }
@@ -737,6 +733,8 @@ private fun InboxScreenContent(
 
     if (showCreateFolderDialog) {
         AlertDialog(
+            // Keep the dialog open while the async folder save is in flight so a backdrop/back
+            // tap cannot dismiss it before the result is known (and hide a failure).
             onDismissRequest = { if (!isCreatingFolder) { showCreateFolderDialog = false; newFolderName = "" } },
             title = { Text(stringResource(R.string.inbox_folder_create)) },
             text = {
@@ -745,6 +743,7 @@ private fun InboxScreenContent(
                     onValueChange = { newFolderName = it },
                     label = { Text(stringResource(R.string.inbox_folder_name)) },
                     singleLine = true,
+                    enabled = !isCreatingFolder,
                     modifier = Modifier.fillMaxWidth()
                 )
             },
@@ -752,9 +751,7 @@ private fun InboxScreenContent(
                 Button(
                     enabled = newFolderName.isNotBlank() && !isCreatingFolder,
                     onClick = {
-                        isCreatingFolder = true
                         viewModel.createFolderAndAssign(newFolderName, selectedChatIds) { success ->
-                            isCreatingFolder = false
                             if (success) {
                                 showCreateFolderDialog = false
                                 newFolderName = ""
@@ -776,32 +773,23 @@ private fun InboxScreenContent(
 
     if (showDeleteDialog) {
         AlertDialog(
-            onDismissRequest = { if (!isDeletingConversation) showDeleteDialog = false },
+            onDismissRequest = { showDeleteDialog = false },
             title = { Text(stringResource(R.string.inbox_delete_title)) },
             text = { Text(stringResource(R.string.inbox_delete_message, selectedChatIds.size)) },
             confirmButton = {
-                TextButton(
-                    enabled = !isDeletingConversation,
-                    onClick = {
-                        isDeletingConversation = true
-                        viewModel.deleteConversations(selectedChatIds) { success ->
-                            isDeletingConversation = false
-                            if (success) {
-                                showDeleteDialog = false
-                                returnToInbox()
-                            }
-                            // On failure the dialog stays open so the user can retry;
-                            // the error is surfaced via the existing error snackbar.
+                TextButton(onClick = {
+                    viewModel.deleteConversations(selectedChatIds) { success ->
+                        if (success) {
+                            showDeleteDialog = false
+                            returnToInbox()
                         }
+                        // On failure the dialog stays open so the user can retry;
+                        // the error is surfaced via the existing error snackbar.
+                    }
                     }
                 ) { Text(stringResource(R.string.inbox_delete_confirm), color = MaterialTheme.colorScheme.error) }
             },
-            dismissButton = {
-                TextButton(
-                    onClick = { if (!isDeletingConversation) showDeleteDialog = false },
-                    enabled = !isDeletingConversation
-                ) { Text(stringResource(R.string.inbox_cancel)) }
-            }
+            dismissButton = { TextButton(onClick = { showDeleteDialog = false }) { Text(stringResource(R.string.inbox_cancel)) } }
         )
     }
 }
