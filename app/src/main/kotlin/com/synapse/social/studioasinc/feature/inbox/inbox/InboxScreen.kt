@@ -292,6 +292,7 @@ private fun InboxScreenContent(
     val error by viewModel.error.collectAsState()
     val selectedFilter by viewModel.selectedFilter.collectAsState()
     val selectedFolderId by viewModel.selectedFolderId.collectAsState()
+    val isAssigningToFolder by viewModel.isAssigningToFolder.collectAsState()
     val folders by viewModel.chatFolders.collectAsState()
     val searchState by viewModel.searchState.collectAsState()
     val unreadThreadCount = conversations.count { it.unreadCount > 0 }
@@ -708,7 +709,7 @@ private fun InboxScreenContent(
     }
 
     if (showFolderSheet) {
-        ModalBottomSheet(onDismissRequest = { showFolderSheet = false }) {
+        ModalBottomSheet(onDismissRequest = { if (!isAssigningToFolder) showFolderSheet = false }) {
             Text(stringResource(R.string.inbox_folder_picker_title), style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(horizontal = Spacing.space24, vertical = Spacing.space8))
             if (folders.isEmpty()) {
                 Text(stringResource(R.string.inbox_folder_empty), color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(horizontal = Spacing.space24, vertical = Spacing.space8))
@@ -718,8 +719,10 @@ private fun InboxScreenContent(
                     content = { Text(folder.name) },
                     leadingContent = { Icon(Icons.Rounded.Archive, contentDescription = null, tint = MaterialTheme.colorScheme.primary) },
                     modifier = Modifier.fillMaxWidth().clickable {
-                        viewModel.assignConversationsToFolder(selectedChatIds, folder.id)
-                        showFolderSheet = false
+                        if (!isAssigningToFolder) {
+                            viewModel.assignConversationsToFolder(selectedChatIds, folder.id)
+                            showFolderSheet = false
+                        }
                     }
                 )
             }
