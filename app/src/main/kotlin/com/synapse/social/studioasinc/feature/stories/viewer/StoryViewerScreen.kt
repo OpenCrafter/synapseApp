@@ -58,7 +58,8 @@ import androidx.compose.ui.text.input.ImeAction
 @Composable
 fun QuickReactionsRow(
     userReaction: String?,
-    onEmojiClick: (String) -> Unit
+    onEmojiClick: (String) -> Unit,
+    isReacting: Boolean = false
 ) {
     val emojis = listOf("❤️", "😂", "😮", "😢", "😡")
     Row(
@@ -75,7 +76,8 @@ fun QuickReactionsRow(
                         if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
                         else Color.Transparent
                     )
-                    .clickable { onEmojiClick(emoji) },
+                    .clickable { onEmojiClick(emoji) }
+                    .enabled(!isReacting),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
@@ -298,7 +300,8 @@ fun StoryViewerScreen(
                                 } else {
                                     viewModel.reactToStory(emoji)
                                 }
-                            }
+                            },
+                            isReacting = uiState.isReacting
                         )
 
                         Spacer(modifier = Modifier.height(Spacing.space8))

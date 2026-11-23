@@ -44,6 +44,7 @@ data class StoryViewerState(
     val reactionsCount: Int = 0,
     val replyText: String = "",
     val isReplying: Boolean = false,
+    val isReacting: Boolean = false,
     val showOptionsSheet: Boolean = false,
     val showDeleteConfirmation: Boolean = false,
     val isDeletingStory: Boolean = false,
@@ -308,28 +309,36 @@ class StoryViewerViewModel @Inject constructor(
     }
 
     fun reactToStory(emoji: String) {
+        // Repeated-tap protection: ignore taps while a reaction request is already in flight.
+        if (_uiState.value.isReacting) return
         val currentStory = _uiState.value.stories.getOrNull(_uiState.value.currentStoryIndex) ?: return
         val storyId = currentStory.id ?: return
         val currentUserId = authRepository.getCurrentUserId() ?: return
 
         viewModelScope.launch {
+            _uiState.update { it.copy(isReacting = true) }
             val result = storyRepository.reactToStory(storyId, currentUserId, emoji)
             if (result.isSuccess) {
                 loadStoryData(storyId)
             }
+            _uiState.update { it.copy(isReacting = false) }
         }
     }
 
     fun removeReaction() {
+        // Repeated-tap protection: ignore taps while a reaction request is already in flight.
+        if (_uiState.value.isReacting) return
         val currentStory = _uiState.value.stories.getOrNull(_uiState.value.currentStoryIndex) ?: return
         val storyId = currentStory.id ?: return
         val currentUserId = authRepository.getCurrentUserId() ?: return
 
         viewModelScope.launch {
+            _uiState.update { it.copy(isReacting = true) }
             val result = storyRepository.removeReaction(storyId, currentUserId)
             if (result.isSuccess) {
                 loadStoryData(storyId)
             }
+            _uiState.update { it.copy(isReacting = false) }
         }
     }
 
