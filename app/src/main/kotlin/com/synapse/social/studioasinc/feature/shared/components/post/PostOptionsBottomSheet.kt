@@ -90,7 +90,7 @@ fun PostOptionsBottomSheet(
     }
 
     ModalBottomSheet(
-        onDismissRequest = onDismiss,
+        onDismissRequest = { if (!isProcessing) onDismiss() },
         containerColor = MaterialTheme.colorScheme.surface
     ) {
         Column(
