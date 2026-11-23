@@ -207,6 +207,7 @@ val currentUserId = currentUserIdState ?: ""
     var batchViewerMessage by remember { mutableStateOf<Message?>(null) }
     var batchViewerInitialIndex by remember { mutableIntStateOf(0) }
     var showDeleteMessageDialog by remember { mutableStateOf<Message?>(null) }
+    var isDeletingMessage by remember { mutableStateOf(false) }
     var showDeleteSelectedDialog by rememberSaveable(chatId) { mutableStateOf(false) }
 
     LaunchedEffect(selectedMessageIds) {
@@ -831,48 +832,59 @@ val currentUserId = currentUserIdState ?: ""
             DeleteMessageDialog(
                 message = showDeleteMessageDialog,
                 canDeleteForEveryone = showDeleteMessageDialog?.senderId == currentUserId,
-                onDismissRequest = { showDeleteMessageDialog = null },
+                isLoading = isDeletingMessage,
+                onDismissRequest = { if (!isDeletingMessage) showDeleteMessageDialog = null },
                 onDeleteForMe = { message ->
                     // Do not dismiss the dialog here: deletion is async. Keep it open until the
                     // result is known so the user gets success/failure feedback and can retry.
-                    viewModel.deleteMessageForMe(
-                        message,
-                        onError = { err ->
-                            android.widget.Toast.makeText(
-                                context,
-                                err,
-                                android.widget.Toast.LENGTH_LONG
-                            ).show()
-                        },
-                        onSuccess = {
-                            showDeleteMessageDialog = null
-                            android.widget.Toast.makeText(
-                                context,
-                                context.getString(R.string.message_deleted_successfully),
-                                android.widget.Toast.LENGTH_SHORT
-                            ).show()
-                        }
-                    )
+                    if (!isDeletingMessage) {
+                        isDeletingMessage = true
+                        viewModel.deleteMessageForMe(
+                            message,
+                            onError = { err ->
+                                isDeletingMessage = false
+                                android.widget.Toast.makeText(
+                                    context,
+                                    err,
+                                    android.widget.Toast.LENGTH_LONG
+                                ).show()
+                            },
+                            onSuccess = {
+                                isDeletingMessage = false
+                                showDeleteMessageDialog = null
+                                android.widget.Toast.makeText(
+                                    context,
+                                    context.getString(R.string.message_deleted_successfully),
+                                    android.widget.Toast.LENGTH_SHORT
+                                ).show()
+                            }
+                        )
+                    }
                 },
                 onDeleteForEveryone = { message ->
-                    viewModel.deleteMessage(
-                        message,
-                        onError = { err ->
-                            android.widget.Toast.makeText(
-                                context,
-                                err,
-                                android.widget.Toast.LENGTH_LONG
-                            ).show()
-                        },
-                        onSuccess = {
-                            showDeleteMessageDialog = null
-                            android.widget.Toast.makeText(
-                                context,
-                                context.getString(R.string.success_delete_for_everyone),
-                                android.widget.Toast.LENGTH_SHORT
-                            ).show()
-                        }
-                    )
+                    if (!isDeletingMessage) {
+                        isDeletingMessage = true
+                        viewModel.deleteMessage(
+                            message,
+                            onError = { err ->
+                                isDeletingMessage = false
+                                android.widget.Toast.makeText(
+                                    context,
+                                    err,
+                                    android.widget.Toast.LENGTH_LONG
+                                ).show()
+                            },
+                            onSuccess = {
+                                isDeletingMessage = false
+                                showDeleteMessageDialog = null
+                                android.widget.Toast.makeText(
+                                    context,
+                                    context.getString(R.string.success_delete_for_everyone),
+                                    android.widget.Toast.LENGTH_SHORT
+                                ).show()
+                            }
+                        )
+                    }
                 }
             )
 
