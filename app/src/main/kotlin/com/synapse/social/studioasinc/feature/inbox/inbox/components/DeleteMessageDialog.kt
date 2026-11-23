@@ -9,7 +9,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.synapse.social.studioasinc.R
+import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
+import com.synapse.social.studioasinc.ui.components.ExpressiveLoadingIndicator
 import com.synapse.social.studioasinc.shared.domain.model.chat.ContentStatus
 import com.synapse.social.studioasinc.shared.domain.model.chat.Message
 
@@ -21,6 +23,9 @@ import com.synapse.social.studioasinc.shared.domain.model.chat.Message
  *
  * @param message The message being deleted.
  * @param canDeleteForEveryone Whether the message belongs to the current user.
+ * @param isLoading Whether a delete operation is currently in flight. While true, the confirm
+ * and cancel buttons are disabled so a rapid re-tap cannot retrigger the delete and the dialog
+ * cannot be dismissed before the result is known.
  * @param onDismissRequest Called when the dialog is dismissed.
  * @param onDeleteForMe Called when the user selects "Delete for me".
  * @param onDeleteForEveryone Called when the user selects "Delete for everyone".
@@ -30,6 +35,7 @@ import com.synapse.social.studioasinc.shared.domain.model.chat.Message
 fun DeleteMessageDialog(
     message: Message?,
     canDeleteForEveryone: Boolean,
+    isLoading: Boolean = false,
     onDismissRequest: () -> Unit,
     onDeleteForMe: (Message) -> Unit,
     onDeleteForEveryone: (Message) -> Unit
@@ -65,7 +71,16 @@ fun DeleteMessageDialog(
             },
             confirmButton = {
                 if (canDeleteForEveryone) {
-                    TextButton(onClick = { onDeleteForEveryone(it) }) {
+                    TextButton(
+                        onClick = { onDeleteForEveryone(it) },
+                        enabled = !isLoading
+                    ) {
+                        if (isLoading) {
+                            ExpressiveLoadingIndicator(
+                                modifier = Modifier.size(Sizes.IconSemiMedium)
+                            )
+                            Spacer(modifier = Modifier.width(Spacing.space8))
+                        }
                         Text(
                             text = stringResource(R.string.delete_for_everyone),
                             style = MaterialTheme.typography.labelLarge,
@@ -73,7 +88,16 @@ fun DeleteMessageDialog(
                         )
                     }
                 } else {
-                    TextButton(onClick = { onDeleteForMe(it) }) {
+                    TextButton(
+                        onClick = { onDeleteForMe(it) },
+                        enabled = !isLoading
+                    ) {
+                        if (isLoading) {
+                            ExpressiveLoadingIndicator(
+                                modifier = Modifier.size(Sizes.IconSemiMedium)
+                            )
+                            Spacer(modifier = Modifier.width(Spacing.space8))
+                        }
                         Text(
                             text = stringResource(R.string.delete_for_me),
                             style = MaterialTheme.typography.labelLarge,
@@ -87,7 +111,10 @@ fun DeleteMessageDialog(
                     modifier = Modifier.padding(end = Spacing.space8),
                     horizontalArrangement = Arrangement.spacedBy(Spacing.space8)
                 ) {
-                    TextButton(onClick = onDismissRequest) {
+                    TextButton(
+                        onClick = onDismissRequest,
+                        enabled = !isLoading
+                    ) {
                         Text(
                             text = stringResource(R.string.cancel),
                             style = MaterialTheme.typography.labelLarge,
@@ -95,7 +122,10 @@ fun DeleteMessageDialog(
                         )
                     }
                     if (canDeleteForEveryone) {
-                        TextButton(onClick = { onDeleteForMe(it) }) {
+                        TextButton(
+                            onClick = { onDeleteForMe(it) },
+                            enabled = !isLoading
+                        ) {
                             Text(
                                 text = stringResource(R.string.delete_for_me),
                                 style = MaterialTheme.typography.labelLarge,
