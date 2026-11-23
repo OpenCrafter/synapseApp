@@ -41,6 +41,9 @@ class SettingsViewModel @Inject constructor(
     private val _isSavingConfig = MutableStateFlow(false)
     val isSavingConfig: StateFlow<Boolean> = _isSavingConfig.asStateFlow()
 
+    private val _isUpdatingProvider = MutableStateFlow(false)
+    val isUpdatingProvider: StateFlow<Boolean> = _isUpdatingProvider.asStateFlow()
+
     fun resetE2EE() {
         viewModelScope.launch {
             _isResettingE2EE.value = true
@@ -95,19 +98,40 @@ class SettingsViewModel @Inject constructor(
 
     fun updatePhotoProvider(providerName: String?) {
         viewModelScope.launch {
-            updateStorageProviderUseCase(MediaType.PHOTO, providerName.toStorageProvider())
+            _isUpdatingProvider.value = true
+            try {
+                updateStorageProviderUseCase(MediaType.PHOTO, providerName.toStorageProvider())
+            } catch (e: Exception) {
+                _error.value = e.message ?: "Failed to update photo storage provider"
+            } finally {
+                _isUpdatingProvider.value = false
+            }
         }
     }
 
     fun updateVideoProvider(providerName: String?) {
         viewModelScope.launch {
-            updateStorageProviderUseCase(MediaType.VIDEO, providerName.toStorageProvider())
+            _isUpdatingProvider.value = true
+            try {
+                updateStorageProviderUseCase(MediaType.VIDEO, providerName.toStorageProvider())
+            } catch (e: Exception) {
+                _error.value = e.message ?: "Failed to update video storage provider"
+            } finally {
+                _isUpdatingProvider.value = false
+            }
         }
     }
 
     fun updateOtherProvider(providerName: String?) {
         viewModelScope.launch {
-            updateStorageProviderUseCase(MediaType.OTHER, providerName.toStorageProvider())
+            _isUpdatingProvider.value = true
+            try {
+                updateStorageProviderUseCase(MediaType.OTHER, providerName.toStorageProvider())
+            } catch (e: Exception) {
+                _error.value = e.message ?: "Failed to update file storage provider"
+            } finally {
+                _isUpdatingProvider.value = false
+            }
         }
     }
 
