@@ -40,13 +40,15 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.PrimaryTabRow
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SheetValue
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Tab
-import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -78,12 +80,16 @@ fun StorageProviderScreen(
     viewModel: SettingsViewModel = hiltViewModel()
 ) {
     val storageConfig by viewModel.storageConfig.collectAsState()
+    val isSavingConfig by viewModel.isSavingConfig.collectAsState()
+    val error by viewModel.error.collectAsState()
+    val snackbarHostState = remember { SnackbarHostState() }
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
     val pagerState = rememberPagerState(pageCount = { 2 })
     val coroutineScope = rememberCoroutineScope()
 
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         topBar = {
             LargeTopAppBar(
                 title = {
@@ -473,7 +479,6 @@ private fun ProviderRow(
                         apiKey = storageConfig.imgBBKey,
                         onApiKeyChange = {
                             viewModel.updateImgBBConfig(it)
-                            showSheet = false
                         }
                     )
                     StorageProvider.CLOUDINARY -> CloudinaryConfigContent(
@@ -483,7 +488,6 @@ private fun ProviderRow(
                         uploadPreset = storageConfig.cloudinaryUploadPreset,
                         onConfigChange = { n, k, s, p ->
                             viewModel.updateCloudinaryConfig(n, k, s, p)
-                            showSheet = false
                         }
                     )
                     StorageProvider.PRIMARY -> SupabaseConfigContent(
@@ -492,7 +496,6 @@ private fun ProviderRow(
                         bucketName = storageConfig.primaryBucket,
                         onConfigChange = { u, k, b ->
                             viewModel.updatePrimaryConfig(u, k, b)
-                            showSheet = false
                         }
                     )
                     StorageProvider.CLOUDFLARE_R2 -> R2ConfigContent(
@@ -502,13 +505,26 @@ private fun ProviderRow(
                         bucketName = storageConfig.r2BucketName,
                         onConfigChange = { a, i, s, b ->
                             viewModel.updateR2Config(a, i, s, b)
-                            showSheet = false
                         }
                     )
                     else -> {}
                 }
             }
             Spacer(modifier = Modifier.height(Spacing.space48))
+        }
+
+        var wasSaving by remember { mutableStateOf(false) }
+        LaunchedEffect(isSavingConfig) {
+            if (wasSaving && !isSavingConfig) {
+                if (error != null) {
+                    snackbarHostState.showSnackbar(message = error)
+                    viewModel.clearError()
+                    // Keep the sheet open so the user can retry
+                } else {
+                    showSheet = false
+                }
+            }
+            wasSaving = isSavingConfig
         }
     }
 }
