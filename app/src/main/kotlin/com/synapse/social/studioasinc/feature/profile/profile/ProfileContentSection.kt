@@ -477,7 +477,11 @@ internal fun ProfileContent(
                     },
                     onCommentClick = { PostDetailActivity.start(context, comment.postId, comment.userId) },
                     onShareClick = { PostShareUtils.shareComment(context, comment.content) },
-                    onRepostClick = { viewModel.resharePost(postCardState.post) },
+                    onRepostClick = {
+                        if (!state.inFlightReshareIds.contains(postCardState.post.id)) {
+                            viewModel.resharePost(postCardState.post)
+                        }
+                    },
                     onBookmarkClick = {
                         if (!state.inFlightBookmarkIds.contains(postCardState.post.id)) {
                             viewModel.toggleSave(postCardState.post)

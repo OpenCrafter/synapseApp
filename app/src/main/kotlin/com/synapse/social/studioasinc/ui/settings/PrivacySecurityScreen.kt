@@ -87,7 +87,7 @@ fun PrivacySecurityContent(
             MediumTopAppBar(
                 title = { Text(stringResource(R.string.settings_privacy_security_title)) },
                 navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
+                    IconButton(onClick = onNavigateBack, enabled = !isLoading) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Back"

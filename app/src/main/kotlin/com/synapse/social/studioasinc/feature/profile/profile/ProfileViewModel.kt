@@ -86,6 +86,9 @@ data class ProfileScreenState(
     // Post IDs with a bookmark (save) toggle currently in flight. Scoped per post so that a rapid
     // tap on one post never blocks bookmark taps on a different post.
     val inFlightBookmarkIds: Set<String> = emptySet(),
+    // Post IDs with a repost (reshare) toggle currently in flight. Scoped per post so that a rapid
+    // tap on one post never blocks repost taps on a different post.
+    val inFlightReshareIds: Set<String> = emptySet(),
     val showViewAsSheet: Boolean = false,
     val showReportDialog: Boolean = false,
     val reportUserLoading: Boolean = false,
@@ -443,44 +446,56 @@ class ProfileViewModel @Inject constructor(
     }
 
     fun resharePost(post: Post) {
+        // Guard against rapid-tap duplicate requests: ignore a second tap on the same post while its
+        // reshare is in flight. Other posts remain tappable.
+        if (_state.value.inFlightReshareIds.contains(post.id)) return
+        // Mark in flight synchronously before launching so a near-simultaneous second tap cannot pass
+        // the guard before the coroutine sets the marker (TOCTOU). Mirrors reactToPost/toggleSave.
+        _state.update { it.copy(inFlightReshareIds = it.inFlightReshareIds + post.id) }
+
         viewModelScope.launch {
-            val isCurrentlyReshared = post.isReshared
-            val newResharesCount = if (isCurrentlyReshared) maxOf(0, post.resharesCount - 1) else post.resharesCount + 1
-            val optimisticPost = post.copy(
-                isReshared = !isCurrentlyReshared,
-                resharesCount = newResharesCount
-            )
-
-            // Optimistic update
-            _state.update { state ->
-                state.copy(
-                    posts = state.posts.map {
-                        if (it is com.synapse.social.studioasinc.domain.model.Post && it.id == post.id) optimisticPost
-                        else if (it is com.synapse.social.studioasinc.domain.model.FeedItem.PostItem && it.id == post.id) it.copy(post = optimisticPost)
-                        else it
-                    }
+            try {
+                val isCurrentlyReshared = post.isReshared
+                val newResharesCount = if (isCurrentlyReshared) maxOf(0, post.resharesCount - 1) else post.resharesCount + 1
+                val optimisticPost = post.copy(
+                    isReshared = !isCurrentlyReshared,
+                    resharesCount = newResharesCount
                 )
-            }
-            com.synapse.social.studioasinc.feature.shared.components.post.PostEventBus.emit(com.synapse.social.studioasinc.feature.shared.components.post.PostEvent.Updated(optimisticPost))
 
-            val result = if (isCurrentlyReshared) {
-                postRepository.unresharePost(post.id)
-            } else {
-                postRepository.resharePost(post.id)
-            }
-
-            result.onFailure {
-                // Revert on failure
+                // Optimistic update
                 _state.update { state ->
                     state.copy(
                         posts = state.posts.map {
-                            if (it is com.synapse.social.studioasinc.domain.model.Post && it.id == post.id) post
-                            else if (it is com.synapse.social.studioasinc.domain.model.FeedItem.PostItem && it.id == post.id) it.copy(post = post)
+                            if (it is com.synapse.social.studioasinc.domain.model.Post && it.id == post.id) optimisticPost
+                            else if (it is com.synapse.social.studioasinc.domain.model.FeedItem.PostItem && it.id == post.id) it.copy(post = optimisticPost)
                             else it
                         }
                     )
                 }
-                com.synapse.social.studioasinc.feature.shared.components.post.PostEventBus.emit(com.synapse.social.studioasinc.feature.shared.components.post.PostEvent.Updated(post))
+                com.synapse.social.studioasinc.feature.shared.components.post.PostEventBus.emit(com.synapse.social.studioasinc.feature.shared.components.post.PostEvent.Updated(optimisticPost))
+
+                val result = if (isCurrentlyReshared) {
+                    postRepository.unresharePost(post.id)
+                } else {
+                    postRepository.resharePost(post.id)
+                }
+
+                result.onFailure {
+                    // Revert on failure
+                    _state.update { state ->
+                        state.copy(
+                            posts = state.posts.map {
+                                if (it is com.synapse.social.studioasinc.domain.model.Post && it.id == post.id) post
+                                else if (it is com.synapse.social.studioasinc.domain.model.FeedItem.PostItem && it.id == post.id) it.copy(post = post)
+                                else it
+                            }
+                        )
+                    }
+                    com.synapse.social.studioasinc.feature.shared.components.post.PostEventBus.emit(com.synapse.social.studioasinc.feature.shared.components.post.PostEvent.Updated(post))
+                }
+            } finally {
+                // Always clear the in-flight marker so the user can retry after success or failure.
+                _state.update { it.copy(inFlightReshareIds = it.inFlightReshareIds - post.id) }
             }
         }
     }
