@@ -556,7 +556,18 @@ class PostDetailViewModel @Inject constructor(
         val currentPost = _uiState.value.post ?: return Result.failure(IllegalStateException("No post"))
 
         // Guard against rapid-tap duplicate toggle comments requests.
-        if (_uiState.value.isTogglingComments) return Result.failure(IllegalStateException("Toggle comments already in progress"))
+        // Atomically check-and-set to avoid a TOCTOU race between concurrent taps.
+        var alreadyToggling = false
+        _uiState.update { state ->
+            if (state.isTogglingComments) {
+                alreadyToggling = true
+                state
+            } else {
+                alreadyToggling = false
+                state.copy(isTogglingComments = true)
+            }
+        }
+        if (alreadyToggling) return Result.failure(IllegalStateException("Toggle comments already in progress"))
 
         val isCurrentlyDisabled = currentPost.post.postDisableReplies == "true"
         val newDisableValue = if (isCurrentlyDisabled) "false" else "true"
@@ -565,15 +576,20 @@ class PostDetailViewModel @Inject constructor(
             post = currentPost.post.copy(postDisableReplies = newDisableValue)
         )
 
-        _uiState.update { it.copy(post = optimisticPost, isTogglingComments = true) }
+        _uiState.update { it.copy(post = optimisticPost) }
         PostEventBus.emit(PostEvent.Updated(optimisticPost.post))
 
-        return postActionsRepository.toggleComments(postId).also { result ->
-            _uiState.update { it.copy(isTogglingComments = false) }
-            result.onFailure { e ->
-                _uiState.update { it.copy(post = currentPost) }
-                PostEventBus.emit(PostEvent.Updated(currentPost.post))
+        return try {
+            postActionsRepository.toggleComments(postId).also { result ->
+                result.onFailure { e ->
+                    _uiState.update { it.copy(post = currentPost) }
+                    PostEventBus.emit(PostEvent.Updated(currentPost.post))
+                }
             }
+        } finally {
+            // Always clear the in-flight flag so the user can retry after success or failure,
+            // even if the repository call throws rather than returning Result.failure.
+            _uiState.update { it.copy(isTogglingComments = false) }
         }
     }
 
