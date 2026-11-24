@@ -162,7 +162,8 @@ class ChatMessagingDelegate(
         expiresAt: String?,
         replyToId: String?,
         awaitReady: suspend () -> Unit = {},
-        onError: (String?) -> Unit
+        onError: (String?) -> Unit,
+        replaceMessageId: String? = null
     ) {
         viewModelScope.launch {
             val tempId = UUID.randomUUID().toString()
@@ -200,7 +201,17 @@ class ChatMessagingDelegate(
             )
             markLiveInsert(tempId)
             _messages.update { current ->
-                insertChronologically(current, newMessage)
+                val base = if (replaceMessageId != null) current.filterNot { it.id == replaceMessageId } else current
+                // Clean up the replaced message's entrance so a retried failed message is swapped in
+                // place atomically instead of being removed and re-added in separate state commits.
+                val replaced = current.firstOrNull { it.id == replaceMessageId }
+                replaced?.clientId?.let { clientId ->
+                    unpublishedEntrances.remove(clientId)?.consume()
+                    chatItems.value.filterIsInstance<ChatListItem.MessageItem>()
+                        .filter { it.message.clientId == clientId }
+                        .forEach { it.entrance?.consume() }
+                }
+                insertChronologically(base, newMessage)
             }
 
             val sendMutex = sendMutexes.computeIfAbsent(chatId) { Mutex() }
@@ -270,14 +281,16 @@ class ChatMessagingDelegate(
     ) {
         // Only text payloads are re-sent verbatim; media needs a fresh upload from the composer.
         if (message.deliveryStatus != DeliveryStatus.FAILED || message.messageType != MessageType.TEXT) return
+        // Replace the failed bubble with the new optimistic "sending" bubble in a single atomic
+        // state commit so the message never vanishes from the conversation while the retry runs.
         performSendMessage(
             chatId = message.chatId,
             text = message.content,
             expiresAt = message.expiresAt,
             replyToId = message.replyToId,
-            onError = onError
+            onError = onError,
+            replaceMessageId = message.id
         )
-        removeMessages(setOf(message.id))
     }
 
     fun saveEdit(
