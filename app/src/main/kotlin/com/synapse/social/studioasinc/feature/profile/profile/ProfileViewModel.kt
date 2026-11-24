@@ -509,15 +509,15 @@ class ProfileViewModel @Inject constructor(
     fun toggleSave(post: Post) {
         // Guard against rapid-tap duplicate requests: ignore a second tap on the same post while its
         // bookmark toggle is in flight. Other posts remain tappable.
-        if (currentState.inFlightBookmarkIds.contains(post.id)) return
+        if (_state.value.inFlightBookmarkIds.contains(post.id)) return
         // Mark in flight synchronously before launching so a near-simultaneous second tap cannot pass
         // the guard before the coroutine sets the marker (TOCTOU). Mirrors SearchViewModel.bookmarkBusyPostIds.
-        updateState { it.copy(inFlightBookmarkIds = it.inFlightBookmarkIds + post.id) }
+        _state.update { it.copy(inFlightBookmarkIds = it.inFlightBookmarkIds + post.id) }
 
         val isSaved = post.isBookmarked
         val currentUserId = _state.value.currentUserId.ifBlank { getCurrentUserIdUseCase().orEmpty() }
         if (currentUserId.isBlank()) {
-            updateState { it.copy(inFlightBookmarkIds = it.inFlightBookmarkIds - post.id) }
+            _state.update { it.copy(inFlightBookmarkIds = it.inFlightBookmarkIds - post.id) }
             return
         }
 
@@ -550,7 +550,7 @@ class ProfileViewModel @Inject constructor(
                 }
             } finally {
                 // Always clear the in-flight marker so the user can retry after success or failure.
-                updateState { it.copy(inFlightBookmarkIds = it.inFlightBookmarkIds - post.id) }
+                _state.update { it.copy(inFlightBookmarkIds = it.inFlightBookmarkIds - post.id) }
             }
         }
     }
