@@ -28,6 +28,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import java.util.concurrent.ConcurrentHashMap
 import javax.inject.Inject
 
 enum class SearchTab(val title: String) {
@@ -108,6 +109,7 @@ class SearchViewModel @Inject constructor(
     private val unrepostPostUseCase: UnrepostPostUseCase
 ) : BaseViewModel<SearchUiState>(SearchUiState()) {
     private var searchJob: Job? = null
+    private val inFlightRevokeVotePostIds = ConcurrentHashMap<String, Unit>()
     init {
         loadHistory()
         loadTrendingHashtags()
@@ -566,13 +568,20 @@ class SearchViewModel @Inject constructor(
     }
 
     fun revokeVote(post: com.synapse.social.studioasinc.domain.model.Post) {
+        // Guard against rapid-tap duplicate requests: ignore a second tap on the same post while
+        // its revoke-vote is in flight. Other posts remain tappable.
+        if (inFlightRevokeVotePostIds.putIfAbsent(post.id, Unit) != null) return
         viewModelScope.launch {
-            revokeVoteUseCase(post).collect { result ->
-                result.onSuccess { updatedPost ->
-                    updateState { state ->
-                        state.copy(posts = state.posts.map { if (it.id == updatedPost.id) updatedPost else it })
-                    }
-                }.onFailure { err -> updateState { it.copy(error = err.message) } }
+            try {
+                revokeVoteUseCase(post).collect { result ->
+                    result.onSuccess { updatedPost ->
+                        updateState { state ->
+                            state.copy(posts = state.posts.map { if (it.id == updatedPost.id) updatedPost else it })
+                        }
+                    }.onFailure { err -> updateState { it.copy(error = err.message) } }
+                }
+            } finally {
+                inFlightRevokeVotePostIds.remove(post.id)
             }
         }
     }
