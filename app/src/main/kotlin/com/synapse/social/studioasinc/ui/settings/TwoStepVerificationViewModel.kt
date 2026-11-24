@@ -53,6 +53,7 @@ class TwoStepVerificationViewModel @Inject constructor(
     }
 
     fun setupTwoFactor() {
+        if (_isLoading.value) return
         viewModelScope.launch {
             _isLoading.value = true
             _error.value = null

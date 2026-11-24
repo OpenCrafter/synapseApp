@@ -44,11 +44,11 @@ fun ScheduledPostsScreen(
     onBackClick: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    val inFlightPostIds by viewModel.inFlightPostIds.collectAsState()
     val context = LocalContext.current
 
     var reschedulingPostId by remember { mutableStateOf<String?>(null) }
     var cancelConfirmPostId by remember { mutableStateOf<String?>(null) }
+    var cancelling by remember { mutableStateOf(false) }
 
     Scaffold(
         containerColor = AppColors.screenBackground,
@@ -151,7 +151,7 @@ fun ScheduledPostsScreen(
                         items(uiState.posts, key = { it.id }) { scheduledPost ->
                             ScheduledPostCard(
                                 scheduledPost = scheduledPost,
-                                inFlightPostIds = inFlightPostIds,
+                                inFlight = uiState.inFlightPostIds.contains(scheduledPost.id),
                                 onEdit = {
                                     val intent = Intent(context, CreatePostActivity::class.java).apply {
                                         putExtra("scheduled_post_id", scheduledPost.id)
@@ -184,30 +184,33 @@ fun ScheduledPostsScreen(
     }
 
     cancelConfirmPostId?.let { postId ->
-        val cancelling = postId in inFlightPostIds
         AlertDialog(
+            // Keep the dialog open while the async cancel is in flight so a backdrop/back tap
+            // cannot dismiss it before the result is known (and hide a failure).
             onDismissRequest = { if (!cancelling) cancelConfirmPostId = null },
             title = { Text(stringResource(R.string.cancel_scheduled_post)) },
             text = { Text("Are you sure you want to cancel and delete this scheduled post?") },
             confirmButton = {
                 TextButton(
+                    enabled = !cancelling,
                     onClick = {
+                        cancelling = true
                         viewModel.cancelScheduledPost(postId) { success ->
+                            cancelling = false
                             // Dismiss only when the async cancel succeeds. On failure the dialog
                             // stays open so the user can retry; the list is refreshed by the
                             // ViewModel so the post remains visible.
                             if (success) cancelConfirmPostId = null
                         }
-                    },
-                    enabled = !cancelling
+                    }
                 ) {
                     Text(stringResource(R.string.m_delete), color = MaterialTheme.colorScheme.error)
                 }
             },
             dismissButton = {
                 TextButton(
-                    onClick = { if (!cancelling) cancelConfirmPostId = null },
-                    enabled = !cancelling
+                    enabled = !cancelling,
+                    onClick = { if (!cancelling) cancelConfirmPostId = null }
                 ) {
                     Text(stringResource(R.string.cancel))
                 }
@@ -219,7 +222,7 @@ fun ScheduledPostsScreen(
 @Composable
 private fun ScheduledPostCard(
     scheduledPost: ScheduledPost,
-    inFlightPostIds: Set<String>,
+    inFlight: Boolean = false,
     onEdit: () -> Unit,
     onReschedule: () -> Unit,
     onRetry: () -> Unit,
@@ -265,7 +268,7 @@ private fun ScheduledPostCard(
                                 menuExpanded = false
                                 onReschedule()
                             },
-                            enabled = scheduledPost.id !in inFlightPostIds,
+                            enabled = !inFlight,
                             leadingIcon = { Icon(Icons.Default.Schedule, contentDescription = null) }
                         )
                         if (scheduledPost.status == ScheduledPost.STATUS_FAILED) {
@@ -275,7 +278,7 @@ private fun ScheduledPostCard(
                                     menuExpanded = false
                                     onRetry()
                                 },
-                                enabled = scheduledPost.id !in inFlightPostIds,
+                                enabled = !inFlight,
                                 leadingIcon = { Icon(Icons.Default.Refresh, contentDescription = null) }
                             )
                         }

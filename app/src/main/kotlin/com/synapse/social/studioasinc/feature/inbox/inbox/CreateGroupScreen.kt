@@ -292,6 +292,7 @@ fun CreateGroupScreen(
                     requestActionInProgress = viewModel.requestActionInProgress.collectAsStateWithLifecycle().value,
                     inviteUpdating = viewModel.isUpdatingInvite.collectAsStateWithLifecycle().value,
                     saveStatus = viewModel.saveStatus.collectAsStateWithLifecycle().value,
+                    isChangingRole = viewModel.isChangingRole.collectAsStateWithLifecycle().value,
                     currentUserId = viewModel.currentUserId,
                     error = error,
                     onRegenerateInvite = viewModel::regenerateInvite,

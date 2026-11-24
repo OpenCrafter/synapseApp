@@ -31,7 +31,7 @@ fun MoreActionsBottomSheet(
     val scope = rememberCoroutineScope()
     var isProcessing by remember { mutableStateOf(false) }
 
-    ModalBottomSheet(onDismissRequest = onDismiss) {
+    ModalBottomSheet(onDismissRequest = { if (!isProcessing) onDismiss() }) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()

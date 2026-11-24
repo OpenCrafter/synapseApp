@@ -115,7 +115,6 @@ import kotlinx.coroutines.withContext
     var isBlocking by remember { mutableStateOf(false) }
     var showClearChatDialog by rememberSaveable(chatId) { mutableStateOf(false) }
     var isClearing by remember { mutableStateOf(false) }
-    var isDeletingMessage by remember { mutableStateOf(false) }
     var isDeletingSelected by remember { mutableStateOf(false) }
     val snackbarHostState = remember { SnackbarHostState() }
 
@@ -176,6 +175,7 @@ val currentUserId = currentUserIdState ?: ""
     val chatMessageCornerRadius by viewModel.chatMessageCornerRadius.collectAsState()
     val chatAvatarDisabled by viewModel.chatAvatarDisabled.collectAsState()
     val isDeletingChat by viewModel.isDeletingChat.collectAsState()
+    val isMediaUploading = viewModel.isMediaUploading
     val wordEffects by viewModel.wordEffects.collectAsState(emptyList())
 
     val participantAvatarUrl = participantProfile?.avatar
@@ -208,6 +208,7 @@ val currentUserId = currentUserIdState ?: ""
     var batchViewerMessage by remember { mutableStateOf<Message?>(null) }
     var batchViewerInitialIndex by remember { mutableIntStateOf(0) }
     var showDeleteMessageDialog by remember { mutableStateOf<Message?>(null) }
+    var isDeletingMessage by remember { mutableStateOf(false) }
     var showDeleteSelectedDialog by rememberSaveable(chatId) { mutableStateOf(false) }
 
     LaunchedEffect(selectedMessageIds) {
@@ -894,49 +895,45 @@ val currentUserId = currentUserIdState ?: ""
                     messageCount = selectedMessageIds.size,
                     canDeleteForEveryone = selectedMessages.isNotEmpty() &&
                         selectedMessages.all { it.senderId == currentUserId },
-                    isLoading = isDeletingSelected,
+                    deleteInProgress = isDeletingSelected,
                     onDismissRequest = { if (!isDeletingSelected) showDeleteSelectedDialog = false },
                     onDeleteForMe = {
-                        if (!isDeletingSelected) {
-                            isDeletingSelected = true
-                            viewModel.deleteSelectedMessagesForMe(
-                                onError = { err ->
-                                    isDeletingSelected = false
-                                    // Error is surfaced via viewModel.error -> LaunchedEffect(error) toast
-                                    // (set by the delegate). Keep the dialog open so the user can retry.
-                                },
-                                onSuccess = {
-                                    isDeletingSelected = false
-                                    showDeleteSelectedDialog = false
-                                    android.widget.Toast.makeText(
-                                        context,
-                                        context.getString(R.string.message_deleted_successfully),
-                                        android.widget.Toast.LENGTH_SHORT
-                                    ).show()
-                                }
-                            )
-                        }
+                        isDeletingSelected = true
+                        viewModel.deleteSelectedMessagesForMe(
+                            onError = { err ->
+                                isDeletingSelected = false
+                                // Error is surfaced via viewModel.error -> LaunchedEffect(error) toast
+                                // (set by the delegate). Keep the dialog open so the user can retry.
+                            },
+                            onSuccess = {
+                                isDeletingSelected = false
+                                showDeleteSelectedDialog = false
+                                android.widget.Toast.makeText(
+                                    context,
+                                    context.getString(R.string.message_deleted_successfully),
+                                    android.widget.Toast.LENGTH_SHORT
+                                ).show()
+                            }
+                        )
                     },
                     onDeleteForEveryone = {
-                        if (!isDeletingSelected) {
-                            isDeletingSelected = true
-                            viewModel.deleteSelectedMessagesForEveryone(
-                                onError = { err ->
-                                    isDeletingSelected = false
-                                    // Error is surfaced via viewModel.error -> LaunchedEffect(error) toast
-                                    // (set by the delegate). Keep the dialog open so the user can retry.
-                                },
-                                onSuccess = {
-                                    isDeletingSelected = false
-                                    showDeleteSelectedDialog = false
-                                    android.widget.Toast.makeText(
-                                        context,
-                                        context.getString(R.string.message_deleted_successfully),
-                                        android.widget.Toast.LENGTH_SHORT
-                                    ).show()
-                                }
-                            )
-                        }
+                        isDeletingSelected = true
+                        viewModel.deleteSelectedMessagesForEveryone(
+                            onError = { err ->
+                                isDeletingSelected = false
+                                // Error is surfaced via viewModel.error -> LaunchedEffect(error) toast
+                                // (set by the delegate). Keep the dialog open so the user can retry.
+                            },
+                            onSuccess = {
+                                isDeletingSelected = false
+                                showDeleteSelectedDialog = false
+                                android.widget.Toast.makeText(
+                                    context,
+                                    context.getString(R.string.message_deleted_successfully),
+                                    android.widget.Toast.LENGTH_SHORT
+                                ).show()
+                            }
+                        )
                     }
                 )
             }
@@ -1223,6 +1220,7 @@ val currentUserId = currentUserIdState ?: ""
         }
         val chatFolders by viewModel.chatFolders.collectAsState()
         val createFolderSaveStatus by viewModel.createFolderSaveStatus.collectAsState()
+        val folderAssignmentSaveStatus by viewModel.folderAssignmentSaveStatus.collectAsState()
 
         // Dismiss the create folder dialog only when the async save succeeds.
         // On failure the dialog stays open so the user can see the error and retry.
@@ -1244,13 +1242,31 @@ val currentUserId = currentUserIdState ?: ""
             }
         }
 
+        // Dismiss the folder selection sheet only when the async assignment completes.
+        // On failure the sheet stays open so the user can see the error and retry.
+        LaunchedEffect(folderAssignmentSaveStatus) {
+            when (folderAssignmentSaveStatus) {
+                is ChatViewModel.FolderAssignmentSaveStatus.Success -> {
+                    showChatFolderSheet = false
+                    viewModel.resetFolderAssignmentSaveStatus()
+                }
+                is ChatViewModel.FolderAssignmentSaveStatus.Failure -> {
+                    // Keep sheet open; error is surfaced via snackbar below
+                    snackbarHostState.showSnackbar(
+                        message = context.getString(R.string.chat_folder_save_failed)
+                    )
+                }
+                ChatViewModel.FolderAssignmentSaveStatus.Idle -> Unit
+                ChatViewModel.FolderAssignmentSaveStatus.Saving -> Unit
+            }
+        }
+
         if (showChatFolderSheet) {
             val currentChatId = resolvedChatId ?: chatId
             ChatFolderSelectionBottomSheet(
                 folders = chatFolders,
                 currentFolderId = chatFolders.firstOrNull { currentChatId in it.includedChatIds }?.id,
                 onFolderSelected = { folder ->
-                    showChatFolderSheet = false
                     viewModel.assignCurrentChatToFolder(folder.id)
                 },
                 onCreateNewFolder = {
@@ -1264,9 +1280,11 @@ val currentUserId = currentUserIdState ?: ""
         if (showCreateFolderDialog) {
             AlertDialog(
                 onDismissRequest = {
-                    showCreateFolderDialog = false
-                    newFolderName = ""
-                    viewModel.resetCreateFolderSaveStatus()
+                    if (createFolderSaveStatus !is ChatViewModel.CreateFolderSaveStatus.Saving) {
+                        showCreateFolderDialog = false
+                        newFolderName = ""
+                        viewModel.resetCreateFolderSaveStatus()
+                    }
                 },
                 title = { Text(stringResource(R.string.inbox_folder_create)) },
                 text = {
@@ -1291,10 +1309,13 @@ val currentUserId = currentUserIdState ?: ""
                 dismissButton = {
                     TextButton(
                         onClick = {
-                            showCreateFolderDialog = false
-                            newFolderName = ""
-                            viewModel.resetCreateFolderSaveStatus()
-                        }
+                            if (createFolderSaveStatus !is ChatViewModel.CreateFolderSaveStatus.Saving) {
+                                showCreateFolderDialog = false
+                                newFolderName = ""
+                                viewModel.resetCreateFolderSaveStatus()
+                            }
+                        },
+                        enabled = createFolderSaveStatus !is ChatViewModel.CreateFolderSaveStatus.Saving
                     ) { Text(stringResource(R.string.action_cancel)) }
                 }
             )
@@ -1344,7 +1365,7 @@ val currentUserId = currentUserIdState ?: ""
                 selectedFiles = files,
                 context = context,
                 onDismissRequest = {
-                    selectedMediaFiles = null
+                    if (!isMediaUploading) selectedMediaFiles = null
                 },
                 onSendMedia = { finalFiles, caption, quality ->
                     val validFiles = finalFiles.mapNotNull { pickedFile ->

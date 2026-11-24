@@ -74,6 +74,16 @@ class InboxViewModel @Inject constructor(
     private val _isRefreshing = MutableStateFlow(false)
     val isRefreshing: StateFlow<Boolean> = _isRefreshing.asStateFlow()
 
+    /** True while assigning selected conversations to a folder is in flight; used to keep the folder sheet open until the result is known. */
+    private val _isAssigningToFolder = MutableStateFlow(false)
+    val isAssigningToFolder: StateFlow<Boolean> = _isAssigningToFolder.asStateFlow()
+
+    private val _isCreatingFolder = MutableStateFlow(false)
+    val isCreatingFolder: StateFlow<Boolean> = _isCreatingFolder.asStateFlow()
+
+    private val _isDeletingConversations = MutableStateFlow(false)
+    val isDeletingConversations: StateFlow<Boolean> = _isDeletingConversations.asStateFlow()
+
     private val _error = MutableStateFlow<String?>(null)
     val error: StateFlow<String?> = _error.asStateFlow()
 
@@ -296,7 +306,9 @@ class InboxViewModel @Inject constructor(
 
     fun selectFilter(filter: InboxFilter) { _selectedFilter.value = filter }
 
-    fun assignConversationsToFolder(chatIds: Set<String>, folderId: String) {
+    fun assignConversationsToFolder(chatIds: Set<String>, folderId: String, onResult: (Boolean) -> Unit = {}) {
+        if (_isAssigningToFolder.value) return
+        _isAssigningToFolder.value = true
         viewModelScope.launch {
             val updated = chatFolders.value.map { folder ->
                 if (folder.id == folderId) {
@@ -311,11 +323,14 @@ class InboxViewModel @Inject constructor(
                     )
                 }
             }
-            persistFolders(updated)
+            val saved = persistFolders(updated)
+            _isAssigningToFolder.value = false
+            onResult(saved)
         }
     }
 
     fun createFolderAndAssign(name: String, chatIds: Set<String>, onResult: (Boolean) -> Unit = {}) {
+        if (_isCreatingFolder.value) return
         val cleanName = name.trim()
         if (cleanName.isBlank()) {
             _error.value = "Folder name cannot be blank"
@@ -328,8 +343,10 @@ class InboxViewModel @Inject constructor(
             return
         }
         viewModelScope.launch {
+            _isCreatingFolder.value = true
             val newFolder = ChatFolder(id = UUID.randomUUID().toString(), name = cleanName, includedChatIds = chatIds.toList())
             val saved = persistFolders(chatFolders.value + newFolder)
+            _isCreatingFolder.value = false
             if (saved) {
                 _selectedFolderId.value = newFolder.id
             }
@@ -420,6 +437,7 @@ class InboxViewModel @Inject constructor(
             return
         }
         viewModelScope.launch {
+            _isDeletingConversations.value = true
             var failures = 0
             chatIds.forEach { chatId ->
                 chatRepository.deleteConversation(chatId)
@@ -428,6 +446,7 @@ class InboxViewModel @Inject constructor(
                     }
                     .onFailure { failures++ }
             }
+            _isDeletingConversations.value = false
             if (failures > 0) {
                 _error.value = "Failed to delete $failures conversation(s)."
                 onResult(false)

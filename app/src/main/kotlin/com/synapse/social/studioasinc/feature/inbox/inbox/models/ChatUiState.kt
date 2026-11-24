@@ -39,6 +39,7 @@ data class ChatUiState(
     val isMuted: Boolean = false,
     val isMuteUpdating: Boolean = false,
     val canSendMessage: Boolean = true,
+    val isMediaUploading: Boolean = false,
     val chatWallpaperType: WallpaperType = WallpaperType.DEFAULT,
     val chatWallpaperValue: String? = null,
     val chatWallpaperBlur: Float = 0f,

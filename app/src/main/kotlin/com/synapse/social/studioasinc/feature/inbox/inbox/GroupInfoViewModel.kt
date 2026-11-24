@@ -50,13 +50,11 @@ data class GroupInfoUiState(
     val isReporting: Boolean = false,
     /** True while an invite link rotation is in flight; used to disable the confirm button. */
     val isRevokingInvite: Boolean = false,
-    /** True while a join-request approve or decline is in flight; used to disable the confirm buttons. */
-    val isProcessingJoinRequest: Boolean = false,
     /** True while a member removal is in flight; used to keep the confirmation dialog open until the result is known. */
-    val removingMemberIds: Set<String> = emptySet(),
-    /** True while a group leave is in flight; used to keep the confirmation dialog open until the result is known. */
+    val isRemoving: Boolean = false,
+    /** True while a leave-group operation is in flight; used to keep the confirmation dialog open until the result is known. */
     val isLeaving: Boolean = false,
-    /** True while a group deletion is in flight; used to keep the confirmation dialog open until the result is known. */
+    /** True while a group deletion is in flight; used to keep the delete confirmation dialog open until the result is known. */
     val isDeleting: Boolean = false,
     /** True while a group name update is in flight; used to disable the confirm button and prevent double-tap. */
     val isUpdatingName: Boolean = false,
@@ -72,7 +70,10 @@ data class GroupInfoUiState(
     val addableUsers: List<User> = emptyList(),
     val selectedUsersToAdd: List<User> = emptyList(),
     val addMemberSearchQuery: String = "",
-    val isLoadingContacts: Boolean = false
+    val isLoadingContacts: Boolean = false,
+    /** True while the add-members request is in flight; used to disable the confirm button and
+     *  prevent the sheet from being dismissed before the result is known. */
+    val isAddingMembers: Boolean = false
 )
 
 @HiltViewModel
@@ -193,7 +194,6 @@ class GroupInfoViewModel @Inject constructor(
 
     fun updateGroupName(name: String, onResult: () -> Unit) {
         val chatId = currentChatId ?: return
-        if (_uiState.value.isUpdatingName) return
         _uiState.value = _uiState.value.copy(isUpdatingName = true)
         viewModelScope.launch {
             chatRepository.updateGroupInfo(chatId, name = name)
@@ -209,7 +209,6 @@ class GroupInfoViewModel @Inject constructor(
 
     fun updateGroupDescription(description: String, onResult: () -> Unit) {
         val chatId = currentChatId ?: return
-        if (_uiState.value.isUpdatingDescription) return
         _uiState.value = _uiState.value.copy(isUpdatingDescription = true)
         viewModelScope.launch {
             chatRepository.updateGroupInfo(chatId, description = description)
@@ -346,7 +345,6 @@ class GroupInfoViewModel @Inject constructor(
 
     fun setDisappearingMode(mode: DisappearingMode, onResult: (Boolean) -> Unit) {
         val chatId = currentChatId ?: return
-        if (_uiState.value.isUpdatingDisappearingMode) return
         _uiState.value = _uiState.value.copy(isUpdatingDisappearingMode = true)
         viewModelScope.launch {
             chatRepository.setDisappearingMode(chatId, mode)
@@ -393,7 +391,6 @@ class GroupInfoViewModel @Inject constructor(
 
     fun rotateInviteCode(onResult: (Boolean) -> Unit = {}) {
         val chatId = currentChatId ?: return
-        if (_uiState.value.isRevokingInvite) return
         _uiState.value = _uiState.value.copy(isRevokingInvite = true)
         viewModelScope.launch {
             groupCreationRepository.rotateGroupInviteCode(chatId)
@@ -502,25 +499,30 @@ class GroupInfoViewModel @Inject constructor(
         val chatId = currentChatId ?: return
         val ids = _uiState.value.selectedUsersToAdd.map { it.uid }.distinct()
         if (ids.isEmpty()) { onDone(); return }
+        _uiState.value = _uiState.value.copy(isAddingMembers = true, errorRes = null)
         viewModelScope.launch {
             chatRepository.addGroupMembers(chatId, ids)
                 .onSuccess {
-                    _uiState.value = _uiState.value.copy(selectedUsersToAdd = emptyList(), errorRes = null)
+                    _uiState.value = _uiState.value.copy(
+                        selectedUsersToAdd = emptyList(),
+                        isAddingMembers = false,
+                        errorRes = null
+                    )
                     reloadMembers(chatId)
                     onDone()
                 }
                 .onFailure {
-                    _uiState.value = _uiState.value.copy(errorRes = R.string.group_error_member_update)
+                    _uiState.value = _uiState.value.copy(
+                        isAddingMembers = false,
+                        errorRes = R.string.group_error_member_update
+                    )
                 }
         }
     }
 
     fun removeMember(userId: String, onResult: (Boolean) -> Unit = {}) {
         val chatId = currentChatId ?: return
-        if (_uiState.value.removingMemberIds.contains(userId)) return
-        _uiState.value = _uiState.value.copy(
-            removingMemberIds = _uiState.value.removingMemberIds + userId
-        )
+        _uiState.value = _uiState.value.copy(isRemoving = true)
         viewModelScope.launch {
             chatRepository.removeGroupMember(chatId, userId)
                 .onSuccess {
@@ -529,15 +531,12 @@ class GroupInfoViewModel @Inject constructor(
                         members = remaining,
                         filteredMembers = _uiState.value.filteredMembers.filterNot { it.first.uid == userId },
                         errorRes = null,
-                        removingMemberIds = _uiState.value.removingMemberIds - userId
+                        isRemoving = false
                     )
                     onResult(true)
                 }
                 .onFailure {
-                    _uiState.value = _uiState.value.copy(
-                        errorRes = R.string.group_error_member_update,
-                        removingMemberIds = _uiState.value.removingMemberIds - userId
-                    )
+                    _uiState.value = _uiState.value.copy(errorRes = R.string.group_error_member_update, isRemoving = false)
                     onResult(false)
                 }
         }
@@ -585,19 +584,17 @@ class GroupInfoViewModel @Inject constructor(
 
     fun approveRequest(requestId: String) {
         val chatId = currentChatId ?: return
-        if (_uiState.value.isProcessingJoinRequest) return
         viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isProcessingJoinRequest = true)
             groupCreationRepository.approveGroupJoinRequest(requestId)
                 .onSuccess {
-                    _uiState.value = _uiState.value.copy(errorRes = null, isProcessingJoinRequest = false)
+                    _uiState.value = _uiState.value.copy(errorRes = null)
                     reloadMembers(chatId)
                     reloadPendingRequests(chatId)
                     // Re-fan-out encrypted metadata so the newly approved member can decrypt it.
                     chatRepository.resyncGroupMetadata(chatId)
                 }
                 .onFailure {
-                    _uiState.value = _uiState.value.copy(errorRes = R.string.group_error_requests, isProcessingJoinRequest = false)
+                    _uiState.value = _uiState.value.copy(errorRes = R.string.group_error_requests)
                 }
         }
     }
@@ -605,19 +602,16 @@ class GroupInfoViewModel @Inject constructor(
     fun declineRequest(requestId: String) {
         // declineGroupJoinRequest keys off the request id only; guard against acting before load.
         if (currentChatId == null) return
-        if (_uiState.value.isProcessingJoinRequest) return
         viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isProcessingJoinRequest = true)
             groupCreationRepository.declineGroupJoinRequest(requestId)
                 .onSuccess {
                     _uiState.value = _uiState.value.copy(
                         pendingRequests = _uiState.value.pendingRequests.filterNot { it.id == requestId },
-                        errorRes = null,
-                        isProcessingJoinRequest = false
+                        errorRes = null
                     )
                 }
                 .onFailure {
-                    _uiState.value = _uiState.value.copy(errorRes = R.string.group_error_requests, isProcessingJoinRequest = false)
+                    _uiState.value = _uiState.value.copy(errorRes = R.string.group_error_requests)
                 }
         }
     }
@@ -628,7 +622,6 @@ class GroupInfoViewModel @Inject constructor(
 
     fun leaveGroup(onLeft: () -> Unit) {
         val chatId = currentChatId ?: return
-        if (_uiState.value.isLeaving) return
         _uiState.value = _uiState.value.copy(isLeaving = true)
         viewModelScope.launch {
             chatRepository.leaveGroup(chatId)
@@ -637,10 +630,7 @@ class GroupInfoViewModel @Inject constructor(
                     onLeft()
                 }
                 .onFailure {
-                    _uiState.value = _uiState.value.copy(
-                        errorRes = R.string.group_error_create,
-                        isLeaving = false
-                    )
+                    _uiState.value = _uiState.value.copy(errorRes = R.string.group_error_create, isLeaving = false)
                 }
         }
     }
@@ -650,24 +640,25 @@ class GroupInfoViewModel @Inject constructor(
         if (_uiState.value.isDeleting) return
         _uiState.value = _uiState.value.copy(isDeleting = true)
         viewModelScope.launch {
-            try {
-                chatRepository.deleteGroup(chatId)
-                    .onSuccess {
-                        _uiState.value = _uiState.value.copy(isDeleting = false)
-                        onDeleted()
-                    }
-                    .onFailure {
-                        _uiState.value = _uiState.value.copy(errorRes = R.string.group_error_create)
-                    }
-            } finally {
-                _uiState.value = _uiState.value.copy(isDeleting = false)
-            }
+            chatRepository.deleteGroup(chatId)
+                .onSuccess {
+                    _uiState.value = _uiState.value.copy(
+                        isDeleting = false,
+                        errorRes = null
+                    )
+                    onDeleted()
+                }
+                .onFailure {
+                    _uiState.value = _uiState.value.copy(
+                        errorRes = R.string.group_error_create,
+                        isDeleting = false
+                    )
+                }
         }
     }
 
     fun reportGroup(reason: String, onResult: (Boolean) -> Unit = {}) {
         val chatId = currentChatId ?: return
-        if (_uiState.value.isReporting) return
         _uiState.value = _uiState.value.copy(isReporting = true)
         viewModelScope.launch {
             chatRepository.reportChat(chatId, reason)

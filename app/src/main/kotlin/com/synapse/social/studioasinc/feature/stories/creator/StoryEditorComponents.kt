@@ -290,6 +290,7 @@ internal fun StoryBottomControls(
 ) {
     Button(
         onClick = onPost,
+        enabled = !isPosting,
         modifier = modifier.padding(Spacing.space16)
     ) {
         if (isPosting) {
