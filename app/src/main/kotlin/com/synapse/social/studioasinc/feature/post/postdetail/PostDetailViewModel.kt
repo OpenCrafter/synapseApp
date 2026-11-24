@@ -505,8 +505,12 @@ class PostDetailViewModel @Inject constructor(
 
     fun reportPost(reason: String) {
         val postId = currentPostId ?: return
+        // Guard against rapid-tap duplicate report submissions: ignore a second tap while the
+        // first report is in flight.
+        if (_uiState.value.isReporting) return
+
         viewModelScope.launch {
-            _uiState.update { it.copy(reportPostSuccess = false, reportPostError = null) }
+            _uiState.update { it.copy(reportPostSuccess = false, reportPostError = null, isReporting = true) }
             val result = reportRepository.createReport(postId, reason, null)
             if (result.isSuccess) {
                 _uiState.update { it.copy(reportPostSuccess = true) }
@@ -514,6 +518,8 @@ class PostDetailViewModel @Inject constructor(
                 _uiState.update {
                     it.copy(reportPostError = result.exceptionOrNull()?.message ?: "Failed to submit report")
                 }
+            }.also {
+                _uiState.update { it.copy(isReporting = false) }
             }
         }
     }
