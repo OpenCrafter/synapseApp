@@ -166,8 +166,8 @@ fun GroupParticipantsScreen(
                             canManage = isAdmin,
                             position = settingsPositionAt(index, filteredMembers.size),
                             onProfileClick = { onNavigateToProfile(user.uid) },
-                            onPromote = { viewModel.promoteToAdmin(user.uid) },
-                            onDemote = { viewModel.demoteAdmin(user.uid) },
+                            onPromote = { if (!uiState.isProcessingMemberRole) viewModel.promoteToAdmin(user.uid) },
+                            onDemote = { if (!uiState.isProcessingMemberRole) viewModel.demoteAdmin(user.uid) },
                             onRemove = { memberToRemove = user }
                         )
                     }
