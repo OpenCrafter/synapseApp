@@ -96,6 +96,7 @@ data class ProfileScreenState(
     val blockError: String? = null,
     val isBlocking: Boolean = false,
     val isMuting: Boolean = false,
+    val isRevokingVote: Boolean = false,
     val reportPostSuccess: Boolean = false,
     val reportPostError: String? = null,
     val isSummarizing: Boolean = false,
@@ -529,11 +530,18 @@ class ProfileViewModel @Inject constructor(
     }
 
     fun revokeVote(post: Post) {
+        // Guard against duplicate concurrent revoke-vote requests from rapid taps.
+        if (_state.value.isRevokingVote) return
         viewModelScope.launch {
-            revokeVoteUseCase(post).collect { result ->
-                result.onSuccess { updatedPost ->
-                    PostEventBus.emit(PostEvent.Updated(updatedPost))
+            _state.update { it.copy(isRevokingVote = true) }
+            try {
+                revokeVoteUseCase(post).collect { result ->
+                    result.onSuccess { updatedPost ->
+                        PostEventBus.emit(PostEvent.Updated(updatedPost))
+                    }
                 }
+            } finally {
+                _state.update { it.copy(isRevokingVote = false) }
             }
         }
     }
