@@ -71,7 +71,11 @@ data class FeedUiState(
     // Post IDs with a poll vote currently in flight. Scoped per post so that a rapid tap never
     // fires duplicate vote requests for the same post. Observable via UI state so the poll option
     // can be guarded while the vote is in flight.
-    val inFlightVotePollIds: Set<String> = emptySet()
+    val inFlightVotePollIds: Set<String> = emptySet(),
+    // Post IDs with a report submission currently in flight. Scoped per post so that a rapid tap
+    // never fires duplicate report requests for the same post. Observable via UI state so the
+    // Report button can be disabled while the submission is in flight.
+    val inFlightReportIds: Set<String> = emptySet()
 )
 
 @HiltViewModel
@@ -350,14 +354,25 @@ class FeedViewModel @Inject constructor(
     }
 
     fun reportPost(postId: String, reason: String) {
+        // Guard against rapid-tap duplicate report submissions: ignore a second tap on the same post
+        // while its report is in flight. Other posts remain reportable.
+        if (currentState.inFlightReportIds.contains(postId)) return
+        // Mark in flight synchronously before launching so a rapid second tap cannot pass the guard
+        // before the coroutine sets the marker (TOCTOU).
+        updateState { it.copy(inFlightReportIds = it.inFlightReportIds + postId) }
         viewModelScope.launch {
-            reportPostUseCase(postId, reason, null).collect { result ->
-                result.onSuccess {
-                    updateState { it.copy(error = null, reportSubmitted = true) }
+            try {
+                reportPostUseCase(postId, reason, null).collect { result ->
+                    result.onSuccess {
+                        updateState { it.copy(error = null, reportSubmitted = true) }
+                    }
+                    result.onFailure { e ->
+                        updateState { it.copy(error = e.message ?: "Failed to report post") }
+                    }
                 }
-                result.onFailure { e ->
-                    updateState { it.copy(error = e.message ?: "Failed to report post") }
-                }
+            } finally {
+                // Always clear the in-flight marker so the user can retry after success or failure.
+                updateState { it.copy(inFlightReportIds = it.inFlightReportIds - postId) }
             }
         }
     }
