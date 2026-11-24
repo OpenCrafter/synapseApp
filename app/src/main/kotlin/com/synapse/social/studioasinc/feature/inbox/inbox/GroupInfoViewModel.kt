@@ -52,6 +52,8 @@ data class GroupInfoUiState(
     val isRevokingInvite: Boolean = false,
     /** True while a join-request approve or decline is in flight; used to disable the confirm buttons. */
     val isProcessingJoinRequest: Boolean = false,
+    /** True while a member role change (promote/demote admin) is in flight; used to disable the action buttons. */
+    val isProcessingMemberRole: Boolean = false,
     /** True while a member removal is in flight; used to keep the confirmation dialog open until the result is known. */
     val removingMemberIds: Set<String> = emptySet(),
     /** True while a group leave is in flight; used to keep the confirmation dialog open until the result is known. */
@@ -549,14 +551,16 @@ class GroupInfoViewModel @Inject constructor(
 
     fun promoteToAdmin(userId: String) {
         val chatId = currentChatId ?: return
+        if (_uiState.value.isProcessingMemberRole) return
+        _uiState.value = _uiState.value.copy(isProcessingMemberRole = true)
         viewModelScope.launch {
             chatRepository.promoteToAdmin(chatId, userId)
                 .onSuccess {
-                    _uiState.value = _uiState.value.copy(errorRes = null)
+                    _uiState.value = _uiState.value.copy(errorRes = null, isProcessingMemberRole = false)
                     reloadMembers(chatId)
                 }
                 .onFailure {
-                    _uiState.value = _uiState.value.copy(errorRes = R.string.group_error_member_update)
+                    _uiState.value = _uiState.value.copy(errorRes = R.string.group_error_member_update, isProcessingMemberRole = false)
                 }
         }
     }
@@ -571,14 +575,17 @@ class GroupInfoViewModel @Inject constructor(
             return
         }
 
+        if (_uiState.value.isProcessingMemberRole) return
+        _uiState.value = _uiState.value.copy(isProcessingMemberRole = true)
+
         viewModelScope.launch {
             chatRepository.demoteAdmin(chatId, userId)
                 .onSuccess {
-                    _uiState.value = _uiState.value.copy(errorRes = null)
+                    _uiState.value = _uiState.value.copy(errorRes = null, isProcessingMemberRole = false)
                     reloadMembers(chatId)
                 }
                 .onFailure {
-                    _uiState.value = _uiState.value.copy(errorRes = R.string.group_error_member_update)
+                    _uiState.value = _uiState.value.copy(errorRes = R.string.group_error_member_update, isProcessingMemberRole = false)
                 }
         }
     }
