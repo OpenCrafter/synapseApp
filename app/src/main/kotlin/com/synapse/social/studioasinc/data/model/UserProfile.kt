@@ -17,6 +17,8 @@ data class UserProfile(
     val coverImageUrl: String? = null,
     @SerialName("is_verified")
     val isVerified: Boolean = false,
+    @SerialName("badge_type")
+    val badgeType: String? = null,
     @SerialName("is_private")
     val isPrivate: Boolean = false,
     @SerialName("post_count")

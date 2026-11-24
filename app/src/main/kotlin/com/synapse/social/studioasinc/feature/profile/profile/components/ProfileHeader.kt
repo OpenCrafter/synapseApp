@@ -20,7 +20,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
-import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
@@ -32,6 +31,7 @@ import androidx.compose.ui.res.stringResource
 import com.synapse.social.studioasinc.R
 import androidx.compose.ui.unit.dp
 import com.synapse.social.studioasinc.feature.shared.components.AnimatedCounter
+import com.synapse.social.studioasinc.feature.shared.components.IdentityBadge
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
 import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 import com.synapse.social.studioasinc.domain.model.UserStatus
@@ -45,7 +45,7 @@ fun ProfileHeader(
     username: String,
     nickname: String?,
     bio: String?,
-    isVerified: Boolean,
+    badgeType: String?,
     hasStory: Boolean,
     postsCount: Int,
     followersCount: Int,
@@ -105,6 +105,7 @@ fun ProfileHeader(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Row(
+                        modifier = Modifier.fillMaxWidth(),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(Spacing.space4)
                     ) {
@@ -118,9 +119,7 @@ fun ProfileHeader(
                             modifier = Modifier.weight(1f, fill = false)
                         )
 
-                        if (isVerified) {
-                            AnimatedVerifiedBadge()
-                        }
+                        IdentityBadge(badgeType = badgeType)
                     }
 
                     Text(
@@ -197,40 +196,6 @@ fun ProfileHeader(
         }
     }
 }
-@Composable
-fun AnimatedVerifiedBadge(
-    modifier: Modifier = Modifier
-) {
-    val infiniteTransition = rememberInfiniteTransition(label = "verifiedBadge")
-
-    val scale by infiniteTransition.animateFloat(
-        initialValue = 1f,
-        targetValue = 1.1f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 2000, easing = FastOutSlowInEasing),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "verifiedScale"
-    )
-
-    Surface(
-        modifier = modifier
-            .size(Sizes.IconLarge)
-            .scale(scale),
-        shape = SevenSidedCookieShape(),
-        color = MaterialTheme.colorScheme.primaryContainer,
-        contentColor = MaterialTheme.colorScheme.primary
-    ) {
-        Box(contentAlignment = Alignment.Center) {
-            Icon(
-                imageVector = Icons.Default.Verified,
-                contentDescription = stringResource(R.string.verified_account),
-                modifier = Modifier.size(Sizes.IconSemiMedium)
-            )
-        }
-    }
-}
-
 @Composable
 private fun ExpandableBio(
     bio: String,
@@ -528,7 +493,7 @@ private fun ProfileHeaderPreview() {
             username = "johndoe",
             nickname = "JD",
             bio = "Software developer | Tech enthusiast | Coffee lover ☕️ | Building amazing things with code every day.",
-            isVerified = true,
+            badgeType = "verified",
             hasStory = true,
             postsCount = 142,
             followersCount = 12345,

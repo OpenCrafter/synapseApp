@@ -88,6 +88,15 @@ class ProfileRepositoryImpl(
 
     internal fun constructAvatarUrl(storagePath: String): String = SupabaseClient.constructStorageUrl(SupabaseClient.BUCKET_USER_AVATARS, storagePath)
 
+    // Read the authoritative assignment through the visibility-checked RPC. Failure
+    // is propagated rather than displaying a potentially revoked cached badge.
+    private suspend fun loadProfileBadge(uid: String): String? =
+        client.postgrest.rpc("get_profile_badge_types", buildJsonObject {
+            put("p_uids", buildJsonArray { add(uid) })
+        }).decodeList<JsonObject>()
+            .firstOrNull { it.getNullableString("uid") == uid }
+            ?.getNullableString("badge_type")
+
     private suspend fun parseUserProfile(data: JsonObject, postCount: Int = 0): UserProfile {
         return UserProfile(
             id = data.getString(KEY_UID, ""),
@@ -203,7 +212,7 @@ class ProfileRepositoryImpl(
                                 0
                             }
 
-                            val profile = parseUserProfile(retryResponse, postCount.toInt())
+                            val profile = parseUserProfile(retryResponse, postCount.toInt()).copy(badgeType = loadProfileBadge(actualUserId))
                             android.util.Log.d("ProfileRepository", "Profile created and loaded successfully")
                             emit(Result.success(profile))
                             return@flow
@@ -230,7 +239,7 @@ class ProfileRepositoryImpl(
                 0
             }
 
-            val profile = parseUserProfile(response, postCount.toInt())
+            val profile = parseUserProfile(response, postCount.toInt()).copy(badgeType = loadProfileBadge(actualUserId))
             android.util.Log.d("ProfileRepository", "Profile loaded successfully for userId: $actualUserId")
             emit(Result.success(profile))
         } catch (cancelled: kotlinx.coroutines.CancellationException) {

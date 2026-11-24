@@ -20,6 +20,7 @@ data class UserProfile(
     val gender: Gender? = null,
     val region: String? = null,
     val verify: Boolean = false,
+    @SerialName("badge_type") val badgeType: String? = null,
     val banned: Boolean = false,
     
     // Address & Location

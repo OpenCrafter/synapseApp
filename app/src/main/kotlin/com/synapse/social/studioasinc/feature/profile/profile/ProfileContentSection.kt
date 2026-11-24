@@ -164,7 +164,7 @@ internal fun ProfileContent(
                             username = profile.username,
                             nickname = profile.nickname,
                             bio = profile.bio,
-                            isVerified = profile.isVerified,
+                            badgeType = profile.badgeType,
                             hasStory = state.hasStory,
                             postsCount = profile.postCount,
                             followersCount = profile.followerCount,
