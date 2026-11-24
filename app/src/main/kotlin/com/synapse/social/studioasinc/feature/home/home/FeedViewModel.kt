@@ -429,25 +429,33 @@ class FeedViewModel @Inject constructor(
         // Guard against rapid-tap duplicate block requests: ignore a second call for the same user
         // while a block is in flight. Other users remain blockable.
         if (currentState.inFlightBlockUserIds.contains(userId)) {
-            return Result.failure(Exception("Block already in flight for user $userId"))
+            return Result.success(Unit)
         }
-        // Mark in flight before any suspension point so a concurrent call sees the marker.
-        updateState { it.copy(inFlightBlockUserIds = it.inFlightBlockUserIds + userId) }
-        updateState { it.copy(blockSuccess = false, blockError = null) }
-        
-        return blockUserUseCase(userId).also { result ->
-            // Always clear the in-flight marker so the user can retry after success or failure.
-            updateState { it.copy(inFlightBlockUserIds = it.inFlightBlockUserIds - userId) }
-            result.onSuccess {
-                updateState { it.copy(blockSuccess = true) }
-                // Refresh feed to remove blocked user's posts
-                refresh()
-            }
-            .onFailure { error ->
-                updateState {
-                    it.copy(blockError = error.message ?: "Failed to block user")
+        // Mark in flight and reset block status before any suspension point so a concurrent call
+        // sees the marker. Combined into a single updateState to avoid redundant state emissions.
+        updateState { it.copy(
+            inFlightBlockUserIds = it.inFlightBlockUserIds + userId,
+            blockSuccess = false,
+            blockError = null
+        ) }
+
+        return try {
+            blockUserUseCase(userId).also { result ->
+                result.onSuccess {
+                    updateState { it.copy(blockSuccess = true) }
+                    // Refresh feed to remove blocked user's posts
+                    refresh()
+                }
+                .onFailure { error ->
+                    updateState {
+                        it.copy(blockError = error.message ?: "Failed to block user")
+                    }
                 }
             }
+            Result.success(Unit)
+        } finally {
+            // Always clear the in-flight marker so the user can retry after success or failure.
+            updateState { it.copy(inFlightBlockUserIds = it.inFlightBlockUserIds - userId) }
         }
     }
     fun clearBlockStatus() {
