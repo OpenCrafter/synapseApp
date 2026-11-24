@@ -113,6 +113,8 @@ class PersonalInformationViewModel @Inject constructor(
 
     private fun saveProfile() {
         val state = _uiState.value
+        if (!state.hasChanges || state.isSaving) return
+
         viewModelScope.launch {
             _uiState.update { it.copy(isSaving = true, error = null) }
             val userId = repository.getCurrentUserId()
