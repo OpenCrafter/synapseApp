@@ -577,7 +577,7 @@ fun ChatInfoScreen(
 
     if (showGroupsDialog) {
         AlertDialog(
-            onDismissRequest = { showGroupsDialog = false },
+            onDismissRequest = { if (!uiState.isLoadingCommonGroups) showGroupsDialog = false },
             title = { Text(stringResource(R.string.chat_info_groups_dialog_title)) },
             text = {
                 when {
@@ -631,7 +631,10 @@ fun ChatInfoScreen(
                 }
             },
             dismissButton = {
-                PressScaleTextButton(onClick = { showGroupsDialog = false }) {
+                PressScaleTextButton(
+                    onClick = { if (!uiState.isLoadingCommonGroups) showGroupsDialog = false },
+                    enabled = !uiState.isLoadingCommonGroups
+                ) {
                     Text(stringResource(R.string.cancel))
                 }
             }
