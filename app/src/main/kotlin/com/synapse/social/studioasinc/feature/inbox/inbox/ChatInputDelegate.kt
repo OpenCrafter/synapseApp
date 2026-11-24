@@ -233,6 +233,9 @@ class ChatInputDelegate(
         const val STOP_ATTEMPTS = 3
     }
 
+    // True while an edit save is in flight, used to block re-entry from rapid send taps.
+    private var isSavingEdit = false
+
     fun sendMessage() {
         stopTyping()
         val text = _inputText.value.trim()
@@ -241,11 +244,18 @@ class ChatInputDelegate(
 
         val editingMsg = _editingMessage.value
         if (editingMsg != null) {
+            // Block re-entry while an edit save is in flight so rapid send taps cannot enqueue
+            // duplicate saveEdit calls for the same message.
+            if (isSavingEdit) return
+            isSavingEdit = true
             messagingDelegate.saveEdit(
                 message = editingMsg,
                 newContent = text,
-                onError = { _error.value = "Failed to edit: $it" },
+                onError = { _error.value = "Failed to edit: $it";
+                    isSavingEdit = false
+                },
                 onSuccess = {
+                    isSavingEdit = false
                     _editingMessage.value = null
                     _inputText.value = ""
                 }
