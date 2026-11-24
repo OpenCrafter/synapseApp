@@ -97,6 +97,7 @@ data class ProfileScreenState(
     val isBlocking: Boolean = false,
     val isMuting: Boolean = false,
     val isRevokingVote: Boolean = false,
+    val isVotePollInFlight: Boolean = false,
     val reportPostSuccess: Boolean = false,
     val reportPostError: String? = null,
     val isSummarizing: Boolean = false,
@@ -520,11 +521,18 @@ class ProfileViewModel @Inject constructor(
     }
 
     fun votePoll(post: Post, optionIndex: Int) {
+        // Guard against rapid-tap duplicate requests: ignore a second tap while a vote is in flight.
+        if (_state.value.isVotePollInFlight) return
+        _state.update { it.copy(isVotePollInFlight = true) }
         viewModelScope.launch {
-            votePollUseCase(post, optionIndex).collect { result ->
-                result.onSuccess { updatedPost ->
-                    PostEventBus.emit(PostEvent.Updated(updatedPost))
+            try {
+                votePollUseCase(post, optionIndex).collect { result ->
+                    result.onSuccess { updatedPost ->
+                        PostEventBus.emit(PostEvent.Updated(updatedPost))
+                    }
                 }
+            } finally {
+                _state.update { it.copy(isVotePollInFlight = false) }
             }
         }
     }
