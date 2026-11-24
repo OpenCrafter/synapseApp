@@ -42,6 +42,7 @@ data class PostDetailUiState(
     val isResharing: Boolean = false,
     val isBookmarking: Boolean = false,
     val isTogglingReaction: Boolean = false,
+    val isTogglingComments: Boolean = false,
     val isReporting: Boolean = false,
     val isBlockingUser: Boolean = false,
     val isDeletingPost: Boolean = false

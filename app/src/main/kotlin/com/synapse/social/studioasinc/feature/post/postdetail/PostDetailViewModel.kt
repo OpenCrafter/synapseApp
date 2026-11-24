@@ -555,6 +555,9 @@ class PostDetailViewModel @Inject constructor(
         val postId = currentPostId ?: return Result.failure(IllegalStateException("No post ID"))
         val currentPost = _uiState.value.post ?: return Result.failure(IllegalStateException("No post"))
 
+        // Guard against rapid-tap duplicate toggle comments requests.
+        if (_uiState.value.isTogglingComments) return Result.failure(IllegalStateException("Toggle comments already in progress"))
+
         val isCurrentlyDisabled = currentPost.post.postDisableReplies == "true"
         val newDisableValue = if (isCurrentlyDisabled) "false" else "true"
 
@@ -562,14 +565,16 @@ class PostDetailViewModel @Inject constructor(
             post = currentPost.post.copy(postDisableReplies = newDisableValue)
         )
 
-        _uiState.update { it.copy(post = optimisticPost) }
+        _uiState.update { it.copy(post = optimisticPost, isTogglingComments = true) }
         PostEventBus.emit(PostEvent.Updated(optimisticPost.post))
 
-        return postActionsRepository.toggleComments(postId)
-            .onFailure { e ->
+        return postActionsRepository.toggleComments(postId).also { result ->
+            _uiState.update { it.copy(isTogglingComments = false) }
+            result.onFailure { e ->
                 _uiState.update { it.copy(post = currentPost) }
                 PostEventBus.emit(PostEvent.Updated(currentPost.post))
             }
+        }
     }
 
     suspend fun blockUser(userId: String): Result<Unit> {
