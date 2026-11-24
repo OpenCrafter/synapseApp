@@ -404,7 +404,7 @@ fun FeedScreen(
             onToggleComments = { val result = viewModel.toggleComments(post); if (result.isSuccess) { selectedPost = null }; result },
             onReport = { postToReport = post; showReportDialog = true; selectedPost = null; Result.success(Unit) },
             onBlock = { val result = viewModel.blockUser(post.authorUid); if (result.isSuccess) { selectedPost = null }; result },
-            onRevokeVote = { viewModel.revokeVote(post) },
+            onRevokeVote = { if (!uiState.inFlightRevokeVoteIds.contains(post.id)) { viewModel.revokeVote(post); selectedPost = null } },
             onSummarize = {
                 showSummarySheet = true
                 viewModel.summarizePost(post)
@@ -475,7 +475,7 @@ private fun FeedCommentItem(
     }
 
     val context = LocalContext.current
-    val onLikeClick = remember(feedItem.id) { { viewModel.reactToComment(feedItem.id, com.synapse.social.studioasinc.domain.model.ReactionType.LIKE) } }
+    val onLikeClick = remember(feedItem.id, uiState.inFlightCommentReactionIds) { { if (!uiState.inFlightCommentReactionIds.contains(feedItem.id)) viewModel.reactToComment(feedItem.id, com.synapse.social.studioasinc.domain.model.ReactionType.LIKE) } }
     val onCommentClickAction = remember(feedItem.id, onCommentClick) { { feedItem.parentPostId?.let { onCommentClick(commentState.post) } ?: Unit } }
     val onShareClick = remember(feedItem.id, context) { { PostShareUtils.shareComment(context, feedItem.content) } }
     val onRepostClick = remember(commentState.post) { { viewModel.resharePost(commentState.post) } }
@@ -497,7 +497,7 @@ private fun FeedCommentItem(
     }}
     val onOptionsClickAction = remember(commentState.post) { { onOptionsClick(commentState.post) } }
     val onPollVote = remember(feedItem.id) { { _: String -> } }
-    val onReactionSelected = remember(feedItem.id) { { reaction: com.synapse.social.studioasinc.domain.model.ReactionType -> viewModel.reactToComment(feedItem.id, reaction) } }
+    val onReactionSelected = remember(feedItem.id, uiState.inFlightCommentReactionIds) { { reaction: com.synapse.social.studioasinc.domain.model.ReactionType -> if (!uiState.inFlightCommentReactionIds.contains(feedItem.id)) viewModel.reactToComment(feedItem.id, reaction) } }
 
     PostCard(
         state = commentState,

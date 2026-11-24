@@ -9,9 +9,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.synapse.social.studioasinc.R
-import com.synapse.social.studioasinc.feature.shared.theme.Sizes
 import com.synapse.social.studioasinc.feature.shared.theme.Spacing
-import com.synapse.social.studioasinc.ui.components.ExpressiveLoadingIndicator
 
 /**
  * Confirmation dialog for bulk deletion of selected messages from the top app bar.
@@ -21,7 +19,7 @@ import com.synapse.social.studioasinc.ui.components.ExpressiveLoadingIndicator
  *
  * @param messageCount The number of messages selected for deletion.
  * @param canDeleteForEveryone Whether every selected message can be deleted for all participants.
- * @param isLoading Whether a delete operation is currently in flight.
+ * @param deleteInProgress Whether a bulk delete is currently in flight; confirm actions are disabled while true.
  * @param onDismissRequest Called when the dialog is dismissed.
  * @param onDeleteForMe Called when the user selects "Delete for me".
  * @param onDeleteForEveryone Called when the user selects "Delete for everyone".
@@ -31,7 +29,7 @@ import com.synapse.social.studioasinc.ui.components.ExpressiveLoadingIndicator
 fun DeleteSelectedMessagesDialog(
     messageCount: Int,
     canDeleteForEveryone: Boolean,
-    isLoading: Boolean = false,
+    deleteInProgress: Boolean = false,
     onDismissRequest: () -> Unit,
     onDeleteForMe: () -> Unit,
     onDeleteForEveryone: () -> Unit
@@ -67,16 +65,7 @@ fun DeleteSelectedMessagesDialog(
         },
         confirmButton = {
             if (canDeleteForEveryone) {
-                TextButton(
-                    onClick = onDeleteForEveryone,
-                    enabled = !isLoading
-                ) {
-                    if (isLoading) {
-                        ExpressiveLoadingIndicator(
-                            modifier = Modifier.size(Sizes.IconSemiMedium)
-                        )
-                        Spacer(modifier = Modifier.width(Spacing.space8))
-                    }
+                TextButton(enabled = !deleteInProgress, onClick = onDeleteForEveryone) {
                     Text(
                         text = stringResource(R.string.delete_for_everyone),
                         style = MaterialTheme.typography.labelLarge,
@@ -84,16 +73,7 @@ fun DeleteSelectedMessagesDialog(
                     )
                 }
             } else {
-                TextButton(
-                    onClick = onDeleteForMe,
-                    enabled = !isLoading
-                ) {
-                    if (isLoading) {
-                        ExpressiveLoadingIndicator(
-                            modifier = Modifier.size(Sizes.IconSemiMedium)
-                        )
-                        Spacer(modifier = Modifier.width(Spacing.space8))
-                    }
+                TextButton(enabled = !deleteInProgress, onClick = onDeleteForMe) {
                     Text(
                         text = stringResource(R.string.delete_for_me),
                         style = MaterialTheme.typography.labelLarge,
@@ -107,10 +87,7 @@ fun DeleteSelectedMessagesDialog(
                 modifier = Modifier.padding(end = Spacing.space8),
                 horizontalArrangement = Arrangement.spacedBy(Spacing.space8)
             ) {
-                TextButton(
-                    onClick = onDismissRequest,
-                    enabled = !isLoading
-                ) {
+                TextButton(onClick = onDismissRequest) {
                     Text(
                         text = stringResource(R.string.cancel),
                         style = MaterialTheme.typography.labelLarge,
@@ -118,10 +95,7 @@ fun DeleteSelectedMessagesDialog(
                     )
                 }
                 if (canDeleteForEveryone) {
-                    TextButton(
-                        onClick = onDeleteForMe,
-                        enabled = !isLoading
-                    ) {
+                    TextButton(enabled = !deleteInProgress, onClick = onDeleteForMe) {
                         Text(
                             text = stringResource(R.string.delete_for_me),
                             style = MaterialTheme.typography.labelLarge,

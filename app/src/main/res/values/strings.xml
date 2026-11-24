@@ -882,6 +882,8 @@ Please explain the following message from %3$s in detail, considering the contex
     <string name="storage_cache_size_value">%1$s MB</string>
     <string name="storage_clear_cache">Clear Cache</string>
     <string name="storage_clearing_cache">Clearing…</string>
+    <string name="storage_clear_cache_confirm_title">Clear entire cache?</string>
+    <string name="storage_clear_cache_confirm_message">This will delete all cached photos, videos, documents, chats and temporary files. This action cannot be undone.</string>
     <string name="storage_cache_cleared">Cache cleared: %1$s MB freed</string>
     <string name="storage_total_usage">Total App Storage</string>
     <string name="storage_total_usage_value">%1$s MB</string>

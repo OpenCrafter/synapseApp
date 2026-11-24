@@ -212,6 +212,12 @@ class StoryCreatorViewModel @Inject constructor(
         val userId = currentUserId ?: return
         val mediaUri = _state.value.capturedMediaUri ?: return
 
+        // Guard against rapid-tap duplicate requests: ignore a second postStory() call while
+        // one is already in flight. This mirrors the in-flight guard pattern used by
+        // BlockingViewModel.blockUser/unblockUser and complements the UI-side
+        // `enabled = !isPosting` on the Post button.
+        if (_state.value.isPosting) return
+
         viewModelScope.launch {
             _state.update { it.copy(isPosting = true, error = null) }
 

@@ -21,7 +21,7 @@ fun DisappearingModeDialog(
     isSaving: Boolean = false
 ) {
     AlertDialog(
-        onDismissRequest = onDismissRequest,
+        onDismissRequest = { if (!isSaving) onDismissRequest() },
         title = { Text(stringResource(R.string.disappearing_messages_title)) },
         text = {
             Column {
@@ -54,7 +54,7 @@ fun DisappearingModeDialog(
             }
         },
         confirmButton = {
-            TextButton(onClick = onDismissRequest) {
+            TextButton(onClick = { if (!isSaving) onDismissRequest() }) {
                 Text(stringResource(R.string.action_cancel))
             }
         }
@@ -69,7 +69,7 @@ fun MessageSummaryDialog(
 ) {
     if (isSummarizingMessage || messageSummary != null) {
         AlertDialog(
-            onDismissRequest = onDismissRequest,
+            onDismissRequest = { if (!isSummarizingMessage) onDismissRequest() },
             icon = { Icon(Icons.Default.AutoAwesome, contentDescription = null) },
             title = { Text(stringResource(R.string.message_summary_title)) },
             text = {
@@ -82,7 +82,7 @@ fun MessageSummaryDialog(
                 }
             },
             confirmButton = {
-                TextButton(onClick = onDismissRequest) {
+                TextButton(onClick = { if (!isSummarizingMessage) onDismissRequest() }) {
                     Text(stringResource(R.string.action_close))
                 }
             }

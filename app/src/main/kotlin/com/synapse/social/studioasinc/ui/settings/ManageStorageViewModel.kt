@@ -39,6 +39,13 @@ class ManageStorageViewModel @Inject constructor(
     private val _maxCacheSizeGB = MutableStateFlow(5)
     val maxCacheSizeGB: StateFlow<Int> = _maxCacheSizeGB.asStateFlow()
 
+    private val _error = MutableStateFlow<String?>(null)
+    val error: StateFlow<String?> = _error.asStateFlow()
+
+    fun clearError() {
+        _error.value = null
+    }
+
     init {
         loadData()
         settingsRepository.keepMediaDays
@@ -79,6 +86,7 @@ class ManageStorageViewModel @Inject constructor(
                 refreshStorageData()
             } catch (e: Exception) {
                 android.util.Log.e("ManageStorageViewModel", "Error clearing cache", e)
+                _error.value = e.message ?: "Failed to clear cache"
             } finally {
                 _isLoading.value = false
             }
@@ -100,6 +108,7 @@ class ManageStorageViewModel @Inject constructor(
                 }
             } catch (e: Exception) {
                 android.util.Log.e("ManageStorageViewModel", "Error deleting large file", e)
+                _error.value = e.message ?: "Failed to delete file"
             }
         }
     }

@@ -116,7 +116,7 @@ fun TwoStepVerificationScreen(
                     } else {
                         FilledTonalButton(
                             onClick = { viewModel.setupTwoFactor() },
-                            enabled = !twoFactorEnabled,
+                            enabled = !isLoading && !twoFactorEnabled,
                             shape = AppShapes.itemShape,
                             colors = ButtonDefaults.filledTonalButtonColors(
                                 containerColor = MaterialTheme.colorScheme.primaryContainer,

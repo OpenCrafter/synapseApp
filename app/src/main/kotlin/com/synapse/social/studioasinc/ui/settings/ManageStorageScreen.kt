@@ -39,14 +39,26 @@ fun ManageStorageScreen(
     val storageUsage by viewModel.storageUsage.collectAsState()
     val largeFiles by viewModel.largeFiles.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
+    val error by viewModel.error.collectAsState()
 
     val keepMediaDays by viewModel.keepMediaDays.collectAsState()
     val maxCacheSizeGB by viewModel.maxCacheSizeGB.collectAsState()
+
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    LaunchedEffect(error) {
+        val currentError = error
+        if (currentError != null) {
+            snackbarHostState.showSnackbar(message = currentError)
+            viewModel.clearError()
+        }
+    }
 
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
 
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         topBar = {
             LargeTopAppBar(
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -107,6 +119,7 @@ fun ManageStorageScreen(
                     storageUsage?.let { usage ->
                         ClearCacheSection(
                             storageUsage = usage,
+                            isLoading = isLoading,
                             onClearCacheClick = { viewModel.clearEntireCache() }
                         )
                     }
@@ -166,9 +179,11 @@ fun AutomatedCleanupSection(
 @Composable
 fun ClearCacheSection(
     storageUsage: StorageUsageBreakdown,
+    isLoading: Boolean,
     onClearCacheClick: () -> Unit
 ) {
     val totalCacheSize = formatBytes(storageUsage.synapseSize)
+    var showConfirmDialog by remember { mutableStateOf(false) }
 
     SettingsSection(title = stringResource(R.string.storage_clear_cache)) {
         SettingsCard {
@@ -190,7 +205,8 @@ fun ClearCacheSection(
                 Spacer(modifier = Modifier.height(Spacing.space16))
 
                 Button(
-                    onClick = onClearCacheClick,
+                    onClick = { if (!isLoading) showConfirmDialog = true },
+                    enabled = !isLoading,
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = AppSpacing.itemHorizontalPadding),
@@ -207,6 +223,32 @@ fun ClearCacheSection(
                 }
             }
         }
+    }
+
+    if (showConfirmDialog) {
+        AlertDialog(
+            onDismissRequest = { if (!isLoading) showConfirmDialog = false },
+            title = { Text(stringResource(R.string.storage_clear_cache_confirm_title)) },
+            text = { Text(stringResource(R.string.storage_clear_cache_confirm_message)) },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showConfirmDialog = false
+                        onClearCacheClick()
+                    },
+                    enabled = !isLoading
+                ) {
+                    Text(text = stringResource(R.string.clear))
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { showConfirmDialog = false }
+                ) {
+                    Text(text = stringResource(R.string.action_cancel))
+                }
+            }
+        )
     }
 }
 

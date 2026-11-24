@@ -90,7 +90,14 @@ data class FeedUiState(
     val inFlightToggleCommentsIds: Set<String> = emptySet(),
     // User IDs with a block operation currently in flight. Scoped per user so that a rapid tap
     // never fires duplicate block requests for the same user. Other users remain blockable.
-    val inFlightBlockUserIds: Set<String> = emptySet()
+    val inFlightBlockUserIds: Set<String> = emptySet(),
+    // Post IDs with a vote revocation currently in flight. Scoped per post so that a rapid tap never
+    // fires duplicate revoke requests for the same post.
+    val inFlightRevokeVoteIds: Set<String> = emptySet(),
+    // Comment IDs with a reaction (like/oppose) toggle currently in flight. Scoped per comment so
+    // that a rapid tap on one comment never blocks reaction taps on a different comment. Observable
+    // via UI state so the comment Like button can be guarded while the toggle is in flight.
+    val inFlightCommentReactionIds: Set<String> = emptySet()
 )
 
 @HiltViewModel
@@ -219,9 +226,22 @@ class FeedViewModel @Inject constructor(
     }
 
     fun reactToComment(commentId: String, reactionType: ReactionType) {
+        // Guard against rapid-tap duplicate requests: ignore a second tap on the same comment while its
+        // reaction toggle is in flight. Other comments remain tappable.
+        if (currentState.inFlightCommentReactionIds.contains(commentId)) return
+        // Mark in flight synchronously before launching so a near-simultaneous second tap cannot pass
+        // the guard before the coroutine sets the marker (TOCTOU). Mirrors bookmarkPost.
+        updateState { it.copy(inFlightCommentReactionIds = it.inFlightCommentReactionIds + commentId) }
         viewModelScope.launch {
-            reactToCommentUseCase(commentId, reactionType).onSuccess { updatedCommentPost ->
-                cacheModifiedPost(updatedCommentPost)
+            try {
+                reactToCommentUseCase(commentId, reactionType).onSuccess { updatedCommentPost ->
+                    cacheModifiedPost(updatedCommentPost)
+                }.onFailure { e ->
+                    updateState { it.copy(error = e.message ?: "Failed to react to comment") }
+                }
+            } finally {
+                // Always clear the in-flight marker so the user can retry after success or failure.
+                updateState { it.copy(inFlightCommentReactionIds = it.inFlightCommentReactionIds - commentId) }
             }
         }
     }
@@ -251,14 +271,25 @@ class FeedViewModel @Inject constructor(
     }
 
     fun revokeVote(post: Post) {
+        // Guard against rapid-tap duplicate requests: ignore a second tap on the same post while its
+        // vote revocation is in flight. Other posts remain tappable.
+        if (currentState.inFlightRevokeVoteIds.contains(post.id)) return
+        // Mark in flight synchronously before launching so a near-simultaneous second tap cannot pass
+        // the guard before the coroutine sets the marker (TOCTOU). Mirrors bookmarkPost.
+        updateState { it.copy(inFlightRevokeVoteIds = it.inFlightRevokeVoteIds + post.id) }
         viewModelScope.launch {
-            revokeVoteUseCase(post).collect { result ->
-                result.onSuccess { updatedPost ->
-                    cacheModifiedPost(updatedPost)
-                    PostEventBus.emit(PostEvent.Updated(updatedPost))
-                }.onFailure {
-                    _modifiedPosts.update { it - post.id }
+            try {
+                revokeVoteUseCase(post).collect { result ->
+                    result.onSuccess { updatedPost ->
+                        cacheModifiedPost(updatedPost)
+                        PostEventBus.emit(PostEvent.Updated(updatedPost))
+                    }.onFailure { e ->
+                        updateState { it.copy(error = e.message ?: "Failed to revoke vote") }
+                    }
                 }
+            } finally {
+                // Always clear the in-flight marker so the user can retry after success or failure.
+                updateState { it.copy(inFlightRevokeVoteIds = it.inFlightRevokeVoteIds - post.id) }
             }
         }
     }

@@ -349,11 +349,11 @@ fun SearchScreen(
                                                         onLike = viewModel::likePost,
                                                         onComment = { p -> onNavigateToPost(p.id) },
                                                         onShare = { p -> PostShareUtils.sharePost(context, p.id) },
-                                                        onRepost = viewModel::resharePost,
+                                                        onRepost = { p -> if (p.id !in uiState.resharingBusyPostIds) viewModel.resharePost(p) },
                                                         onQuote = { post -> onNavigateToQuotePost(post.id) },
                                                         onBookmark = { post -> if (post.id !in uiState.bookmarkBusyPostIds) viewModel.bookmarkPost(post) },
                                                         onOptionClick = { p -> selectedPost = p },
-                                                        onPollVote = viewModel::votePoll,
+                                                        onPollVote = { p, i -> if (p.id !in uiState.votingBusyPostIds) viewModel.votePoll(p, i) },
                                                                  onUserClick = { userId -> onNavigateToProfile(userId) },
                                                                   onMediaClick = { post, index ->
                                                                       val urls = post.mediaItems?.mapNotNull { it.url } ?: emptyList()
@@ -468,11 +468,11 @@ fun SearchScreen(
                                                                 onLike = viewModel::likePost,
                                                                 onComment = { p -> onNavigateToPost(p.id) },
                                                                 onShare = { p -> PostShareUtils.sharePost(context, p.id) },
-                                                                onRepost = viewModel::resharePost,
+                                                                onRepost = { p -> if (p.id !in uiState.resharingBusyPostIds) viewModel.resharePost(p) },
                                                                 onQuote = { post -> onNavigateToQuotePost(post.id) },
                                                                 onBookmark = { post -> if (post.id !in uiState.bookmarkBusyPostIds) viewModel.bookmarkPost(post) },
                                                                 onOptionClick = { p -> selectedPost = p },
-                                                                onPollVote = viewModel::votePoll,
+                                                                onPollVote = { p, i -> if (p.id !in uiState.votingBusyPostIds) viewModel.votePoll(p, i) },
                                                                 onUserClick = { userId -> onNavigateToProfile(userId) },
 onMediaClick = { post, index ->
                                                             val urls = post.mediaItems?.mapNotNull { it.url } ?: emptyList()

@@ -23,7 +23,9 @@ import com.synapse.social.studioasinc.shared.domain.model.chat.Message
  *
  * @param message The message being deleted.
  * @param canDeleteForEveryone Whether the message belongs to the current user.
- * @param isLoading Whether a delete operation is currently in flight.
+ * @param isLoading Whether a delete operation is currently in flight. While true, the confirm
+ * and cancel buttons are disabled so a rapid re-tap cannot retrigger the delete and the dialog
+ * cannot be dismissed before the result is known.
  * @param onDismissRequest Called when the dialog is dismissed.
  * @param onDeleteForMe Called when the user selects "Delete for me".
  * @param onDeleteForEveryone Called when the user selects "Delete for everyone".

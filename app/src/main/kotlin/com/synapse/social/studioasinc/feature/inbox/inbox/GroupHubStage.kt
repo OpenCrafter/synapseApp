@@ -130,6 +130,7 @@ internal fun GroupHubStage(
     requestActionInProgress: Set<String>,
     inviteUpdating: Boolean,
     saveStatus: GroupHubSaveStatus,
+    isChangingRole: Boolean,
     currentUserId: String?,
     error: GroupCreationError?,
     onRegenerateInvite: () -> Unit,
@@ -332,7 +333,8 @@ internal fun GroupHubStage(
                                 DropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
                                     DropdownMenuItem(
                                         text = { Text(stringResource(if (isAdmin) R.string.group_demote_admin else R.string.group_promote_admin)) },
-                                        onClick = { onChangeRole(user.uid, !isAdmin); menuExpanded = false }
+                                        onClick = { if (!isChangingRole) { onChangeRole(user.uid, !isAdmin); menuExpanded = false } },
+                                        enabled = !isChangingRole
                                     )
                                     DropdownMenuItem(
                                         text = { Text(stringResource(R.string.remove_member), color = MaterialTheme.colorScheme.error) },

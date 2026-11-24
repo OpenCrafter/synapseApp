@@ -83,6 +83,7 @@ fun GroupParticipantsScreen(
     val currentUserId = uiState.currentUserId
     val createdBy = uiState.groupInfo?.createdBy
     var memberToRemove by remember { mutableStateOf<User?>(null) }
+    var isRemovingMember by remember { mutableStateOf(false) }
 
     Scaffold(
         containerColor = AppColors.screenBackground,
@@ -180,25 +181,29 @@ fun GroupParticipantsScreen(
         AlertDialog(
             // Keep the dialog open while the async removal is in flight so a backdrop/back tap
             // cannot dismiss it before the result is known (and hide a failure).
-            onDismissRequest = { if (!uiState.removingMemberIds.contains(member.uid)) memberToRemove = null },
+            onDismissRequest = { if (!isRemovingMember) memberToRemove = null },
             title = { Text(stringResource(R.string.group_remove_member_title)) },
             text = { Text(stringResource(R.string.group_remove_member_body, userDisplayName(member))) },
             confirmButton = {
                 TextButton(
-                    enabled = !uiState.removingMemberIds.contains(member.uid),
                     onClick = {
+                        isRemovingMember = true
                         viewModel.removeMember(member.uid) { success ->
+                            isRemovingMember = false
                             if (success) memberToRemove = null
+                            // On failure the dialog stays open so the user can retry;
+                            // the error is surfaced via the existing errorRes snackbar.
                         }
-                    }
+                    },
+                    enabled = !isRemovingMember
                 ) {
                     Text(stringResource(R.string.action_remove), color = MaterialTheme.colorScheme.error)
                 }
             },
             dismissButton = {
                 TextButton(
-                    onClick = { memberToRemove = null },
-                    enabled = !uiState.removingMemberIds.contains(member.uid)
+                    onClick = { if (!isRemovingMember) memberToRemove = null },
+                    enabled = !isRemovingMember
                 ) {
                     Text(stringResource(R.string.cancel))
                 }

@@ -18,7 +18,8 @@ data class ScheduledPostsUiState(
     val isLoading: Boolean = false,
     val error: String? = null,
     val posts: List<ScheduledPost> = emptyList(),
-    val isOffline: Boolean = false
+    val isOffline: Boolean = false,
+    val inFlightPostIds: Set<String> = emptySet()
 )
 
 @HiltViewModel
@@ -31,11 +32,6 @@ class ScheduledPostsViewModel @Inject constructor(
 
     private val _uiState = MutableStateFlow(ScheduledPostsUiState())
     val uiState: StateFlow<ScheduledPostsUiState> = _uiState.asStateFlow()
-
-    // Tracks post IDs that currently have a retry/reschedule/cancel operation in flight,
-    // so the UI can disable the corresponding controls and prevent duplicate requests.
-    private val _inFlightPostIds = MutableStateFlow(emptySet<String>())
-    val inFlightPostIds: StateFlow<Set<String>> = _inFlightPostIds.asStateFlow()
 
     init {
         loadScheduledPosts()
@@ -74,36 +70,24 @@ class ScheduledPostsViewModel @Inject constructor(
     }
 
     fun cancelScheduledPost(id: String, onResult: (Boolean) -> Unit) {
-        // Guard against concurrent invocations for the same post
-        if (_inFlightPostIds.value.contains(id)) {
-            onResult(false)
-            return
-        }
         viewModelScope.launch {
-            _inFlightPostIds.value = _inFlightPostIds.value + id
-            try {
-                _uiState.update { state ->
-                    state.copy(posts = state.posts.filter { it.id != id })
-                }
-                val result = scheduledPostRepository.cancelScheduledPost(id)
-                if (result.isSuccess) {
-                    onResult(true)
-                } else {
-                    loadScheduledPosts()
-                    onResult(false)
-                }
-            } finally {
-                _inFlightPostIds.value = _inFlightPostIds.value - id
+            _uiState.update { state ->
+                state.copy(posts = state.posts.filter { it.id != id })
+            }
+            val result = scheduledPostRepository.cancelScheduledPost(id)
+            if (result.isSuccess) {
+                onResult(true)
+            } else {
+                loadScheduledPosts()
+                onResult(false)
             }
         }
     }
 
     fun retryScheduledPost(id: String) {
-        // Guard against concurrent invocations for the same post
-        if (_inFlightPostIds.value.contains(id)) return
-
+        if (_uiState.value.inFlightPostIds.contains(id)) return
         viewModelScope.launch {
-            _inFlightPostIds.value = _inFlightPostIds.value + id
+            _uiState.update { it.copy(inFlightPostIds = it.inFlightPostIds + id) }
             try {
                 val post = _uiState.value.posts.find { it.id == id }
                 scheduledPostRepository.retryScheduledPost(id)
@@ -115,17 +99,15 @@ class ScheduledPostsViewModel @Inject constructor(
                         _uiState.update { it.copy(error = "Retry failed: ${error.message}") }
                     }
             } finally {
-                _inFlightPostIds.value = _inFlightPostIds.value - id
+                _uiState.update { it.copy(inFlightPostIds = it.inFlightPostIds - id) }
             }
         }
     }
 
     fun reschedulePost(id: String, newScheduledAt: String) {
-        // Guard against concurrent invocations for the same post
-        if (_inFlightPostIds.value.contains(id)) return
-
+        if (_uiState.value.inFlightPostIds.contains(id)) return
         viewModelScope.launch {
-            _inFlightPostIds.value = _inFlightPostIds.value + id
+            _uiState.update { it.copy(inFlightPostIds = it.inFlightPostIds + id) }
             try {
                 val post = _uiState.value.posts.find { it.id == id } ?: return@launch
                 scheduledPostRepository.updateScheduledPost(id, newScheduledAt, post.postRequest)
@@ -137,7 +119,7 @@ class ScheduledPostsViewModel @Inject constructor(
                         _uiState.update { it.copy(error = "Reschedule failed: ${error.message}") }
                     }
             } finally {
-                _inFlightPostIds.value = _inFlightPostIds.value - id
+                _uiState.update { it.copy(inFlightPostIds = it.inFlightPostIds - id) }
             }
         }
     }

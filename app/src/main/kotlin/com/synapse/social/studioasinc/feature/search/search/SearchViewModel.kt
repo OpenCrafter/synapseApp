@@ -78,7 +78,13 @@ data class SearchUiState(
     val deletingBusyPostIds: Set<String> = emptySet(),
     // Post IDs with a toggle-comments operation currently in flight. Scoped per post so that a
     // rapid tap never fires duplicate toggle-comments requests for the same post.
-    val togglingCommentsBusyPostIds: Set<String> = emptySet()
+    val togglingCommentsBusyPostIds: Set<String> = emptySet(),
+    // Post IDs with a reshare operation currently in flight. Scoped per post so that a rapid tap
+    // never fires duplicate reshare requests for the same post.
+    val resharingBusyPostIds: Set<String> = emptySet(),
+    // Post IDs with a vote operation currently in flight. Scoped per post so that a rapid tap
+    // never fires duplicate vote requests for the same post.
+    val votingBusyPostIds: Set<String> = emptySet()
 )
 
 @HiltViewModel
@@ -452,13 +458,22 @@ class SearchViewModel @Inject constructor(
     }
 
     fun votePoll(post: com.synapse.social.studioasinc.domain.model.Post, optionIndex: Int) {
+        if (currentState.votingBusyPostIds.contains(post.id)) return
+        // Mark busy synchronously before launching so a rapid second tap on the same post
+        // sees votingBusyPostIds containing post.id and no duplicate concurrent vote slips
+        // through the dispatch-delay window. Matches the bookmarkBusyPostIds convention.
+        updateState { it.copy(votingBusyPostIds = it.votingBusyPostIds + post.id) }
         viewModelScope.launch {
-            votePollUseCase(post, optionIndex).collect { result ->
-                result.onSuccess { updatedPost ->
-                    updateState { state ->
-                        state.copy(posts = state.posts.map { if (it.id == updatedPost.id) updatedPost else it })
-                    }
-                }.onFailure { err -> updateState { it.copy(error = err.message) } }
+            try {
+                votePollUseCase(post, optionIndex).collect { result ->
+                    result.onSuccess { updatedPost ->
+                        updateState { state ->
+                            state.copy(posts = state.posts.map { if (it.id == updatedPost.id) updatedPost else it })
+                        }
+                    }.onFailure { err -> updateState { it.copy(error = err.message) } }
+                }
+            } finally {
+                updateState { it.copy(votingBusyPostIds = it.votingBusyPostIds - post.id) }
             }
         }
     }
@@ -595,33 +610,41 @@ class SearchViewModel @Inject constructor(
     }
 
     fun resharePost(post: com.synapse.social.studioasinc.domain.model.Post) {
+        if (currentState.resharingBusyPostIds.contains(post.id)) return
+        // Mark busy synchronously before optimistic work so a rapid second tap sees
+        // resharingBusyPostIds containing post.id and does not issue the opposite
+        // operation while the first request is still in flight. Matches bookmarkBusyPostIds.
+        updateState { it.copy(resharingBusyPostIds = it.resharingBusyPostIds + post.id) }
+        val isCurrentlyReshared = post.isReshared
+        val optimisticPost = post.copy(
+            isReshared = !isCurrentlyReshared,
+            resharesCount = if (isCurrentlyReshared) maxOf(0, post.resharesCount - 1) else post.resharesCount + 1
+        )
+        updateState { state ->
+            state.copy(posts = state.posts.map { if (it.id == post.id) optimisticPost else it })
+        }
+        PostEventBus.emit(PostEvent.Updated(optimisticPost))
         viewModelScope.launch {
-            val isCurrentlyReshared = post.isReshared
-            val optimisticPost = post.copy(
-                isReshared = !isCurrentlyReshared,
-                resharesCount = if (isCurrentlyReshared) maxOf(0, post.resharesCount - 1) else post.resharesCount + 1
-            )
-            updateState { state ->
-                state.copy(posts = state.posts.map { if (it.id == post.id) optimisticPost else it })
-            }
-            PostEventBus.emit(PostEvent.Updated(optimisticPost))
-
-            val result = if (isCurrentlyReshared) {
-                unrepostPostUseCase(post.id)
-            } else {
-                repostPostUseCase(post.id)
-            }
-
-            result.onSuccess {
-                performSearch(currentState.query)
-            }.onFailure {
-                updateState { state ->
-                    state.copy(posts = state.posts.map { if (it.id == post.id) post else it })
+            try {
+                val result = if (isCurrentlyReshared) {
+                    unrepostPostUseCase(post.id)
+                } else {
+                    repostPostUseCase(post.id)
                 }
-                PostEventBus.emit(PostEvent.Updated(post))
-                updateState {
-                    it.copy(error = it.error ?: application.getString(R.string.error_reshare_failed))
+
+                result.onSuccess {
+                    performSearch(currentState.query)
+                }.onFailure {
+                    updateState { state ->
+                        state.copy(posts = state.posts.map { if (it.id == post.id) post else it })
+                    }
+                    PostEventBus.emit(PostEvent.Updated(post))
+                    updateState {
+                        it.copy(error = it.error ?: application.getString(R.string.error_reshare_failed))
+                    }
                 }
+            } finally {
+                updateState { it.copy(resharingBusyPostIds = it.resharingBusyPostIds - post.id) }
             }
         }
     }

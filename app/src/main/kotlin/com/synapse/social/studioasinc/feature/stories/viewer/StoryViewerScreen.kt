@@ -58,7 +58,8 @@ import androidx.compose.ui.text.input.ImeAction
 @Composable
 fun QuickReactionsRow(
     userReaction: String?,
-    onEmojiClick: (String) -> Unit
+    onEmojiClick: (String) -> Unit,
+    isReacting: Boolean = false
 ) {
     val emojis = listOf("❤️", "😂", "😮", "😢", "😡")
     Row(
@@ -75,7 +76,7 @@ fun QuickReactionsRow(
                         if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
                         else Color.Transparent
                     )
-                    .clickable { onEmojiClick(emoji) },
+                    .clickable(enabled = !isReacting) { onEmojiClick(emoji) },
                 contentAlignment = Alignment.Center
             ) {
                 Text(
@@ -93,7 +94,8 @@ fun StoryReplyBar(
     onReplyTextChange: (String) -> Unit,
     onSendReply: () -> Unit,
     onFocus: () -> Unit,
-    onBlur: () -> Unit
+    onBlur: () -> Unit,
+    isSendingReply: Boolean = false
 ) {
     Row(
         modifier = Modifier
@@ -130,11 +132,15 @@ fun StoryReplyBar(
             ),
             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Send),
             keyboardActions = KeyboardActions(onSend = { onSendReply() }),
-            singleLine = true
+            singleLine = true,
+            enabled = !isSendingReply
         )
 
         if (replyText.isNotEmpty()) {
-            IconButton(onClick = onSendReply) {
+            IconButton(
+                onClick = onSendReply,
+                enabled = !isSendingReply
+            ) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.Send,
                     contentDescription = stringResource(R.string.cd_send),
@@ -298,7 +304,8 @@ fun StoryViewerScreen(
                                 } else {
                                     viewModel.reactToStory(emoji)
                                 }
-                            }
+                            },
+                            isReacting = uiState.isReacting
                         )
 
                         Spacer(modifier = Modifier.height(Spacing.space8))
@@ -308,7 +315,8 @@ fun StoryViewerScreen(
                             onReplyTextChange = { viewModel.updateReplyText(it) },
                             onSendReply = { viewModel.sendReply() },
                             onFocus = { viewModel.pause() },
-                            onBlur = { viewModel.resume() }
+                            onBlur = { viewModel.resume() },
+                            isSendingReply = uiState.isSendingReply
                         )
                     }
                 }

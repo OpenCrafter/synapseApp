@@ -40,6 +40,8 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.PrimaryTabRow
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SheetValue
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
@@ -47,6 +49,7 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -78,12 +81,16 @@ fun StorageProviderScreen(
     viewModel: SettingsViewModel = hiltViewModel()
 ) {
     val storageConfig by viewModel.storageConfig.collectAsState()
+    val isSavingConfig by viewModel.isSavingConfig.collectAsState()
+    val error by viewModel.error.collectAsState()
+    val snackbarHostState = remember { SnackbarHostState() }
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
     val pagerState = rememberPagerState(pageCount = { 2 })
     val coroutineScope = rememberCoroutineScope()
 
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         topBar = {
             LargeTopAppBar(
                 title = {
@@ -133,7 +140,7 @@ fun StorageProviderScreen(
             ) { page ->
                 when (page) {
                     0 -> AssignProvidersTab(storageConfig, viewModel)
-                    1 -> ProviderSetupTab(storageConfig, viewModel)
+                    1 -> ProviderSetupTab(storageConfig, viewModel, snackbarHostState)
                 }
             }
         }
@@ -145,6 +152,8 @@ private fun AssignProvidersTab(
     storageConfig: StorageConfig,
     viewModel: SettingsViewModel
 ) {
+    val isUpdatingProvider by viewModel.isUpdatingProvider.collectAsState()
+
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(
@@ -162,6 +171,7 @@ private fun AssignProvidersTab(
                             icon = Icons.Default.Image,
                             selectedProvider = storageConfig.photoProvider,
                             isPhotos = true,
+                            isUpdatingProvider = isUpdatingProvider,
                             onProviderSelect = { viewModel.updatePhotoProvider(it) }
                         )
                         SettingsDivider()
@@ -170,6 +180,7 @@ private fun AssignProvidersTab(
                             icon = Icons.Default.Videocam,
                             selectedProvider = storageConfig.videoProvider,
                             isPhotos = false,
+                            isUpdatingProvider = isUpdatingProvider,
                             onProviderSelect = { viewModel.updateVideoProvider(it) }
                         )
                         SettingsDivider()
@@ -178,6 +189,7 @@ private fun AssignProvidersTab(
                             icon = Icons.Default.CloudUpload,
                             selectedProvider = storageConfig.otherProvider,
                             isPhotos = false,
+                            isUpdatingProvider = isUpdatingProvider,
                             onProviderSelect = { viewModel.updateOtherProvider(it) }
                         )
                     }
@@ -205,6 +217,7 @@ private fun MediaAssignmentRow(
     icon: ImageVector,
     selectedProvider: StorageProvider,
     isPhotos: Boolean = true,
+    isUpdatingProvider: Boolean = false,
     onProviderSelect: (String) -> Unit
 ) {
     var showSheet by remember { mutableStateOf(false) }
@@ -214,7 +227,7 @@ private fun MediaAssignmentRow(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { showSheet = true }
+            .clickable(enabled = !isUpdatingProvider, onClick = { showSheet = true })
             .padding(
                 horizontal = AppSpacing.itemHorizontalPadding,
                 vertical = AppSpacing.itemVerticalPadding
@@ -249,8 +262,15 @@ private fun MediaAssignmentRow(
     }
 
     if (showSheet) {
+        var wasUpdating by remember { mutableStateOf(false) }
+        LaunchedEffect(isUpdatingProvider) {
+            if (wasUpdating && !isUpdatingProvider) {
+                showSheet = false
+            }
+            wasUpdating = isUpdatingProvider
+        }
         ModalBottomSheet(
-            onDismissRequest = { showSheet = false },
+            onDismissRequest = { if (!isUpdatingProvider) showSheet = false },
             sheetState = sheetState,
             containerColor = AppColors.cardBackgroundElevated
         ) {
@@ -260,7 +280,9 @@ private fun MediaAssignmentRow(
                 isPhotos = isPhotos,
                 onProviderSelect = {
                     onProviderSelect(it)
-                    showSheet = false
+                    // Do not dismiss here: dismissal is gated on isUpdatingProvider becoming false.
+                    // The sheet stays open while the async provider update is in flight so the user
+                    // cannot tap again and see no feedback on failure.
                 }
             )
         }
@@ -336,7 +358,8 @@ private fun ProviderSelectionList(
 @Composable
 private fun ProviderSetupTab(
     storageConfig: StorageConfig,
-    viewModel: SettingsViewModel
+    viewModel: SettingsViewModel,
+    snackbarHostState: SnackbarHostState
 ) {
     val providers = listOf(
         StorageProvider.IMGBB,
@@ -375,7 +398,8 @@ private fun ProviderSetupTab(
                                 isConfigured = storageConfig.isProviderConfigured(provider),
                                 usage = usage,
                                 storageConfig = storageConfig,
-                                viewModel = viewModel
+                                viewModel = viewModel,
+                                snackbarHostState = snackbarHostState
                             )
 
                             if (index < providers.size - 1) {
@@ -396,11 +420,14 @@ private fun ProviderRow(
     isConfigured: Boolean,
     usage: String,
     storageConfig: StorageConfig,
-    viewModel: SettingsViewModel
+    viewModel: SettingsViewModel,
+    snackbarHostState: SnackbarHostState
 ) {
     var showSheet by remember { mutableStateOf(false) }
     val sheetState = rememberBottomSheetState(initialValue = SheetValue.Hidden)
     val displayName = stringResource(provider.toDisplayNameRes())
+    val isSavingConfig by viewModel.isSavingConfig.collectAsState()
+    val error by viewModel.error.collectAsState()
 
     Row(
         modifier = Modifier
@@ -463,7 +490,7 @@ private fun ProviderRow(
 
     if (showSheet) {
         ModalBottomSheet(
-            onDismissRequest = { showSheet = false },
+            onDismissRequest = { if (!isSavingConfig) showSheet = false },
             sheetState = sheetState,
             containerColor = AppColors.cardBackgroundElevated
         ) {
@@ -473,7 +500,6 @@ private fun ProviderRow(
                         apiKey = storageConfig.imgBBKey,
                         onApiKeyChange = {
                             viewModel.updateImgBBConfig(it)
-                            showSheet = false
                         }
                     )
                     StorageProvider.CLOUDINARY -> CloudinaryConfigContent(
@@ -483,7 +509,6 @@ private fun ProviderRow(
                         uploadPreset = storageConfig.cloudinaryUploadPreset,
                         onConfigChange = { n, k, s, p ->
                             viewModel.updateCloudinaryConfig(n, k, s, p)
-                            showSheet = false
                         }
                     )
                     StorageProvider.PRIMARY -> SupabaseConfigContent(
@@ -492,7 +517,6 @@ private fun ProviderRow(
                         bucketName = storageConfig.primaryBucket,
                         onConfigChange = { u, k, b ->
                             viewModel.updatePrimaryConfig(u, k, b)
-                            showSheet = false
                         }
                     )
                     StorageProvider.CLOUDFLARE_R2 -> R2ConfigContent(
@@ -502,13 +526,27 @@ private fun ProviderRow(
                         bucketName = storageConfig.r2BucketName,
                         onConfigChange = { a, i, s, b ->
                             viewModel.updateR2Config(a, i, s, b)
-                            showSheet = false
                         }
                     )
                     else -> {}
                 }
             }
             Spacer(modifier = Modifier.height(Spacing.space48))
+        }
+
+        var wasSaving by remember { mutableStateOf(false) }
+        LaunchedEffect(isSavingConfig) {
+            if (wasSaving && !isSavingConfig) {
+                val errorMessage = error
+                if (errorMessage != null) {
+                    snackbarHostState.showSnackbar(message = errorMessage)
+                    viewModel.clearError()
+                    // Keep the sheet open so the user can retry
+                } else {
+                    showSheet = false
+                }
+            }
+            wasSaving = isSavingConfig
         }
     }
 }

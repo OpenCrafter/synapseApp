@@ -149,6 +149,20 @@ private val messageSyncUseCase: MessageSyncUseCase = MessageSyncUseCase(getMessa
         _createFolderSaveStatus.value = CreateFolderSaveStatus.Idle
     }
 
+    sealed class FolderAssignmentSaveStatus {
+        object Idle : FolderAssignmentSaveStatus()
+        object Saving : FolderAssignmentSaveStatus()
+        object Success : FolderAssignmentSaveStatus()
+        object Failure : FolderAssignmentSaveStatus()
+    }
+
+    private val _folderAssignmentSaveStatus = MutableStateFlow<FolderAssignmentSaveStatus>(FolderAssignmentSaveStatus.Idle)
+    val folderAssignmentSaveStatus: StateFlow<FolderAssignmentSaveStatus> = _folderAssignmentSaveStatus.asStateFlow()
+
+    fun resetFolderAssignmentSaveStatus() {
+        _folderAssignmentSaveStatus.value = FolderAssignmentSaveStatus.Idle
+    }
+
     // ===== ChatUiState: consolidated UI state =====
     private val _uiState = MutableStateFlow(ChatUiState())
     val uiState: StateFlow<ChatUiState> = _uiState.asStateFlow()
@@ -244,6 +258,11 @@ private val messageSyncUseCase: MessageSyncUseCase = MessageSyncUseCase(getMessa
     private val _isDeletingChat = MutableStateFlow(false)
     val isDeletingChat: StateFlow<Boolean> = _isDeletingChat.asStateFlow()
 
+    // True while any media upload/send job is in flight. Used by ChatScreen to keep the
+    // MediaPreviewDialog open and guard its dismissal/send until uploads complete.
+    val isMediaUploading: Boolean
+        get() = mediaDelegate.isMediaUploading
+
     private val _searchResults = MutableStateFlow<List<com.synapse.social.studioasinc.shared.domain.model.chat.Message>>(emptyList())
     val searchResults: StateFlow<List<com.synapse.social.studioasinc.shared.domain.model.chat.Message>> = _searchResults.asStateFlow()
 
@@ -290,6 +309,7 @@ private val messageSyncUseCase: MessageSyncUseCase = MessageSyncUseCase(getMessa
     val resolvedChatId: StateFlow<String?> = _resolvedChatId.asStateFlow()
     private val loadingQuotedMessageIds = ConcurrentHashMap<String, Unit>()
     private val inFlightVoteIds = ConcurrentHashMap<String, Unit>()
+    private val markViewOnceConsumedInFlight = ConcurrentHashMap<String, Unit>()
     private val historyPaginationMutex = Mutex()
     private val activeMessageSyncs = ConcurrentHashMap<String, Deferred<Unit>>()
     private val emptyChatSyncCursors = ConcurrentHashMap<String, Pair<String, String>>()
@@ -333,6 +353,7 @@ private val messageSyncUseCase: MessageSyncUseCase = MessageSyncUseCase(getMessa
             isMuted = _isMuted.value,
             isMuteUpdating = _isMuteUpdating.value,
             canSendMessage = canSendMessage.value,
+            isMediaUploading = isMediaUploading,
             chatWallpaperType = chatWallpaperType.value,
             chatWallpaperValue = chatWallpaperValue.value,
             chatWallpaperBlur = chatWallpaperBlur.value,
@@ -829,17 +850,23 @@ private val messageSyncUseCase: MessageSyncUseCase = MessageSyncUseCase(getMessa
     }
 
     fun markViewOnceConsumed(messageId: String) {
+        if (messageId.isBlank()) return
+        if (markViewOnceConsumedInFlight.putIfAbsent(messageId, Unit) != null) return
         viewModelScope.launch {
-            markViewOnceConsumedUseCase(messageId).onSuccess {
-                messagingDelegate._messages.update { current ->
-                    with(messagingDelegate) {
-                        current.updateById(messageId) { msg ->
-                            val container = msg.metadataContainer ?: return@updateById msg
-                            val updatedViewOnce = container.viewOnce?.copy(isConsumed = true, remainingViews = 0)
-                            msg.copy(metadataContainer = container.copy(viewOnce = updatedViewOnce))
+            try {
+                markViewOnceConsumedUseCase(messageId).onSuccess {
+                    messagingDelegate._messages.update { current ->
+                        with(messagingDelegate) {
+                            current.updateById(messageId) { msg ->
+                                val container = msg.metadataContainer ?: return@updateById msg
+                                val updatedViewOnce = container.viewOnce?.copy(isConsumed = true, remainingViews = 0)
+                                msg.copy(metadataContainer = container.copy(viewOnce = updatedViewOnce))
+                            }
                         }
                     }
                 }
+            } finally {
+                markViewOnceConsumedInFlight.remove(messageId)
             }
         }
     }
@@ -1323,6 +1350,7 @@ private val messageSyncUseCase: MessageSyncUseCase = MessageSyncUseCase(getMessa
     fun assignCurrentChatToFolder(folderId: String) {
         val chatId = currentChatId ?: return
         viewModelScope.launch {
+            _folderAssignmentSaveStatus.value = FolderAssignmentSaveStatus.Saving
             val updated = chatFolders.value.map { folder ->
                 if (folder.id == folderId) {
                     folder.copy(
@@ -1343,7 +1371,12 @@ private val messageSyncUseCase: MessageSyncUseCase = MessageSyncUseCase(getMessa
                     )
                 }
             }
-            persistChatFolders(updated)
+            val success = persistChatFolders(updated)
+            _folderAssignmentSaveStatus.value = if (success) {
+                FolderAssignmentSaveStatus.Success
+            } else {
+                FolderAssignmentSaveStatus.Failure
+            }
         }
     }
 
