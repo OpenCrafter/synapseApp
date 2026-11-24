@@ -308,6 +308,7 @@ private val messageSyncUseCase: MessageSyncUseCase = MessageSyncUseCase(getMessa
     private val _resolvedChatId = MutableStateFlow<String?>(null)
     val resolvedChatId: StateFlow<String?> = _resolvedChatId.asStateFlow()
     private val loadingQuotedMessageIds = ConcurrentHashMap<String, Unit>()
+    private val markViewOnceConsumedInFlight = ConcurrentHashMap<String, Unit>()
     private val historyPaginationMutex = Mutex()
     private val activeMessageSyncs = ConcurrentHashMap<String, Deferred<Unit>>()
     private val emptyChatSyncCursors = ConcurrentHashMap<String, Pair<String, String>>()
@@ -842,17 +843,23 @@ private val messageSyncUseCase: MessageSyncUseCase = MessageSyncUseCase(getMessa
     }
 
     fun markViewOnceConsumed(messageId: String) {
+        if (messageId.isBlank()) return
+        if (markViewOnceConsumedInFlight.putIfAbsent(messageId, Unit) != null) return
         viewModelScope.launch {
-            markViewOnceConsumedUseCase(messageId).onSuccess {
-                messagingDelegate._messages.update { current ->
-                    with(messagingDelegate) {
-                        current.updateById(messageId) { msg ->
-                            val container = msg.metadataContainer ?: return@updateById msg
-                            val updatedViewOnce = container.viewOnce?.copy(isConsumed = true, remainingViews = 0)
-                            msg.copy(metadataContainer = container.copy(viewOnce = updatedViewOnce))
+            try {
+                markViewOnceConsumedUseCase(messageId).onSuccess {
+                    messagingDelegate._messages.update { current ->
+                        with(messagingDelegate) {
+                            current.updateById(messageId) { msg ->
+                                val container = msg.metadataContainer ?: return@updateById msg
+                                val updatedViewOnce = container.viewOnce?.copy(isConsumed = true, remainingViews = 0)
+                                msg.copy(metadataContainer = container.copy(viewOnce = updatedViewOnce))
+                            }
                         }
                     }
                 }
+            } finally {
+                markViewOnceConsumedInFlight.remove(messageId)
             }
         }
     }
