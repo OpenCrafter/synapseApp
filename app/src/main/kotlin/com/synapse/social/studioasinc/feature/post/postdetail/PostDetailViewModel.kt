@@ -529,7 +529,10 @@ class PostDetailViewModel @Inject constructor(
     }
 
     suspend fun deletePost(postId: String): Result<Unit> {
-        _uiState.update { it.copy(deleteSuccess = false, deleteError = null) }
+        // Guard against duplicate concurrent delete requests from rapid taps.
+        if (_uiState.value.isDeletingPost) return Result.failure(IllegalStateException("Delete already in progress"))
+
+        _uiState.update { it.copy(deleteSuccess = false, deleteError = null, isDeletingPost = true) }
         return postDetailRepository.deletePost(postId).also { result ->
             result.onSuccess {
                 _uiState.update { it.copy(deleteSuccess = true) }
@@ -539,6 +542,8 @@ class PostDetailViewModel @Inject constructor(
                     it.copy(deleteError = error.message ?: "Failed to delete post")
                 }
             }
+        }.also {
+            _uiState.update { it.copy(isDeletingPost = false) }
         }
     }
 
