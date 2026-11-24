@@ -17,6 +17,13 @@ data class CallUiState(
     /** True while the end-call request is in flight; used to disable the Confirm button and keep the dialog open. */
     val isEndingCall: Boolean = false,
     /**
+     * True while any call control (accept, decline, end, mute, camera, flip, media-type switch) is
+     * in flight. Guards rapid taps so only one backend call is launched at a time, mirroring the
+     * Post Detail / Feed guard patterns. Kept separate from [isEndingCall] because [end] and
+     * [endAndClose] are distinct user actions.
+     */
+    val isCallControlInFlight: Boolean = false,
+    /**
      * The kind of the last end-call failure, or null when none. Surfaced so the user is told
      * when ending a call fails instead of the dialog closing silently.
      */
