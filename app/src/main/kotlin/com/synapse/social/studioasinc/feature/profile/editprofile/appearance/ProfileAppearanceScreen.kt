@@ -231,7 +231,7 @@ fun ProfileAppearanceScreen(
 
         if (uiState.showRemoveCoverDialog) {
             AlertDialog(
-                onDismissRequest = { viewModel.onEvent(ProfileAppearanceEvent.DismissRemoveCoverDialog) },
+                onDismissRequest = { if (!uiState.isSaving) viewModel.onEvent(ProfileAppearanceEvent.DismissRemoveCoverDialog) },
                 title = { Text(text = stringResource(R.string.dialog_remove_background_title)) },
                 text = { Text(text = stringResource(R.string.dialog_remove_background_body)) },
                 confirmButton = {
@@ -244,7 +244,8 @@ fun ProfileAppearanceScreen(
                 },
                 dismissButton = {
                     TextButton(
-                        onClick = { viewModel.onEvent(ProfileAppearanceEvent.DismissRemoveCoverDialog) }
+                        onClick = { viewModel.onEvent(ProfileAppearanceEvent.DismissRemoveCoverDialog) },
+                        enabled = !uiState.isSaving
                     ) {
                         Text(text = stringResource(R.string.cancel))
                     }
