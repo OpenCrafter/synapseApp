@@ -52,7 +52,7 @@ fun AccountSettingsScreen(
             MediumTopAppBar(
                 title = { Text(stringResource(R.string.account_settings_title)) },
                 navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
+                    IconButton(onClick = onNavigateBack, enabled = !isLoading) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = stringResource(R.string.settings_back_description)
