@@ -5,6 +5,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material3.*
@@ -14,6 +15,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.synapse.social.studioasinc.R
 import com.synapse.social.studioasinc.feature.inbox.inbox.ChatInfoViewModel
@@ -139,8 +141,18 @@ fun DisappearingMessagesScreen(
                 onClick = {
                     viewModel.setDisappearingMode(chatId, selectedMode)
                 },
+                enabled = !uiState.isDisappearingModeUpdating,
                 modifier = Modifier.fillMaxWidth()
             ) {
+                if (uiState.isDisappearingModeUpdating) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(Spacing.space20),
+                        strokeWidth = 2.dp
+                    )
+                } else {
+                    Icon(Icons.Default.Add, contentDescription = null)
+                }
+                Spacer(modifier = Modifier.size(Spacing.space8))
                 Text(stringResource(R.string.action_apply))
             }
         }
