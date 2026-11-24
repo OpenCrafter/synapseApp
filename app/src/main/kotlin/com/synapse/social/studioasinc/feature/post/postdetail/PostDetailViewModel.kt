@@ -213,6 +213,8 @@ class PostDetailViewModel @Inject constructor(
                 postActionsRepository.updateLocalPost(optimisticPost.post)
 
                 reactionRepository.toggleReaction(postId, "post", reactionType, currentReaction, skipCheck = true).onFailure {
+                    // Revert optimistic local DB write so the cache does not retain a stale reaction.
+                    postActionsRepository.updateLocalPost(currentPost.post)
                     _uiState.update { it.copy(post = currentPost) }
                     PostEventBus.emit(PostEvent.Updated(currentPost.post))
                 }
