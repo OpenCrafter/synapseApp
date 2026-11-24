@@ -474,7 +474,11 @@ internal fun ProfileContent(
                     onCommentClick = { PostDetailActivity.start(context, comment.postId, comment.userId) },
                     onShareClick = { PostShareUtils.shareComment(context, comment.content) },
                     onRepostClick = { viewModel.resharePost(postCardState.post) },
-                    onBookmarkClick = { viewModel.toggleSave(postCardState.post) },
+                    onBookmarkClick = {
+                        if (!state.inFlightBookmarkIds.contains(postCardState.post.id)) {
+                            viewModel.toggleSave(postCardState.post)
+                        }
+                    },
                     onUserClick = { comment.userId.let { onNavigateToUserProfile(it) } },
                     onPostClick = {
                         PostDetailActivity.start(context, comment.postId, comment.userId)

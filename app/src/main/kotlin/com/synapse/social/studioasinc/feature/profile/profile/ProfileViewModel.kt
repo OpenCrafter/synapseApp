@@ -80,6 +80,9 @@ data class ProfileScreenState(
     val showMoreMenu: Boolean = false,
     val likedPostIds: Set<String> = emptySet(),
     val savedPostIds: Set<String> = emptySet(),
+    // Post IDs with a bookmark (save) toggle currently in flight. Scoped per post so that a rapid
+    // tap on one post never blocks bookmark taps on a different post.
+    val inFlightBookmarkIds: Set<String> = emptySet(),
     val showViewAsSheet: Boolean = false,
     val showReportDialog: Boolean = false,
     val reportUserLoading: Boolean = false,
@@ -479,35 +482,50 @@ class ProfileViewModel @Inject constructor(
      * post back rather than leaving the UI lying about what the backend holds.
      */
     fun toggleSave(post: Post) {
+        // Guard against rapid-tap duplicate requests: ignore a second tap on the same post while its
+        // bookmark toggle is in flight. Other posts remain tappable.
+        if (currentState.inFlightBookmarkIds.contains(post.id)) return
+        // Mark in flight synchronously before launching so a near-simultaneous second tap cannot pass
+        // the guard before the coroutine sets the marker (TOCTOU). Mirrors SearchViewModel.bookmarkBusyPostIds.
+        updateState { it.copy(inFlightBookmarkIds = it.inFlightBookmarkIds + post.id) }
+
         val isSaved = post.isBookmarked
         val currentUserId = _state.value.currentUserId.ifBlank { getCurrentUserIdUseCase().orEmpty() }
-        if (currentUserId.isBlank()) return
+        if (currentUserId.isBlank()) {
+            updateState { it.copy(inFlightBookmarkIds = it.inFlightBookmarkIds - post.id) }
+            return
+        }
 
         val optimisticPost = post.copy(isBookmarked = !isSaved)
         viewModelScope.launch {
-            _state.update { state ->
-                state.copy(
-                    posts = state.posts.map { item ->
-                        if (item is Post && item.id == post.id) optimisticPost else item
-                    },
-                    savedPostIds = state.savedPostIds.withBookmark(post.id, saved = !isSaved)
-                )
-            }
-            PostEventBus.emit(PostEvent.Updated(optimisticPost))
-
-            bookmarkPostUseCase(post.id, currentUserId, isSaved).collect { result ->
-                result.onFailure {
-                    _state.update { state ->
-                        state.copy(
-                            posts = state.posts.map { item ->
-                                if (item is Post && item.id == post.id) post else item
-                            },
-                            savedPostIds = state.savedPostIds.withBookmark(post.id, saved = isSaved)
-                        )
-                    }
-                    // Put the original back for everyone else already showing this post too.
-                    PostEventBus.emit(PostEvent.Updated(post))
+            try {
+                _state.update { state ->
+                    state.copy(
+                        posts = state.posts.map { item ->
+                            if (item is Post && item.id == post.id) optimisticPost else item
+                        },
+                        savedPostIds = state.savedPostIds.withBookmark(post.id, saved = !isSaved)
+                    )
                 }
+                PostEventBus.emit(PostEvent.Updated(optimisticPost))
+
+                bookmarkPostUseCase(post.id, currentUserId, isSaved).collect { result ->
+                    result.onFailure {
+                        _state.update { state ->
+                            state.copy(
+                                posts = state.posts.map { item ->
+                                    if (item is Post && item.id == post.id) post else item
+                                },
+                                savedPostIds = state.savedPostIds.withBookmark(post.id, saved = isSaved)
+                            )
+                        }
+                        // Put the original back for everyone else already showing this post too.
+                        PostEventBus.emit(PostEvent.Updated(post))
+                    }
+                }
+            } finally {
+                // Always clear the in-flight marker so the user can retry after success or failure.
+                updateState { it.copy(inFlightBookmarkIds = it.inFlightBookmarkIds - post.id) }
             }
         }
     }
