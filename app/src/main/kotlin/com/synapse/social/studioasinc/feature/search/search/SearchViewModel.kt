@@ -68,7 +68,8 @@ data class SearchUiState(
     val postSummary: String? = null,
     val summaryError: String? = null,
     val bookmarkBusyPostIds: Set<String> = emptySet(),
-    val followingBusyAccountIds: Set<String> = emptySet()
+    val followingBusyAccountIds: Set<String> = emptySet(),
+    val resharingBusyPostIds: Set<String> = emptySet()
 )
 
 @HiltViewModel
@@ -532,33 +533,42 @@ class SearchViewModel @Inject constructor(
     }
 
     fun resharePost(post: com.synapse.social.studioasinc.domain.model.Post) {
+        if (currentState.resharingBusyPostIds.contains(post.id)) return
+        val isCurrentlyReshared = post.isReshared
+        val optimisticPost = post.copy(
+            isReshared = !isCurrentlyReshared,
+            resharesCount = if (isCurrentlyReshared) maxOf(0, post.resharesCount - 1) else post.resharesCount + 1
+        )
+        updateState { state ->
+            state.copy(posts = state.posts.map { if (it.id == post.id) optimisticPost else it })
+        }
+        PostEventBus.emit(PostEvent.Updated(optimisticPost))
+
+        // Mark busy synchronously before the network call so a rapid second tap sees
+        // resharingBusyPostIds containing post.id and does not issue the opposite
+        // operation while the first request is still in flight. Matches bookmarkBusyPostIds.
+        updateState { it.copy(resharingBusyPostIds = it.resharingBusyPostIds + post.id) }
         viewModelScope.launch {
-            val isCurrentlyReshared = post.isReshared
-            val optimisticPost = post.copy(
-                isReshared = !isCurrentlyReshared,
-                resharesCount = if (isCurrentlyReshared) maxOf(0, post.resharesCount - 1) else post.resharesCount + 1
-            )
-            updateState { state ->
-                state.copy(posts = state.posts.map { if (it.id == post.id) optimisticPost else it })
-            }
-            PostEventBus.emit(PostEvent.Updated(optimisticPost))
-
-            val result = if (isCurrentlyReshared) {
-                unrepostPostUseCase(post.id)
-            } else {
-                repostPostUseCase(post.id)
-            }
-
-            result.onSuccess {
-                performSearch(currentState.query)
-            }.onFailure {
-                updateState { state ->
-                    state.copy(posts = state.posts.map { if (it.id == post.id) post else it })
+            try {
+                val result = if (isCurrentlyReshared) {
+                    unrepostPostUseCase(post.id)
+                } else {
+                    repostPostUseCase(post.id)
                 }
-                PostEventBus.emit(PostEvent.Updated(post))
-                updateState {
-                    it.copy(error = it.error ?: application.getString(R.string.error_reshare_failed))
+
+                result.onSuccess {
+                    performSearch(currentState.query)
+                }.onFailure {
+                    updateState { state ->
+                        state.copy(posts = state.posts.map { if (it.id == post.id) post else it })
+                    }
+                    PostEventBus.emit(PostEvent.Updated(post))
+                    updateState {
+                        it.copy(error = it.error ?: application.getString(R.string.error_reshare_failed))
+                    }
                 }
+            } finally {
+                updateState { it.copy(resharingBusyPostIds = it.resharingBusyPostIds - post.id) }
             }
         }
     }
