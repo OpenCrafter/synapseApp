@@ -361,6 +361,8 @@ class PostDetailViewModel @Inject constructor(
     }
 
     fun deleteComment(commentId: String) {
+        // Guard against duplicate concurrent delete requests from rapid taps on the same comment.
+        if (_uiState.value.commentActionsLoading.contains(commentId)) return
         viewModelScope.launch {
             _uiState.update { it.copy(commentActionsLoading = it.commentActionsLoading + commentId) }
             commentRepository.deleteComment(commentId).onSuccess {
@@ -639,6 +641,8 @@ class PostDetailViewModel @Inject constructor(
     }
 
     fun reportComment(commentId: String, reason: String, description: String?) {
+        // Guard against duplicate concurrent report requests from rapid taps on the same comment.
+        if (_uiState.value.commentActionsLoading.contains(commentId)) return
         viewModelScope.launch {
             _uiState.update { it.copy(commentActionsLoading = it.commentActionsLoading + commentId) }
             commentRepository.reportComment(commentId, reason).onSuccess {
