@@ -168,55 +168,57 @@ class PostDetailViewModel @Inject constructor(
 
     fun toggleReaction(reactionType: ReactionType) {
         val postId = currentPostId ?: return
+        if (_uiState.value.isTogglingReaction) return
         val currentPost = _uiState.value.post ?: return
 
-        // Guard against duplicate concurrent reaction toggles from rapid taps.
-        if (_uiState.value.isTogglingReaction) return
-
+        _uiState.update { it.copy(isTogglingReaction = true) }
         viewModelScope.launch {
-            _uiState.update { it.copy(isTogglingReaction = true) }
-            val currentReaction = currentPost.userReaction
-            val isRemoving = currentReaction == reactionType
-            val newReaction = if (isRemoving) null else reactionType
+            try {
+                val currentReaction = currentPost.userReaction
+                val isRemoving = currentReaction == reactionType
+                val newReaction = if (isRemoving) null else reactionType
 
-            val countChange = when {
-                isRemoving -> -1
-                currentReaction == null -> 1
-                else -> 0
-            }
-
-            val updatedReactions = currentPost.reactionSummary.toMutableMap()
-            if (isRemoving) {
-                val currentCount = updatedReactions[reactionType] ?: 1
-                updatedReactions[reactionType] = maxOf(0, currentCount - 1)
-            } else {
-                if (currentReaction != null) {
-                    val oldTypeCount = updatedReactions[currentReaction] ?: 1
-                    updatedReactions[currentReaction] = maxOf(0, oldTypeCount - 1)
+                val countChange = when {
+                    isRemoving -> -1
+                    currentReaction == null -> 1
+                    else -> 0
                 }
-                val newTypeCount = updatedReactions[reactionType] ?: 0
-                updatedReactions[reactionType] = newTypeCount + 1
-            }
 
-            val optimisticPost = currentPost.copy(
-                post = currentPost.post.copy(
-                    likesCount = maxOf(0, currentPost.post.likesCount + countChange),
-                    reactions = updatedReactions,
-                    userReaction = newReaction
-                ),
-                userReaction = newReaction,
-                reactionSummary = updatedReactions
-            )
+                val updatedReactions = currentPost.reactionSummary.toMutableMap()
+                if (isRemoving) {
+                    val currentCount = updatedReactions[reactionType] ?: 1
+                    updatedReactions[reactionType] = maxOf(0, currentCount - 1)
+                } else {
+                    if (currentReaction != null) {
+                        val oldTypeCount = updatedReactions[currentReaction] ?: 1
+                        updatedReactions[currentReaction] = maxOf(0, oldTypeCount - 1)
+                    }
+                    val newTypeCount = updatedReactions[reactionType] ?: 0
+                    updatedReactions[reactionType] = newTypeCount + 1
+                }
 
-            _uiState.update { it.copy(post = optimisticPost) }
-            PostEventBus.emit(PostEvent.Updated(optimisticPost.post))
+                val optimisticPost = currentPost.copy(
+                    post = currentPost.post.copy(
+                        likesCount = maxOf(0, currentPost.post.likesCount + countChange),
+                        reactions = updatedReactions,
+                        userReaction = newReaction
+                    ),
+                    userReaction = newReaction,
+                    reactionSummary = updatedReactions
+                )
 
-            postActionsRepository.updateLocalPost(optimisticPost.post)
+                _uiState.update { it.copy(post = optimisticPost) }
+                PostEventBus.emit(PostEvent.Updated(optimisticPost.post))
 
-            reactionRepository.toggleReaction(postId, "post", reactionType, currentReaction, skipCheck = true).onFailure {
-                _uiState.update { it.copy(post = currentPost) }
-                PostEventBus.emit(PostEvent.Updated(currentPost.post))
-            }.also {
+                postActionsRepository.updateLocalPost(optimisticPost.post)
+
+                reactionRepository.toggleReaction(postId, "post", reactionType, currentReaction, skipCheck = true).onFailure {
+                    // Revert optimistic local DB write so the cache does not retain a stale reaction.
+                    postActionsRepository.updateLocalPost(currentPost.post)
+                    _uiState.update { it.copy(post = currentPost) }
+                    PostEventBus.emit(PostEvent.Updated(currentPost.post))
+                }
+            } finally {
                 _uiState.update { it.copy(isTogglingReaction = false) }
             }
         }
