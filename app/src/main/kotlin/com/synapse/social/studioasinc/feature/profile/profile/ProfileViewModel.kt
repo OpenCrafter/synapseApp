@@ -98,6 +98,15 @@ data class ProfileScreenState(
     val isMuting: Boolean = false,
     val isRevokingVote: Boolean = false,
     val isVotePollInFlight: Boolean = false,
+    // True while a toggle-comments action on a profile post is in flight; used to disable the
+    // action button and prevent duplicate requests on rapid tap.
+    val isTogglingComments: Boolean = false,
+    // True while a delete-post action on a profile post is in flight; used to disable the
+    // action button and prevent duplicate requests on rapid tap.
+    val isDeletingPost: Boolean = false,
+    // True while a report-post action on a profile post is in flight; used to disable the
+    // action button and prevent duplicate requests on rapid tap.
+    val isReportingPost: Boolean = false,
     val reportPostSuccess: Boolean = false,
     val reportPostError: String? = null,
     val isSummarizing: Boolean = false,
@@ -555,18 +564,26 @@ class ProfileViewModel @Inject constructor(
     }
 
     suspend fun toggleComments(post: Post): Result<Unit> {
-        val result = postRepository.toggleComments(post.id)
-        if (result.isSuccess) {
-            val toggled = post.copy(
-                postDisableReplies = if (post.postDisableReplies == "true") "false" else "true"
-            )
-            PostEventBus.emit(PostEvent.Updated(toggled))
+        // Guard against rapid-tap duplicate toggle-comments requests.
+        if (_state.value.isTogglingComments) return Result.failure(IllegalStateException("Toggle comments already in progress"))
+        _state.update { it.copy(isTogglingComments = true) }
+        return postRepository.toggleComments(post.id).also { result ->
+            _state.update { it.copy(isTogglingComments = false) }
+            if (result.isSuccess) {
+                val toggled = post.copy(
+                    postDisableReplies = if (post.postDisableReplies == "true") "false" else "true"
+                )
+                PostEventBus.emit(PostEvent.Updated(toggled))
+            }
         }
-        return result
     }
 
     suspend fun deletePost(postId: String): Result<Unit> {
+        // Guard against rapid-tap duplicate delete requests.
+        if (_state.value.isDeletingPost) return Result.failure(IllegalStateException("Delete already in progress"))
+        _state.update { it.copy(isDeletingPost = true) }
         return deletePostUseCase(postId).first().also { result ->
+            _state.update { it.copy(isDeletingPost = false) }
             result.onSuccess {
                 PostEventBus.emit(PostEvent.Deleted(postId))
             }
@@ -574,7 +591,12 @@ class ProfileViewModel @Inject constructor(
     }
 
     suspend fun reportPost(postId: String, reason: String): Result<Unit> {
-        return reportPostUseCase(postId, reason, null).first()
+        // Guard against rapid-tap duplicate report requests.
+        if (_state.value.isReportingPost) return Result.failure(IllegalStateException("Report already in progress"))
+        _state.update { it.copy(isReportingPost = true) }
+        return reportPostUseCase(postId, reason, null).first().also { result ->
+            _state.update { it.copy(isReportingPost = false) }
+        }
     }
 
     fun clearReportPostStatus() {
