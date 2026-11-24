@@ -473,6 +473,8 @@ class FeedViewModel @Inject constructor(
     }
 
     fun summarizePost(post: Post) {
+        // Guard against duplicate concurrent summarize requests from rapid taps.
+        if (currentState.isSummarizing) return
         val content = post.postText.orEmpty().trim()
         if (content.isBlank()) {
             updateState { it.copy(summaryError = "No text content to summarize.") }
