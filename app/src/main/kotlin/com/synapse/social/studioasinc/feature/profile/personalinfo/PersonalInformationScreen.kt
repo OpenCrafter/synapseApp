@@ -113,10 +113,10 @@ fun PersonalInformationScreen(
                 PersonalInformationContent(
                     uiState = uiState,
                     paddingValues = paddingValues,
-                    onPronounsClick = { showPronounsDialog = true },
-                    onBirthdayClick = { showBirthdayPicker = true },
-                    onGenderClick = { showGenderDialog = true },
-                    onRelationshipStatusClick = { showRelationshipStatusDialog = true }
+                    onPronounsClick = { if (!uiState.isSaving) showPronounsDialog = true },
+                    onBirthdayClick = { if (!uiState.isSaving) showBirthdayPicker = true },
+                    onGenderClick = { if (!uiState.isSaving) showGenderDialog = true },
+                    onRelationshipStatusClick = { if (!uiState.isSaving) showRelationshipStatusDialog = true }
                 )
             }
         }
