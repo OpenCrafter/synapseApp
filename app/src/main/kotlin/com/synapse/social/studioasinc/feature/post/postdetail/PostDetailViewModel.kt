@@ -582,7 +582,7 @@ class PostDetailViewModel @Inject constructor(
         return try {
             postActionsRepository.toggleComments(postId).also { result ->
                 result.onFailure { e ->
-                    _uiState.update { it.copy(post = currentPost) }
+                    _uiState.update { it.copy(post = currentPost, commentActionError = e.message ?: "Failed to toggle comments") }
                     PostEventBus.emit(PostEvent.Updated(currentPost.post))
                 }
             }
