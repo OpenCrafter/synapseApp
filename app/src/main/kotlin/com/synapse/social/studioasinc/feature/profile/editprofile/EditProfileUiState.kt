@@ -39,7 +39,8 @@ data class EditProfileUiState(
     val discordTag: String = "",
     val githubProfile: String = "",
     val personalWebsite: String = "",
-    val publicEmail: String = ""
+    val publicEmail: String = "",
+    val showUnsavedChangesDialog: Boolean = false
 )
 
 sealed class UploadState {
@@ -92,6 +93,8 @@ sealed class EditProfileEvent {
     data class PublicEmailChanged(val email: String) : EditProfileEvent()
     object DismissShareToFeedDialog : EditProfileEvent()
     object NavigateToProfessionalProfile : EditProfileEvent()
+    object ConfirmDiscardUnsaved : EditProfileEvent()
+    object DismissUnsavedDialog : EditProfileEvent()
     object ClearPendingAvatar : EditProfileEvent()
 }
 

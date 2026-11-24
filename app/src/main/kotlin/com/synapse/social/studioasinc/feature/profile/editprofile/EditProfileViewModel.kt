@@ -140,7 +140,23 @@ class EditProfileViewModel @Inject constructor(
                 saveProfile()
             }
             EditProfileEvent.BackClicked -> {
-                viewModelScope.launch { _navigationEvents.emit(EditProfileNavigation.NavigateBack) }
+                val state = _uiState.value
+                if (state.hasChanges) {
+                    _uiState.update { it.copy(showUnsavedChangesDialog = true) }
+                } else {
+                    viewModelScope.launch { _navigationEvents.emit(EditProfileNavigation.NavigateBack) }
+                }
+            }
+            EditProfileEvent.ConfirmDiscardUnsaved -> {
+                _uiState.update {
+                    it.copy(showUnsavedChangesDialog = false, hasChanges = false)
+                }
+                viewModelScope.launch {
+                    _navigationEvents.emit(EditProfileNavigation.NavigateBack)
+                }
+            }
+            EditProfileEvent.DismissUnsavedDialog -> {
+                _uiState.update { it.copy(showUnsavedChangesDialog = false) }
             }
             EditProfileEvent.ProfileMediaClicked -> {
                 viewModelScope.launch { _navigationEvents.emit(EditProfileNavigation.NavigateToProfileMedia) }
