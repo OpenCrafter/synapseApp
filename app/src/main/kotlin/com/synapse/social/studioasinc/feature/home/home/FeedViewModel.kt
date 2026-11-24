@@ -71,7 +71,11 @@ data class FeedUiState(
     // Post IDs with a poll vote currently in flight. Scoped per post so that a rapid tap never
     // fires duplicate vote requests for the same post. Observable via UI state so the poll option
     // can be guarded while the vote is in flight.
-    val inFlightVotePollIds: Set<String> = emptySet()
+    val inFlightVotePollIds: Set<String> = emptySet(),
+    // Post IDs with a delete submission currently in flight. Scoped per post so that a rapid tap
+    // never fires duplicate delete requests for the same post. Observable via UI state so the
+    // Delete button can be disabled while the deletion is in flight.
+    val inFlightDeleteIds: Set<String> = emptySet()
 )
 
 @HiltViewModel
@@ -332,7 +336,14 @@ class FeedViewModel @Inject constructor(
     }
 
     suspend fun deletePost(post: Post): Result<Unit> {
+        // Guard against rapid-tap duplicate delete requests: ignore a second tap on the same post
+        // while its deletion is in flight. Other posts remain deletable.
+        if (currentState.inFlightDeleteIds.contains(post.id)) return Result.success(Unit)
+        // Mark in flight before any suspension point so a concurrent call sees the marker.
+        updateState { it.copy(inFlightDeleteIds = it.inFlightDeleteIds + post.id) }
         return deletePostUseCase(post.id).first().also { result ->
+            // Always clear the in-flight marker so the user can retry after success or failure.
+            updateState { it.copy(inFlightDeleteIds = it.inFlightDeleteIds - post.id) }
             result.onFailure { e ->
                 e.printStackTrace()
                 updateState { it.copy(error = e.message ?: "Failed to delete post") }
