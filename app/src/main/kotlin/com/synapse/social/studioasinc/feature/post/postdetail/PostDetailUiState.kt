@@ -36,6 +36,7 @@ data class PostDetailUiState(
     val summaryError: String? = null,
     val voteError: String? = null,
     val lastVoteOptionIndex: Int? = null,
+    val isVoting: Boolean = false,
     val revokeError: String? = null,
     val isRevokingVote: Boolean = false,
     val isBookmarking: Boolean = false,
