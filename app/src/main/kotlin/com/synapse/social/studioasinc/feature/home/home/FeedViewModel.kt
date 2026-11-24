@@ -83,7 +83,11 @@ data class FeedUiState(
     // Post IDs with a quote post operation currently in flight. Scoped per post so that a rapid tap
     // never fires duplicate quote requests for the same post. Observable via UI state so the Quote
     // button can be disabled while the operation is in flight.
-    val inFlightQuotePostIds: Set<String> = emptySet()
+    val inFlightQuotePostIds: Set<String> = emptySet(),
+    // Post IDs with a comments toggle currently in flight. Scoped per post so that a rapid tap
+    // never fires duplicate toggle comments requests for the same post. Observable via UI state so
+    // the toggle comments button can be disabled while the operation is in flight.
+    val inFlightToggleCommentsIds: Set<String> = emptySet()
 )
 
 @HiltViewModel
@@ -372,12 +376,22 @@ class FeedViewModel @Inject constructor(
     }
 
     suspend fun toggleComments(post: Post): Result<Unit> {
-        return togglePostCommentsUseCase(post.id)
-            .first()
-            .onFailure { e ->
-                e.printStackTrace()
-                updateState { it.copy(error = e.message ?: "Failed to toggle comments") }
-            }
+        // Guard against rapid-tap duplicate toggle comments requests: ignore a call on the same
+        // post while its toggle operation is in flight. Other posts remain toggleable.
+        if (currentState.inFlightToggleCommentsIds.contains(post.id)) {
+            return Result.failure(Exception("Toggle comments already in flight for post ${post.id}"))
+        }
+        updateState { it.copy(inFlightToggleCommentsIds = it.inFlightToggleCommentsIds + post.id) }
+        try {
+            return togglePostCommentsUseCase(post.id)
+                .first()
+                .onFailure { e ->
+                    e.printStackTrace()
+                    updateState { it.copy(error = e.message ?: "Failed to toggle comments") }
+                }
+        } finally {
+            updateState { it.copy(inFlightToggleCommentsIds = it.inFlightToggleCommentsIds - post.id) }
+        }
     }
 
     fun reportPost(postId: String, reason: String) {
