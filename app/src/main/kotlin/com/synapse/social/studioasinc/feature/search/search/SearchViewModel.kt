@@ -71,7 +71,13 @@ data class SearchUiState(
     val followingBusyAccountIds: Set<String> = emptySet(),
     // User IDs with a block operation currently in flight. Scoped per user so that a rapid tap on
     // one user never blocks block taps on a different user.
-    val blockingBusyUserIds: Set<String> = emptySet()
+    val blockingBusyUserIds: Set<String> = emptySet(),
+    // Post IDs with a delete operation currently in flight. Scoped per post so that a rapid tap
+    // never fires duplicate delete requests for the same post.
+    val deletingBusyPostIds: Set<String> = emptySet(),
+    // Post IDs with a toggle-comments operation currently in flight. Scoped per post so that a
+    // rapid tap never fires duplicate toggle-comments requests for the same post.
+    val togglingCommentsBusyPostIds: Set<String> = emptySet()
 )
 
 @HiltViewModel
@@ -448,7 +454,16 @@ class SearchViewModel @Inject constructor(
     }
 
     suspend fun deletePost(post: com.synapse.social.studioasinc.domain.model.Post): Result<Unit> {
+        // Guard against rapid-tap duplicate delete requests: ignore a second tap on the same post
+        // while its deletion is in flight. Other posts remain deletable.
+        if (currentState.deletingBusyPostIds.contains(post.id)) {
+            return Result.failure(IllegalStateException("Delete already in progress for post ${post.id}"))
+        }
+        // Mark in flight before any suspension point so a concurrent call sees the marker.
+        updateState { it.copy(deletingBusyPostIds = it.deletingBusyPostIds + post.id) }
         return deletePostUseCase(post.id).first().also { result ->
+            // Always clear the in-flight marker so the user can retry after success or failure.
+            updateState { it.copy(deletingBusyPostIds = it.deletingBusyPostIds - post.id) }
             result.onSuccess {
                 updateState { state -> state.copy(posts = state.posts.filter { it.id != post.id }) }
             }.onFailure { err -> updateState { it.copy(error = err.message) } }
@@ -456,8 +471,19 @@ class SearchViewModel @Inject constructor(
     }
 
     suspend fun toggleComments(post: com.synapse.social.studioasinc.domain.model.Post): Result<Unit> {
+        // Guard against rapid-tap duplicate toggle-comments requests: ignore a second tap on the
+        // same post while its toggle is in flight.
+        if (currentState.togglingCommentsBusyPostIds.contains(post.id)) {
+            return Result.failure(IllegalStateException("Toggle comments already in progress for post ${post.id}"))
+        }
+        // Mark in flight before any suspension point.
+        updateState { it.copy(togglingCommentsBusyPostIds = it.togglingCommentsBusyPostIds + post.id) }
         return togglePostCommentsUseCase(post.id)
             .first()
+            .also { result ->
+                // Always clear the in-flight marker so the user can retry after success or failure.
+                updateState { it.copy(togglingCommentsBusyPostIds = it.togglingCommentsBusyPostIds - post.id) }
+            }
             .onFailure { err -> updateState { it.copy(error = err.message) } }
     }
 
