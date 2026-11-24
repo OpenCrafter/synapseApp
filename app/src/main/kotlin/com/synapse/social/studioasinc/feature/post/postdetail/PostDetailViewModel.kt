@@ -573,7 +573,10 @@ class PostDetailViewModel @Inject constructor(
     }
 
     suspend fun blockUser(userId: String): Result<Unit> {
-        _uiState.update { it.copy(blockSuccess = false, blockError = null) }
+        // Guard against duplicate concurrent block requests from rapid taps.
+        if (_uiState.value.isBlockingUser) return Result.failure(IllegalStateException("Block already in progress"))
+
+        _uiState.update { it.copy(blockSuccess = false, blockError = null, isBlockingUser = true) }
 
         return blockUserUseCase(userId)
             .onSuccess {
@@ -583,6 +586,8 @@ class PostDetailViewModel @Inject constructor(
                 _uiState.update {
                     it.copy(blockError = error.message ?: "Failed to block user")
                 }
+            }.also {
+                _uiState.update { it.copy(isBlockingUser = false) }
             }
     }
     
