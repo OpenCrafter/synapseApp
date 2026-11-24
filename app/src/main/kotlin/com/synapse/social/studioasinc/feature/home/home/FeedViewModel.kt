@@ -428,16 +428,23 @@ class FeedViewModel @Inject constructor(
     suspend fun blockUser(userId: String): Result<Unit> {
         // Guard against rapid-tap duplicate block requests: ignore a second call for the same user
         // while a block is in flight. Other users remain blockable.
-        if (currentState.inFlightBlockUserIds.contains(userId)) {
-            return Result.success(Unit)
+        // Atomically check-and-set the in-flight marker to avoid a TOCTOU race between two
+        // concurrent taps both passing the guard before either marks the user in flight.
+        var alreadyInFlight = false
+        updateState { state ->
+            if (state.inFlightBlockUserIds.contains(userId)) {
+                alreadyInFlight = true
+                state
+            } else {
+                alreadyInFlight = false
+                state.copy(
+                    inFlightBlockUserIds = state.inFlightBlockUserIds + userId,
+                    blockSuccess = false,
+                    blockError = null
+                )
+            }
         }
-        // Mark in flight and reset block status before any suspension point so a concurrent call
-        // sees the marker. Combined into a single updateState to avoid redundant state emissions.
-        updateState { it.copy(
-            inFlightBlockUserIds = it.inFlightBlockUserIds + userId,
-            blockSuccess = false,
-            blockError = null
-        ) }
+        if (alreadyInFlight) return Result.success(Unit)
 
         return try {
             blockUserUseCase(userId).also { result ->
@@ -452,7 +459,6 @@ class FeedViewModel @Inject constructor(
                     }
                 }
             }
-            Result.success(Unit)
         } finally {
             // Always clear the in-flight marker so the user can retry after success or failure.
             updateState { it.copy(inFlightBlockUserIds = it.inFlightBlockUserIds - userId) }
