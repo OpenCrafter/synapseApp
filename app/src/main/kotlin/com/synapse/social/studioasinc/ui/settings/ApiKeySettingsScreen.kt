@@ -64,7 +64,10 @@ fun ApiKeySettingsScreen(
             MediumTopAppBar(
                 title = { Text(stringResource(R.string.settings_api_key_title)) },
                 navigationIcon = {
-                    IconButton(onClick = onBackClick) {
+                    IconButton(
+                        onClick = onBackClick,
+                        enabled = !isLoading && addApiKeyStatus !is AddApiKeyStatus.Adding
+                    ) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 },
