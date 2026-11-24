@@ -80,6 +80,9 @@ data class ProfileScreenState(
     val showMoreMenu: Boolean = false,
     val likedPostIds: Set<String> = emptySet(),
     val savedPostIds: Set<String> = emptySet(),
+    // Post IDs with a reaction (like/oppose) toggle currently in flight. Scoped per post so that a
+    // rapid tap on one post never blocks reaction taps on a different post.
+    val inFlightReactionIds: Set<String> = emptySet(),
     val showViewAsSheet: Boolean = false,
     val showReportDialog: Boolean = false,
     val reportUserLoading: Boolean = false,
@@ -416,11 +419,22 @@ class ProfileViewModel @Inject constructor(
     }
 
     fun reactToPost(post: Post, reactionType: ReactionType) {
+        // Guard against rapid-tap duplicate requests: ignore a second tap on the same post while its
+        // reaction toggle is in flight. Other posts remain tappable.
+        if (_state.value.inFlightReactionIds.contains(post.id)) return
+        // Mark in flight synchronously before launching so a near-simultaneous second tap cannot pass
+        // the guard before the coroutine sets the marker (TOCTOU). Mirrors FeedViewModel.inFlightReactionIds.
+        _state.update { it.copy(inFlightReactionIds = it.inFlightReactionIds + post.id) }
         viewModelScope.launch {
-            reactToPostUseCase(post, reactionType).collect { result ->
-                result.onSuccess { updatedPost ->
-                     PostEventBus.emit(PostEvent.Updated(updatedPost))
+            try {
+                reactToPostUseCase(post, reactionType).collect { result ->
+                    result.onSuccess { updatedPost ->
+                         PostEventBus.emit(PostEvent.Updated(updatedPost))
+                    }
                 }
+            } finally {
+                // Always clear the in-flight marker so the user can retry after success or failure.
+                _state.update { it.copy(inFlightReactionIds = it.inFlightReactionIds - post.id) }
             }
         }
     }
