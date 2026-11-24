@@ -289,6 +289,7 @@ private val messageSyncUseCase: MessageSyncUseCase = MessageSyncUseCase(getMessa
     private val _resolvedChatId = MutableStateFlow<String?>(null)
     val resolvedChatId: StateFlow<String?> = _resolvedChatId.asStateFlow()
     private val loadingQuotedMessageIds = ConcurrentHashMap<String, Unit>()
+    private val inFlightVoteIds = ConcurrentHashMap<String, Unit>()
     private val historyPaginationMutex = Mutex()
     private val activeMessageSyncs = ConcurrentHashMap<String, Deferred<Unit>>()
     private val emptyChatSyncCursors = ConcurrentHashMap<String, Pair<String, String>>()
@@ -780,10 +781,13 @@ private val messageSyncUseCase: MessageSyncUseCase = MessageSyncUseCase(getMessa
             _error.value = "Poll is closed"
             return
         }
+        val voteKey = "$messageId:$optionId"
+        if (inFlightVoteIds.putIfAbsent(voteKey, Unit) != null) return
 
         viewModelScope.launch {
-            val result = voteInPollUseCase(messageId, optionId, poll.pollId)
-            if (result.isSuccess) {
+            try {
+                val result = voteInPollUseCase(messageId, optionId, poll.pollId)
+                if (result.isSuccess) {
                 messagingDelegate._messages.update { current ->
                     with(messagingDelegate) {
                         current.updateById(messageId) { msg ->
@@ -813,7 +817,10 @@ private val messageSyncUseCase: MessageSyncUseCase = MessageSyncUseCase(getMessa
             } else {
                 _error.value = result.exceptionOrNull()?.message ?: "Failed to vote"
             }
+        } finally {
+            inFlightVoteIds.remove(voteKey)
         }
+    }
     }
 
     fun restartSubscriptions() {
