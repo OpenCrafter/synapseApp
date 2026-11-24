@@ -470,7 +470,11 @@ internal fun ProfileContent(
 
                 PostCard(
                     state = postCardState,
-                    onLikeClick = { viewModel.reactToPost(postCardState.post, com.synapse.social.studioasinc.domain.model.ReactionType.LIKE) },
+                    onLikeClick = {
+                        if (!state.inFlightReactionIds.contains(postCardState.post.id)) {
+                            viewModel.reactToPost(postCardState.post, com.synapse.social.studioasinc.domain.model.ReactionType.LIKE)
+                        }
+                    },
                     onCommentClick = { PostDetailActivity.start(context, comment.postId, comment.userId) },
                     onShareClick = { PostShareUtils.shareComment(context, comment.content) },
                     onRepostClick = { viewModel.resharePost(postCardState.post) },
@@ -488,7 +492,11 @@ internal fun ProfileContent(
                     onOptionsClick = { currentOnShowPostOptions(postCardState.post) },
                     showOptions = false,
                     onPollVote = { /* No polls in comments */ },
-                    onReactionSelected = { reaction -> viewModel.reactToPost(postCardState.post, reaction) },
+                    onReactionSelected = { reaction ->
+                        if (!state.inFlightReactionIds.contains(postCardState.post.id)) {
+                            viewModel.reactToPost(postCardState.post, reaction)
+                        }
+                    },
                     onQuoteClick = { currentOnNavigateToQuotePost(postCardState.post.id) },
                     modifier = Modifier.padding(bottom = Spacing.space8)
                 )
