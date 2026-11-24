@@ -67,7 +67,11 @@ data class FeedUiState(
     val inFlightReactionIds: Set<String> = emptySet(),
     // Post IDs with a reshare (repost/unrepost) currently in flight. Scoped per post. Observable via
     // UI state so the Repost button can be disabled while the reshare is in flight.
-    val inFlightReshareIds: Set<String> = emptySet()
+    val inFlightReshareIds: Set<String> = emptySet(),
+    // Post IDs with a poll vote currently in flight. Scoped per post so that a rapid tap never
+    // fires duplicate vote requests for the same post. Observable via UI state so the poll option
+    // can be guarded while the vote is in flight.
+    val inFlightVotePollIds: Set<String> = emptySet()
 )
 
 @HiltViewModel
@@ -204,14 +208,25 @@ class FeedViewModel @Inject constructor(
     }
 
     fun votePoll(post: Post, optionIndex: Int) {
+        // Guard against rapid-tap duplicate requests: ignore a second tap on the same post while its
+        // vote is in flight. Other posts remain tappable.
+        if (currentState.inFlightVotePollIds.contains(post.id)) return
+        // Mark in flight synchronously before launching so a near-simultaneous second tap cannot pass
+        // the guard before the coroutine sets the marker (TOCTOU).
+        updateState { it.copy(inFlightVotePollIds = it.inFlightVotePollIds + post.id) }
         viewModelScope.launch {
-            votePollUseCase(post, optionIndex).collect { result ->
-                result.onSuccess { updatedPost ->
-                    cacheModifiedPost(updatedPost)
-                    PostEventBus.emit(PostEvent.Updated(updatedPost))
-                }.onFailure {
-                    _modifiedPosts.update { it - post.id }
+            try {
+                votePollUseCase(post, optionIndex).collect { result ->
+                    result.onSuccess { updatedPost ->
+                        cacheModifiedPost(updatedPost)
+                        PostEventBus.emit(PostEvent.Updated(updatedPost))
+                    }.onFailure {
+                        _modifiedPosts.update { it - post.id }
+                    }
                 }
+            } finally {
+                // Always clear the in-flight marker so the user can retry after success or failure.
+                updateState { it.copy(inFlightVotePollIds = it.inFlightVotePollIds - post.id) }
             }
         }
     }
