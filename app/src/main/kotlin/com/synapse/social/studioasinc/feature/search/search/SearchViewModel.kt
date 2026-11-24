@@ -534,6 +534,10 @@ class SearchViewModel @Inject constructor(
 
     fun resharePost(post: com.synapse.social.studioasinc.domain.model.Post) {
         if (currentState.resharingBusyPostIds.contains(post.id)) return
+        // Mark busy synchronously before optimistic work so a rapid second tap sees
+        // resharingBusyPostIds containing post.id and does not issue the opposite
+        // operation while the first request is still in flight. Matches bookmarkBusyPostIds.
+        updateState { it.copy(resharingBusyPostIds = it.resharingBusyPostIds + post.id) }
         val isCurrentlyReshared = post.isReshared
         val optimisticPost = post.copy(
             isReshared = !isCurrentlyReshared,
@@ -543,11 +547,6 @@ class SearchViewModel @Inject constructor(
             state.copy(posts = state.posts.map { if (it.id == post.id) optimisticPost else it })
         }
         PostEventBus.emit(PostEvent.Updated(optimisticPost))
-
-        // Mark busy synchronously before the network call so a rapid second tap sees
-        // resharingBusyPostIds containing post.id and does not issue the opposite
-        // operation while the first request is still in flight. Matches bookmarkBusyPostIds.
-        updateState { it.copy(resharingBusyPostIds = it.resharingBusyPostIds + post.id) }
         viewModelScope.launch {
             try {
                 val result = if (isCurrentlyReshared) {
