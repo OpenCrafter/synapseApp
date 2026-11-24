@@ -483,13 +483,24 @@ fun AnimatedFollowButton(
 
 @Preview(showBackground = true)
 @Composable
-private fun ProfileHeaderPreview() {
+private fun ProfileHeaderShortNamePreview() {
+    ProfileHeaderPreview("John Doe")
+}
+
+@Preview(name = "Compact, large font", showBackground = true, widthDp = 320, fontScale = 2f)
+@Composable
+private fun ProfileHeaderLongNamePreview() {
+    ProfileHeaderPreview("AnUnusuallyLongUnbrokenDisplayNameThatMustNotPushTheBadgeOutsideItsParent")
+}
+
+@Composable
+private fun ProfileHeaderPreview(previewName: String) {
     MaterialTheme {
         ProfileHeader(
             avatar = null,
             status = UserStatus.ONLINE,
             coverImageUrl = null,
-            name = "John Doe",
+            name = previewName,
             username = "johndoe",
             nickname = "JD",
             bio = "Software developer | Tech enthusiast | Coffee lover ☕️ | Building amazing things with code every day.",
