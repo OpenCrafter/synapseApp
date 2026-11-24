@@ -407,14 +407,16 @@ class PostDetailViewModel @Inject constructor(
 
     fun revokeVote() {
         val postId = currentPostId ?: return
+        // Guard against duplicate concurrent revoke-vote requests from rapid taps.
+        if (_uiState.value.isRevokingVote) return
         viewModelScope.launch {
-            _uiState.update { it.copy(revokeError = null) }
+            _uiState.update { it.copy(revokeError = null, isRevokingVote = true) }
             pollRepository.revokeVote(postId).onSuccess {
                 postDetailRepository.getPostWithDetails(postId).onSuccess { updatedPost ->
-                    _uiState.update { it.copy(post = updatedPost, revokeError = null, lastVoteOptionIndex = null) }
+                    _uiState.update { it.copy(post = updatedPost, revokeError = null, lastVoteOptionIndex = null, isRevokingVote = false) }
                 }
             }.onFailure { e ->
-                _uiState.update { it.copy(revokeError = e.message ?: "Failed to revoke vote") }
+                _uiState.update { it.copy(revokeError = e.message ?: "Failed to revoke vote", isRevokingVote = false) }
             }
         }
     }
