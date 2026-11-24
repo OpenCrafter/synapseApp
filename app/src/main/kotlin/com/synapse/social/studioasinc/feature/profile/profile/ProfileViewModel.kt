@@ -410,10 +410,10 @@ class ProfileViewModel @Inject constructor(
     fun reactToPost(post: Post, reactionType: ReactionType) {
         // Guard against rapid-tap duplicate requests: ignore a second tap on the same post while its
         // reaction toggle is in flight. Other posts remain tappable.
-        if (currentState.inFlightReactionIds.contains(post.id)) return
+        if (_state.value.inFlightReactionIds.contains(post.id)) return
         // Mark in flight synchronously before launching so a near-simultaneous second tap cannot pass
         // the guard before the coroutine sets the marker (TOCTOU). Mirrors FeedViewModel.inFlightReactionIds.
-        updateState { it.copy(inFlightReactionIds = it.inFlightReactionIds + post.id) }
+        _state.update { it.copy(inFlightReactionIds = it.inFlightReactionIds + post.id) }
         viewModelScope.launch {
             try {
                 reactToPostUseCase(post, reactionType).collect { result ->
@@ -423,7 +423,7 @@ class ProfileViewModel @Inject constructor(
                 }
             } finally {
                 // Always clear the in-flight marker so the user can retry after success or failure.
-                updateState { it.copy(inFlightReactionIds = it.inFlightReactionIds - post.id) }
+                _state.update { it.copy(inFlightReactionIds = it.inFlightReactionIds - post.id) }
             }
         }
     }
