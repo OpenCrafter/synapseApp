@@ -68,7 +68,10 @@ data class SearchUiState(
     val postSummary: String? = null,
     val summaryError: String? = null,
     val bookmarkBusyPostIds: Set<String> = emptySet(),
-    val followingBusyAccountIds: Set<String> = emptySet()
+    val followingBusyAccountIds: Set<String> = emptySet(),
+    // User IDs with a block operation currently in flight. Scoped per user so that a rapid tap on
+    // one user never blocks block taps on a different user.
+    val blockingBusyUserIds: Set<String> = emptySet()
 )
 
 @HiltViewModel
@@ -507,16 +510,29 @@ class SearchViewModel @Inject constructor(
     }
 
     suspend fun blockUser(userId: String): Result<Unit> {
-        updateState { it.copy(blockSuccess = false, blockError = null) }
-        
-        return blockUserUseCase(userId)
-            .onSuccess {
-                updateState { it.copy(blockSuccess = true) }
-                performSearch(currentState.query)
-            }
-            .onFailure { error ->
-                updateState { it.copy(blockError = error.message ?: "Failed to block user") }
-            }
+        // Guard against rapid-tap duplicate requests: ignore a second block on the same user while
+        // the first is in flight. Other users remain tappable.
+        if (currentState.blockingBusyUserIds.contains(userId)) {
+            return Result.failure(IllegalStateException("Block already in progress for user"))
+        }
+        // Mark in flight synchronously before the use-case call so a near-simultaneous second call
+        // cannot pass the guard before the marker is set (TOCTOU). Mirrors bookmarkPost.
+        updateState { it.copy(blockingBusyUserIds = it.blockingBusyUserIds + userId) }
+        try {
+            updateState { it.copy(blockSuccess = false, blockError = null) }
+            
+            return blockUserUseCase(userId)
+                .onSuccess {
+                    updateState { it.copy(blockSuccess = true) }
+                    performSearch(currentState.query)
+                }
+                .onFailure { error ->
+                    updateState { it.copy(blockError = error.message ?: "Failed to block user") }
+                }
+        } finally {
+            // Always clear the in-flight marker so the user can retry after success or failure.
+            updateState { it.copy(blockingBusyUserIds = it.blockingBusyUserIds - userId) }
+        }
     }
     
     fun clearBlockStatus() {
