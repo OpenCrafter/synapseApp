@@ -40,6 +40,7 @@ import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.PostAdd
 import androidx.compose.material.icons.filled.RadioButtonUnchecked
 import androidx.compose.material.icons.filled.Star
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
@@ -254,7 +255,10 @@ fun FeaturedContentScreen(
                                     CandidateMediaGrid(
                                         candidateMedia = uiState.candidateMedia,
                                         selectedMediaUrls = uiState.selectedMediaUrls,
-                                        onToggleMedia = { url -> viewModel.onEvent(FeaturedContentEvent.ToggleMediaSelected(url)) }
+                                        onToggleMedia = { url -> viewModel.onEvent(FeaturedContentEvent.ToggleMediaSelected(url)) },
+                                        onConfirmDiscard = { viewModel.onEvent(FeaturedContentEvent.ConfirmDiscardUnsaved) },
+                                        onDismissDialog = { viewModel.onEvent(FeaturedContentEvent.DismissUnsavedDialog) },
+                                        showUnsavedChangesDialog = uiState.showUnsavedChangesDialog
                                     )
                                 }
                             }
@@ -680,6 +684,9 @@ private fun CandidateMediaGrid(
     candidateMedia: List<FeaturedMediaItem>,
     selectedMediaUrls: List<String>,
     onToggleMedia: (String) -> Unit,
+    onConfirmDiscard: () -> Unit,
+    onDismissDialog: () -> Unit,
+    showUnsavedChangesDialog: Boolean,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -771,6 +778,28 @@ private fun CandidateMediaGrid(
                     Spacer(modifier = Modifier.weight(1f))
                 }
             }
+        }
+
+        if (showUnsavedChangesDialog) {
+            AlertDialog(
+                onDismissRequest = { onDismissDialog() },
+                title = { Text(stringResource(R.string.dialog_unsaved_changes_title)) },
+                text = { Text(stringResource(R.string.dialog_unsaved_changes_body)) },
+                confirmButton = {
+                    TextButton(
+                        onClick = { onConfirmDiscard() }
+                    ) {
+                        Text(stringResource(R.string.dialog_discard))
+                    }
+                },
+                dismissButton = {
+                    TextButton(
+                        onClick = { onDismissDialog() }
+                    ) {
+                        Text(stringResource(R.string.action_cancel))
+                    }
+                }
+            )
         }
     }
 }
