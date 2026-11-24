@@ -11,6 +11,7 @@ data class PersonalInformationUiState(
     val gender: Gender = Gender.Hidden,
     val relationshipStatus: RelationshipStatus? = null,
     val hasChanges: Boolean = false,
+    val showUnsavedChangesDialog: Boolean = false,
     val error: String? = null,
     val saveSuccess: Boolean = false
 )
@@ -22,6 +23,8 @@ sealed class PersonalInformationEvent {
     data class RelationshipStatusSelected(val status: RelationshipStatus?) : PersonalInformationEvent()
     object SaveClicked : PersonalInformationEvent()
     object BackClicked : PersonalInformationEvent()
+    object ConfirmDiscardUnsaved : PersonalInformationEvent()
+    object DismissUnsavedDialog : PersonalInformationEvent()
     object ErrorDismissed : PersonalInformationEvent()
 }
 

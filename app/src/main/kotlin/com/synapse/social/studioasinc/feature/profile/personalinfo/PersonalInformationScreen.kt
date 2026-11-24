@@ -14,6 +14,7 @@ import androidx.compose.material3.MediumTopAppBar
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
@@ -157,6 +158,28 @@ fun PersonalInformationScreen(
                 onDismissRequest = { showRelationshipStatusDialog = false },
                 onStatusSelected = { status ->
                     viewModel.onEvent(PersonalInformationEvent.RelationshipStatusSelected(status))
+                }
+            )
+        }
+
+        if (uiState.showUnsavedChangesDialog) {
+            AlertDialog(
+                onDismissRequest = { viewModel.onEvent(PersonalInformationEvent.DismissUnsavedDialog) },
+                title = { Text(stringResource(R.string.dialog_unsaved_changes_title)) },
+                text = { Text(stringResource(R.string.dialog_unsaved_changes_body)) },
+                confirmButton = {
+                    TextButton(
+                        onClick = { viewModel.onEvent(PersonalInformationEvent.ConfirmDiscardUnsaved) }
+                    ) {
+                        Text(stringResource(R.string.dialog_discard))
+                    }
+                },
+                dismissButton = {
+                    TextButton(
+                        onClick = { viewModel.onEvent(PersonalInformationEvent.DismissUnsavedDialog) }
+                    ) {
+                        Text(stringResource(R.string.action_cancel))
+                    }
                 }
             )
         }

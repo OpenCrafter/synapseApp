@@ -85,9 +85,25 @@ class PersonalInformationViewModel @Inject constructor(
                 saveProfile()
             }
             PersonalInformationEvent.BackClicked -> {
+                val state = _uiState.value
+                if (state.hasChanges) {
+                    _uiState.update { it.copy(showUnsavedChangesDialog = true) }
+                } else {
+                    viewModelScope.launch {
+                        _navigationEvents.emit(PersonalInformationNavigation.NavigateBack)
+                    }
+                }
+            }
+            PersonalInformationEvent.ConfirmDiscardUnsaved -> {
+                _uiState.update {
+                    it.copy(showUnsavedChangesDialog = false, hasChanges = false)
+                }
                 viewModelScope.launch {
                     _navigationEvents.emit(PersonalInformationNavigation.NavigateBack)
                 }
+            }
+            PersonalInformationEvent.DismissUnsavedDialog -> {
+                _uiState.update { it.copy(showUnsavedChangesDialog = false) }
             }
             PersonalInformationEvent.ErrorDismissed -> {
                 _uiState.update { it.copy(error = null) }
