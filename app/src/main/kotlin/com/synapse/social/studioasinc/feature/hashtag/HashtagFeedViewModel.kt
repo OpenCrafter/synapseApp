@@ -33,7 +33,18 @@ data class HashtagFeedUiState(
     val tag: String = "",
     val posts: List<Post> = emptyList(),
     val isLoading: Boolean = false,
-    val error: String? = null
+    val error: String? = null,
+    // In-flight guards so a rapid re-tap on the same action cannot launch a second concurrent
+    // repository call while the first is still in flight. Set before the coroutine launches to
+    // avoid a check-then-launch race; cleared on both success and failure so the user can retry.
+    val isReactingToPost: Boolean = false,
+    val isBookmarking: Boolean = false,
+    val isVotingPoll: Boolean = false,
+    val isResharing: Boolean = false,
+    val isTogglingComments: Boolean = false,
+    val isBlockingUser: Boolean = false,
+    val isReportingPost: Boolean = false,
+    val isRevokingVote: Boolean = false
 )
 
 @HiltViewModel
@@ -100,47 +111,68 @@ class HashtagFeedViewModel @Inject constructor(
     }
 
     fun reactToPost(post: Post, reactionType: ReactionType) {
+        // Guard against rapid-tap duplicate reactions: ignore a second tap while the first is in flight.
+        if (_uiState.value.isReactingToPost) return
         viewModelScope.launch {
-            reactToPostUseCase(post, reactionType).collect { result ->
-                result.onSuccess { updatedPost ->
-                    _uiState.update { state ->
-                        state.copy(posts = state.posts.map { if (it.id == updatedPost.id) updatedPost else it })
+            _uiState.update { it.copy(isReactingToPost = true) }
+            try {
+                reactToPostUseCase(post, reactionType).collect { result ->
+                    result.onSuccess { updatedPost ->
+                        _uiState.update { state ->
+                            state.copy(posts = state.posts.map { if (it.id == updatedPost.id) updatedPost else it })
+                        }
+                    }.onFailure { e ->
+                        _uiState.update { it.copy(error = e.message) }
                     }
-                }.onFailure { e ->
-                    _uiState.update { it.copy(error = e.message) }
                 }
+            } finally {
+                _uiState.update { it.copy(isReactingToPost = false) }
             }
         }
     }
 
     fun bookmarkPost(post: Post) {
+        // Guard against rapid-tap duplicate bookmarks: ignore a second tap while the first is in flight.
+        if (_uiState.value.isBookmarking) return
         viewModelScope.launch {
-            val userId = authRepository.getCurrentUserId() ?: return@launch
-            val isBookmarked = post.isBookmarked == true
-            bookmarkPostUseCase(post.id, userId, isBookmarked).collect { result ->
-                result.onSuccess {
-                    _uiState.update { state ->
-                        state.copy(posts = state.posts.map {
-                            if (it.id == post.id) it.copy(isBookmarked = !isBookmarked) else it
-                        })
+            _uiState.update { it.copy(isBookmarking = true) }
+            try {
+                val userId = authRepository.getCurrentUserId() ?: return@launch
+                val isBookmarked = post.isBookmarked == true
+                bookmarkPostUseCase(post.id, userId, isBookmarked).collect { result ->
+                    result.onSuccess {
+                        _uiState.update { state ->
+                            state.copy(posts = state.posts.map {
+                                if (it.id == post.id) it.copy(isBookmarked = !isBookmarked) else it
+                            })
+                        }
+                    }.onFailure { e ->
+                        _uiState.update { it.copy(error = e.message) }
                     }
-                }.onFailure { e ->
-                    _uiState.update { it.copy(error = e.message) }
                 }
+            } finally {
+                _uiState.update { it.copy(isBookmarking = false) }
             }
         }
     }
 
     fun votePoll(post: Post, optionIndex: Int) {
+        // Guard against rapid-tap duplicate poll votes: ignore a second tap while the first is in flight.
+        if (_uiState.value.isVotingPoll) return
         viewModelScope.launch {
-            votePollUseCase(post, optionIndex).collect { result ->
-                result.onSuccess { updatedPost ->
-                    _uiState.update { state ->
-                        state.copy(posts = state.posts.map { if (it.id == updatedPost.id) updatedPost else it })
+            _uiState.update { it.copy(isVotingPoll = true) }
+            try {
+                votePollUseCase(post, optionIndex).collect { result ->
+                    result.onSuccess { updatedPost ->
+                        _uiState.update { state ->
+                            state.copy(posts = state.posts.map { if (it.id == updatedPost.id) updatedPost else it })
+                        }
+                    }.onFailure { e ->
+                        _uiState.update { it.copy(error = e.message) }
                     }
-                }.onFailure { e ->
-                    _uiState.update { it.copy(error = e.message) }
                 }
+            } finally {
+                _uiState.update { it.copy(isVotingPoll = false) }
             }
         }
     }
@@ -156,6 +188,8 @@ class HashtagFeedViewModel @Inject constructor(
     }
 
     fun resharePost(post: Post) {
+        // Guard against rapid-tap duplicate reposts: ignore a second tap while the first is in flight.
+        if (_uiState.value.isResharing) return
         val isCurrentlyReshared = post.isReshared
         val optimisticPost = post.copy(
             isReshared = !isCurrentlyReshared,
@@ -166,21 +200,26 @@ class HashtagFeedViewModel @Inject constructor(
         }
 
         viewModelScope.launch {
-            val result = if (isCurrentlyReshared) {
-                unrepostPostUseCase(post.id)
-            } else {
-                repostPostUseCase(post.id)
-            }
+            _uiState.update { it.copy(isResharing = true) }
+            try {
+                val result = if (isCurrentlyReshared) {
+                    unrepostPostUseCase(post.id)
+                } else {
+                    repostPostUseCase(post.id)
+                }
 
-            result.onSuccess {
-                val currentTag = _uiState.value.tag
-                if (currentTag.isNotBlank()) {
-                    loadPosts(currentTag)
+                result.onSuccess {
+                    val currentTag = _uiState.value.tag
+                    if (currentTag.isNotBlank()) {
+                        loadPosts(currentTag)
+                    }
+                }.onFailure {
+                    _uiState.update { state ->
+                        state.copy(posts = state.posts.map { if (it.id == post.id) post else it })
+                    }
                 }
-            }.onFailure {
-                _uiState.update { state ->
-                    state.copy(posts = state.posts.map { if (it.id == post.id) post else it })
-                }
+            } finally {
+                _uiState.update { it.copy(isResharing = false) }
             }
         }
     }
@@ -190,51 +229,79 @@ class HashtagFeedViewModel @Inject constructor(
     }
 
     suspend fun toggleComments(post: Post): Result<Unit> {
-        val result = togglePostCommentsUseCase(post.id).single()
-        result.onSuccess {
-            val toggled = if (post.postDisableReplies == "true") "false" else "true"
-            _uiState.update { state ->
-                state.copy(posts = state.posts.map {
-                    if (it.id == post.id) it.copy(postDisableReplies = toggled) else it
-                })
+        // Guard against rapid-tap duplicate comment toggles: ignore a second tap while the first is in flight.
+        if (_uiState.value.isTogglingComments) return Result.success(Unit)
+        _uiState.update { it.copy(isTogglingComments = true) }
+        return try {
+            val result = togglePostCommentsUseCase(post.id).single()
+            result.onSuccess {
+                val toggled = if (post.postDisableReplies == "true") "false" else "true"
+                _uiState.update { state ->
+                    state.copy(posts = state.posts.map {
+                        if (it.id == post.id) it.copy(postDisableReplies = toggled) else it
+                    })
+                }
+            }.onFailure { e ->
+                _uiState.update { it.copy(error = e.message ?: "Failed to toggle comments") }
             }
-        }.onFailure { e ->
-            _uiState.update { it.copy(error = e.message ?: "Failed to toggle comments") }
+            result
+        } finally {
+            _uiState.update { it.copy(isTogglingComments = false) }
         }
-        return result
     }
 
     suspend fun blockUser(userId: String): Result<Unit> {
-        val result = blockUserUseCase(userId)
-        result.onSuccess {
-            _uiState.update { it.copy(error = null) }
-            loadPosts(_uiState.value.tag)
-        }.onFailure { error ->
-            _uiState.update { it.copy(error = error.message ?: "Failed to block user") }
+        // Guard against rapid-tap duplicate blocks: ignore a second call while the first is in flight.
+        if (_uiState.value.isBlockingUser) return Result.success(Unit)
+        _uiState.update { it.copy(isBlockingUser = true) }
+        return try {
+            val result = blockUserUseCase(userId)
+            result.onSuccess {
+                _uiState.update { it.copy(error = null) }
+                loadPosts(_uiState.value.tag)
+            }.onFailure { error ->
+                _uiState.update { it.copy(error = error.message ?: "Failed to block user") }
+            }
+            result
+        } finally {
+            _uiState.update { it.copy(isBlockingUser = false) }
         }
-        return result
     }
 
     suspend fun reportPost(postId: String): Result<Unit> {
-        return reportPostUseCase(postId, defaultReportReason, null).first().also { result ->
-            result.onFailure { e ->
-                _uiState.update { it.copy(error = e.message ?: "Failed to report post") }
+        // Guard against rapid-tap duplicate reports: ignore a second call while the first is in flight.
+        if (_uiState.value.isReportingPost) return Result.success(Unit)
+        _uiState.update { it.copy(isReportingPost = true) }
+        return try {
+            reportPostUseCase(postId, defaultReportReason, null).first().also { result ->
+                result.onFailure { e ->
+                    _uiState.update { it.copy(error = e.message ?: "Failed to report post") }
+                }
             }
+        } finally {
+            _uiState.update { it.copy(isReportingPost = false) }
         }
     }
 
     fun revokeVote(post: Post) {
+        // Guard against rapid-tap duplicate vote revocations: ignore a second tap while the first is in flight.
+        if (_uiState.value.isRevokingVote) return
         viewModelScope.launch {
-            revokeVoteUseCase(post).collect { result ->
-                result.onSuccess { updatedPost ->
-                    _uiState.update { state ->
-                        state.copy(posts = state.posts.map {
-                            if (it.id == post.id) updatedPost else it
-                        })
+            _uiState.update { it.copy(isRevokingVote = true) }
+            try {
+                revokeVoteUseCase(post).collect { result ->
+                    result.onSuccess { updatedPost ->
+                        _uiState.update { state ->
+                            state.copy(posts = state.posts.map {
+                                if (it.id == post.id) updatedPost else it
+                            })
+                        }
+                    }.onFailure { e ->
+                        _uiState.update { it.copy(error = e.message ?: "Failed to revoke vote") }
                     }
-                }.onFailure { e ->
-                    _uiState.update { it.copy(error = e.message ?: "Failed to revoke vote") }
                 }
+            } finally {
+                _uiState.update { it.copy(isRevokingVote = false) }
             }
         }
     }
