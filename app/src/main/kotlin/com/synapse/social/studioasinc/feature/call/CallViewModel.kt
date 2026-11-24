@@ -420,18 +420,27 @@ class CallViewModel @Inject constructor(
     private fun currentSession(): CallSession? = _uiState.value.session
 
     private fun runControl(action: suspend () -> Result<Unit>) {
+        // Guard against rapid-tap duplicate call-control operations: ignore a second tap while the
+        // first is in flight. Mirrors the isEndingCall guard used by endAndClose and the broader
+        // Post Detail / Feed guard patterns.
+        if (_uiState.value.isCallControlInFlight) return
         viewModelScope.launch {
-            action().onFailure { error ->
-                if (error is CallBackendException && error.kind == CallErrorKind.PERMISSION_DENIED) {
-                    // A grant was revoked, or the platform's answer changed after the gate ran. The
-                    // control did nothing, so say so by putting the question back on screen — this is a
-                    // response to a tap, which is what makes the dialog itself the right answer.
-                    val mediaType = currentSession()?.mediaType
-                    pendingOp = null
-                    if (mediaType != null) publishPlan(prepareCallPermissions(mediaType), reask = true)
-                } else {
-                    Napier.w("Call control refused: ${error.message}")
+            _uiState.update { it.copy(isCallControlInFlight = true) }
+            try {
+                action().onFailure { error ->
+                    if (error is CallBackendException && error.kind == CallErrorKind.PERMISSION_DENIED) {
+                        // A grant was revoked, or the platform's answer changed after the gate ran. The
+                        // control did nothing, so say so by putting the question back on screen — this is a
+                        // response to a tap, which is what makes the dialog itself the right answer.
+                        val mediaType = currentSession()?.mediaType
+                        pendingOp = null
+                        if (mediaType != null) publishPlan(prepareCallPermissions(mediaType), reask = true)
+                    } else {
+                        Napier.w("Call control refused: ${error.message}")
+                    }
                 }
+            } finally {
+                _uiState.update { it.copy(isCallControlInFlight = false) }
             }
         }
     }
