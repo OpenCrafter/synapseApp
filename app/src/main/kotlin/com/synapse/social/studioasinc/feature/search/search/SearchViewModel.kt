@@ -69,7 +69,8 @@ data class SearchUiState(
     val summaryError: String? = null,
     val bookmarkBusyPostIds: Set<String> = emptySet(),
     val followingBusyAccountIds: Set<String> = emptySet(),
-    val resharingBusyPostIds: Set<String> = emptySet()
+    val resharingBusyPostIds: Set<String> = emptySet(),
+    val votingBusyPostIds: Set<String> = emptySet()
 )
 
 @HiltViewModel
@@ -434,13 +435,22 @@ class SearchViewModel @Inject constructor(
     }
 
     fun votePoll(post: com.synapse.social.studioasinc.domain.model.Post, optionIndex: Int) {
+        if (currentState.votingBusyPostIds.contains(post.id)) return
+        // Mark busy synchronously before launching so a rapid second tap on the same post
+        // sees votingBusyPostIds containing post.id and no duplicate concurrent vote slips
+        // through the dispatch-delay window. Matches the bookmarkBusyPostIds convention.
+        updateState { it.copy(votingBusyPostIds = it.votingBusyPostIds + post.id) }
         viewModelScope.launch {
-            votePollUseCase(post, optionIndex).collect { result ->
-                result.onSuccess { updatedPost ->
-                    updateState { state ->
-                        state.copy(posts = state.posts.map { if (it.id == updatedPost.id) updatedPost else it })
-                    }
-                }.onFailure { err -> updateState { it.copy(error = err.message) } }
+            try {
+                votePollUseCase(post, optionIndex).collect { result ->
+                    result.onSuccess { updatedPost ->
+                        updateState { state ->
+                            state.copy(posts = state.posts.map { if (it.id == updatedPost.id) updatedPost else it })
+                        }
+                    }.onFailure { err -> updateState { it.copy(error = err.message) } }
+                }
+            } finally {
+                updateState { it.copy(votingBusyPostIds = it.votingBusyPostIds - post.id) }
             }
         }
     }
