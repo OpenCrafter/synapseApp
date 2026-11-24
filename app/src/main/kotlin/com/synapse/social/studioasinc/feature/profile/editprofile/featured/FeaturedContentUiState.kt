@@ -26,7 +26,8 @@ data class FeaturedContentUiState(
     val selectedPostIds: List<String> = emptyList(),
     val selectedMediaUrls: List<String> = emptyList(),
     val hasPendingChanges: Boolean = false,
-    val showBackendCapabilityNotice: Boolean = true
+    val showBackendCapabilityNotice: Boolean = true,
+    val showUnsavedChangesDialog: Boolean = false
 ) {
     val selectedPosts: List<Post>
         get() = selectedPostIds.mapNotNull { id -> candidatePosts.find { it.id == id } }

@@ -772,6 +772,28 @@ private fun CandidateMediaGrid(
                 }
             }
         }
+
+        if (uiState.showUnsavedChangesDialog) {
+            AlertDialog(
+                onDismissRequest = { viewModel.onEvent(FeaturedContentEvent.DismissUnsavedDialog) },
+                title = { Text(stringResource(R.string.dialog_unsaved_changes_title)) },
+                text = { Text(stringResource(R.string.dialog_unsaved_changes_body)) },
+                confirmButton = {
+                    TextButton(
+                        onClick = { viewModel.onEvent(FeaturedContentEvent.ConfirmDiscardUnsaved) }
+                    ) {
+                        Text(stringResource(R.string.dialog_discard))
+                    }
+                },
+                dismissButton = {
+                    TextButton(
+                        onClick = { viewModel.onEvent(FeaturedContentEvent.DismissUnsavedDialog) }
+                    ) {
+                        Text(stringResource(R.string.action_cancel))
+                    }
+                }
+            )
+        }
     }
 }
 

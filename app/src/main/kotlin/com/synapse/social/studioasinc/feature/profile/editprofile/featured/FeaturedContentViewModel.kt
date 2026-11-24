@@ -179,7 +179,23 @@ class FeaturedContentViewModel @Inject constructor(
                 }
             }
             FeaturedContentEvent.BackClicked -> {
-                viewModelScope.launch { _navigationEvents.emit(FeaturedContentNavigation.NavigateBack) }
+                val state = _uiState.value
+                if (state.hasPendingChanges) {
+                    _uiState.update { it.copy(showUnsavedChangesDialog = true) }
+                } else {
+                    viewModelScope.launch { _navigationEvents.emit(FeaturedContentNavigation.NavigateBack) }
+                }
+            }
+            FeaturedContentEvent.ConfirmDiscardUnsaved -> {
+                _uiState.update {
+                    it.copy(showUnsavedChangesDialog = false, hasPendingChanges = false)
+                }
+                viewModelScope.launch {
+                    _navigationEvents.emit(FeaturedContentNavigation.NavigateBack)
+                }
+            }
+            FeaturedContentEvent.DismissUnsavedDialog -> {
+                _uiState.update { it.copy(showUnsavedChangesDialog = false) }
             }
             FeaturedContentEvent.DismissError -> {
                 _uiState.update { it.copy(error = null) }

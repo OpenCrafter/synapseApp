@@ -11,6 +11,8 @@ sealed class FeaturedContentEvent {
     object ClearAllSelected : FeaturedContentEvent()
     object ApplyChanges : FeaturedContentEvent()
     object BackClicked : FeaturedContentEvent()
+    object ConfirmDiscardUnsaved : FeaturedContentEvent()
+    object DismissUnsavedDialog : FeaturedContentEvent()
     object DismissError : FeaturedContentEvent()
     object DismissCapabilityNotice : FeaturedContentEvent()
 }
