@@ -54,7 +54,7 @@ fun ChangeNumberScreen(
             TopAppBar(
                 title = { Text(stringResource(R.string.settings_change_number_title)) },
                 navigationIcon = {
-                    IconButton(onClick = onBackClick) {
+                    IconButton(onClick = onBackClick, enabled = !isLoading) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Back"
