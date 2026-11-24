@@ -79,7 +79,11 @@ data class FeedUiState(
     // Post IDs with a delete submission currently in flight. Scoped per post so that a rapid tap
     // never fires duplicate delete requests for the same post. Observable via UI state so the
     // Delete button can be disabled while the deletion is in flight.
-    val inFlightDeleteIds: Set<String> = emptySet()
+    val inFlightDeleteIds: Set<String> = emptySet(),
+    // Post IDs with a quote post operation currently in flight. Scoped per post so that a rapid tap
+    // never fires duplicate quote requests for the same post. Observable via UI state so the Quote
+    // button can be disabled while the operation is in flight.
+    val inFlightQuotePostIds: Set<String> = emptySet()
 )
 
 @HiltViewModel
@@ -320,9 +324,21 @@ class FeedViewModel @Inject constructor(
     }
 
     fun quotePost(post: Post, text: String) {
+        // Guard against rapid-tap duplicate quote requests: ignore a second tap on the same post
+        // while its quote operation is in flight. Other posts remain quotable.
+        if (currentState.inFlightQuotePostIds.contains(post.id)) return
+        // Mark in flight synchronously before launching so a rapid second tap cannot pass the guard
+        // before the coroutine sets the marker (TOCTOU).
+        updateState { it.copy(inFlightQuotePostIds = it.inFlightQuotePostIds + post.id) }
         viewModelScope.launch {
-            quotePostUseCase(post.id, text).onSuccess {
-                refresh()
+            try {
+                quotePostUseCase(post.id, text).onSuccess {
+                    refresh()
+                }.onFailure { e ->
+                    updateState { it.copy(error = e.message ?: "Failed to quote post") }
+                }
+            } finally {
+                updateState { it.copy(inFlightQuotePostIds = it.inFlightQuotePostIds - post.id) }
             }
         }
     }
