@@ -286,7 +286,15 @@ fun PostDetailScreen(
             comment = comment,
             isOwnComment = currentUserId == comment.userId,
             isPostAuthor = currentUserId == uiState.post?.post?.authorUid,
-            onDismiss = { showCommentOptions = null },
+            onDismiss = {
+                // Keep the sheet open while the comment delete/report is in flight so the user
+                // gets the success/failure result in context (matching the dismissal-during-flight
+                // convention used by other confirmation dialogs). Back-press / swipe must not
+                // dismiss the sheet mid-flight.
+                if (uiState.commentActionsLoading.all { it != comment.id }) {
+                    showCommentOptions = null
+                }
+            },
             onAction = { action ->
                 handleCommentAction(
                     action = action,
