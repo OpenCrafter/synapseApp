@@ -293,6 +293,10 @@ class ChatMessagingDelegate(
         )
     }
 
+    // Message IDs with a message edit save currently in flight. Scoped per message so that a rapid
+    // tap on one message's edit never blocks edit saves on a different message.
+    private val inFlightEditIds = MutableStateFlow<Set<String>>(emptySet())
+
     fun saveEdit(
         message: Message,
         newContent: String,
@@ -301,26 +305,37 @@ class ChatMessagingDelegate(
     ) {
         val messageId = message.id.takeIf { it.isNotBlank() } ?: return
 
+        // Guard against rapid-tap duplicate requests: ignore a second save on the same message while its
+        // edit is in flight. Other messages remain editable.
+        if (inFlightEditIds.value.contains(messageId)) return
+        // Mark in flight synchronously before launching so a near-simultaneous second tap cannot pass
+        // the guard before the coroutine sets the marker (TOCTOU).
+        inFlightEditIds.value = inFlightEditIds.value + messageId
         viewModelScope.launch {
-            val nowStr = TimeProvider.nowInstant().toString()
-            _messages.update { current ->
-                current.updateById(messageId) {
-                    it.copy(
-                        content = newContent,
-                        isEdited = true,
-                        contentStatus = ContentStatus.EDITED,
-                        editedAt = nowStr
-                    )
-                }
-            }
-
-            editMessageUseCase(messageId, newContent).onSuccess {
-                onSuccess()
-            }.onFailure { e ->
-                onError(e.message)
+            try {
+                val nowStr = TimeProvider.nowInstant().toString()
                 _messages.update { current ->
-                    current.replaceById(messageId, message)
+                    current.updateById(messageId) {
+                        it.copy(
+                            content = newContent,
+                            isEdited = true,
+                            contentStatus = ContentStatus.EDITED,
+                            editedAt = nowStr
+                        )
+                    }
                 }
+
+                editMessageUseCase(messageId, newContent).onSuccess {
+                    onSuccess()
+                }.onFailure { e ->
+                    onError(e.message)
+                    _messages.update { current ->
+                        current.replaceById(messageId, message)
+                    }
+                }
+            } finally {
+                // Always clear the in-flight marker so the user can retry after success or failure.
+                inFlightEditIds.value = inFlightEditIds.value - messageId
             }
         }
     }
