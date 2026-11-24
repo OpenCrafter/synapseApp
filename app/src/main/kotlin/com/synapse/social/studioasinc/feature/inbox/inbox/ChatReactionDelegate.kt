@@ -4,6 +4,7 @@ import com.synapse.social.studioasinc.shared.domain.usecase.chat.ToggleMessageRe
 import com.synapse.social.studioasinc.shared.domain.model.ReactionType
 import com.synapse.social.studioasinc.shared.domain.model.chat.Message
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 
 class ChatReactionDelegate(
@@ -13,25 +14,40 @@ class ChatReactionDelegate(
     private val onError: (String?, Message) -> Unit
 ) {
 
+    // Message IDs with a reaction toggle currently in flight. Scoped per message so that a rapid tap
+    // on one message never blocks reaction taps on a different message.
+    private val inFlightReactionIds = MutableStateFlow<Set<String>>(emptySet())
+
     fun toggleMessageReaction(
         messageId: String,
         reactionType: ReactionType,
         messages: List<Message>
     ) {
+        // Guard against rapid-tap duplicate requests: ignore a second tap on the same message while its
+        // reaction toggle is in flight. Other messages remain tappable.
+        if (inFlightReactionIds.value.contains(messageId)) return
+        // Mark in flight synchronously before launching so a near-simultaneous second tap cannot pass
+        // the guard before the coroutine sets the marker (TOCTOU).
+        inFlightReactionIds.value = inFlightReactionIds.value + messageId
         viewModelScope.launch {
-            val oldMessage = messages.find { it.id == messageId } ?: return@launch
-            val oldUserReaction = oldMessage.userReaction
+            try {
+                val oldMessage = messages.find { it.id == messageId } ?: return@launch
+                val oldUserReaction = oldMessage.userReaction
 
-            val isSame = oldUserReaction == reactionType
-            val newUserReaction = if (isSame) null else reactionType
+                val isSame = oldUserReaction == reactionType
+                val newUserReaction = if (isSame) null else reactionType
 
-            // Optimistic update
-            onOptimisticReactionChanged(messageId, oldMessage, newUserReaction, oldUserReaction)
+                // Optimistic update
+                onOptimisticReactionChanged(messageId, oldMessage, newUserReaction, oldUserReaction)
 
-            val chatId = oldMessage.chatId
-            toggleMessageReactionUseCase(messageId, reactionType.emoji, chatId).onFailure { e ->
-                // Revert
-                onError("Failed to toggle reaction: ${e.message}", oldMessage)
+                val chatId = oldMessage.chatId
+                toggleMessageReactionUseCase(messageId, reactionType.emoji, chatId).onFailure { e ->
+                    // Revert
+                    onError("Failed to toggle reaction: ${e.message}", oldMessage)
+                }
+            } finally {
+                // Always clear the in-flight marker so the user can retry after success or failure.
+                inFlightReactionIds.value = inFlightReactionIds.value - messageId
             }
         }
     }
