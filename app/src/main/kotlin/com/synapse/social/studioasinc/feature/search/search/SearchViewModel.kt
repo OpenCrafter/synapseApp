@@ -109,6 +109,7 @@ class SearchViewModel @Inject constructor(
     private val unrepostPostUseCase: UnrepostPostUseCase
 ) : BaseViewModel<SearchUiState>(SearchUiState()) {
     private var searchJob: Job? = null
+    private val inFlightReactionPostIds = ConcurrentHashMap<String, Unit>()
     private val inFlightRevokeVotePostIds = ConcurrentHashMap<String, Unit>()
     init {
         loadHistory()
@@ -407,13 +408,20 @@ class SearchViewModel @Inject constructor(
     }
 
     fun reactToPost(post: com.synapse.social.studioasinc.domain.model.Post, reactionType: com.synapse.social.studioasinc.domain.model.ReactionType) {
+        // Guard against rapid-tap duplicate requests: ignore a second tap on the same post while
+        // its reaction toggle is in flight. Other posts remain tappable.
+        if (inFlightReactionPostIds.putIfAbsent(post.id, Unit) != null) return
         viewModelScope.launch {
-            reactToPostUseCase(post, reactionType).collect { result ->
-                result.onSuccess { updatedPost ->
-                    updateState { state ->
-                        state.copy(posts = state.posts.map { if (it.id == updatedPost.id) updatedPost else it })
-                    }
-                }.onFailure { err -> updateState { it.copy(error = err.message) } }
+            try {
+                reactToPostUseCase(post, reactionType).collect { result ->
+                    result.onSuccess { updatedPost ->
+                        updateState { state ->
+                            state.copy(posts = state.posts.map { if (it.id == updatedPost.id) updatedPost else it })
+                        }
+                    }.onFailure { err -> updateState { it.copy(error = err.message) } }
+                }
+            } finally {
+                inFlightReactionPostIds.remove(post.id)
             }
         }
     }
