@@ -214,7 +214,10 @@ fun AvatarScreen(
             MediumTopAppBar(
                 title = { Text(stringResource(R.string.avatar_title)) },
                 navigationIcon = {
-                    IconButton(onClick = onBackClick) {
+                    IconButton(
+                        onClick = onBackClick,
+                        enabled = !uiState.isUploading && !isRemoving
+                    ) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Back"
