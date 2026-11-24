@@ -393,14 +393,18 @@ class PostDetailViewModel @Inject constructor(
 
     fun votePoll(optionIndex: Int) {
         val postId = currentPostId ?: return
+
+        // Guard against duplicate concurrent vote requests from rapid taps.
+        if (_uiState.value.isVoting) return
+
         viewModelScope.launch {
-            _uiState.update { it.copy(voteError = null, lastVoteOptionIndex = optionIndex) }
+            _uiState.update { it.copy(voteError = null, lastVoteOptionIndex = optionIndex, isVoting = true) }
             pollRepository.submitVote(postId, optionIndex).onSuccess {
                 postDetailRepository.getPostWithDetails(postId).onSuccess { updatedPost ->
-                    _uiState.update { it.copy(post = updatedPost, voteError = null, lastVoteOptionIndex = null) }
+                    _uiState.update { it.copy(post = updatedPost, voteError = null, lastVoteOptionIndex = null, isVoting = false) }
                 }
             }.onFailure { e ->
-                _uiState.update { it.copy(voteError = e.message ?: "Failed to vote") }
+                _uiState.update { it.copy(voteError = e.message ?: "Failed to vote", isVoting = false) }
             }
         }
     }
