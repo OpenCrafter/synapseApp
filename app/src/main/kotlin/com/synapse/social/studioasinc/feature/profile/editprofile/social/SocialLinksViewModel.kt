@@ -217,6 +217,7 @@ class SocialLinksViewModel @Inject constructor(
         if (state.githubError != null || state.discordError != null || state.websiteError != null || state.publicEmailError != null) {
             return
         }
+        if (!state.hasChanges || state.isSaving) return
 
         viewModelScope.launch {
             _uiState.update { it.copy(isSaving = true, error = null) }
