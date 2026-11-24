@@ -40,6 +40,7 @@ import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.PostAdd
 import androidx.compose.material.icons.filled.RadioButtonUnchecked
 import androidx.compose.material.icons.filled.Star
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
@@ -256,7 +257,8 @@ fun FeaturedContentScreen(
                                         selectedMediaUrls = uiState.selectedMediaUrls,
                                         onToggleMedia = { url -> viewModel.onEvent(FeaturedContentEvent.ToggleMediaSelected(url)) },
                                         onConfirmDiscard = { viewModel.onEvent(FeaturedContentEvent.ConfirmDiscardUnsaved) },
-                                        onDismissDialog = { viewModel.onEvent(FeaturedContentEvent.DismissUnsavedDialog) }
+                                        onDismissDialog = { viewModel.onEvent(FeaturedContentEvent.DismissUnsavedDialog) },
+                                        showUnsavedChangesDialog = uiState.showUnsavedChangesDialog
                                     )
                                 }
                             }
@@ -684,6 +686,7 @@ private fun CandidateMediaGrid(
     onToggleMedia: (String) -> Unit,
     onConfirmDiscard: () -> Unit,
     onDismissDialog: () -> Unit,
+    showUnsavedChangesDialog: Boolean,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -777,7 +780,7 @@ private fun CandidateMediaGrid(
             }
         }
 
-        if (uiState.showUnsavedChangesDialog) {
+        if (showUnsavedChangesDialog) {
             AlertDialog(
                 onDismissRequest = { onDismissDialog() },
                 title = { Text(stringResource(R.string.dialog_unsaved_changes_title)) },
