@@ -821,6 +821,7 @@ private val messageSyncUseCase: MessageSyncUseCase = MessageSyncUseCase(getMessa
             inFlightVoteIds.remove(voteKey)
         }
     }
+    }
 
     fun restartSubscriptions() {
         val chatId = currentChatId ?: return
