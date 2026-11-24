@@ -465,6 +465,10 @@ class PostDetailViewModel @Inject constructor(
         val currentPost = currentPostDetail.post
         val isCurrentlyReshared = currentPostDetail.hasReshared
 
+        // Guard against duplicate concurrent reshare requests from rapid taps.
+        if (_uiState.value.isResharing) return
+        _uiState.update { it.copy(isResharing = true) }
+
         viewModelScope.launch {
             // Optimistic update
             val newResharesCount = if (isCurrentlyReshared) maxOf(0, currentPost.resharesCount - 1) else currentPost.resharesCount + 1
@@ -487,11 +491,11 @@ class PostDetailViewModel @Inject constructor(
 
             result.onSuccess {
                 postDetailRepository.getPostWithDetails(postId).onSuccess { updatedPostDetail ->
-                    _uiState.update { it.copy(post = updatedPostDetail) }
+                    _uiState.update { it.copy(post = updatedPostDetail, isResharing = false) }
                 }
             }.onFailure {
                 // Revert on failure
-                _uiState.update { it.copy(post = currentPostDetail) }
+                _uiState.update { it.copy(post = currentPostDetail, isResharing = false) }
                 com.synapse.social.studioasinc.feature.shared.components.post.PostEventBus.emit(com.synapse.social.studioasinc.feature.shared.components.post.PostEvent.Updated(currentPost))
             }
         }
