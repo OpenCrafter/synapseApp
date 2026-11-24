@@ -169,18 +169,22 @@ class PostDetailViewModel @Inject constructor(
     fun toggleReaction(reactionType: ReactionType) {
         val postId = currentPostId ?: return
         val currentPost = _uiState.value.post ?: return
-        
+
+        // Guard against duplicate concurrent reaction toggles from rapid taps.
+        if (_uiState.value.isTogglingReaction) return
+
         viewModelScope.launch {
+            _uiState.update { it.copy(isTogglingReaction = true) }
             val currentReaction = currentPost.userReaction
             val isRemoving = currentReaction == reactionType
             val newReaction = if (isRemoving) null else reactionType
-            
+
             val countChange = when {
                 isRemoving -> -1
                 currentReaction == null -> 1
                 else -> 0
             }
-            
+
             val updatedReactions = currentPost.reactionSummary.toMutableMap()
             if (isRemoving) {
                 val currentCount = updatedReactions[reactionType] ?: 1
@@ -193,7 +197,7 @@ class PostDetailViewModel @Inject constructor(
                 val newTypeCount = updatedReactions[reactionType] ?: 0
                 updatedReactions[reactionType] = newTypeCount + 1
             }
-            
+
             val optimisticPost = currentPost.copy(
                 post = currentPost.post.copy(
                     likesCount = maxOf(0, currentPost.post.likesCount + countChange),
@@ -203,15 +207,17 @@ class PostDetailViewModel @Inject constructor(
                 userReaction = newReaction,
                 reactionSummary = updatedReactions
             )
-            
+
             _uiState.update { it.copy(post = optimisticPost) }
             PostEventBus.emit(PostEvent.Updated(optimisticPost.post))
-            
+
             postActionsRepository.updateLocalPost(optimisticPost.post)
 
             reactionRepository.toggleReaction(postId, "post", reactionType, currentReaction, skipCheck = true).onFailure {
                 _uiState.update { it.copy(post = currentPost) }
                 PostEventBus.emit(PostEvent.Updated(currentPost.post))
+            }.also {
+                _uiState.update { it.copy(isTogglingReaction = false) }
             }
         }
     }
