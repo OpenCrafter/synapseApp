@@ -21,7 +21,7 @@ fun PostSummarySheet(
     onDismiss: () -> Unit
 ) {
     ModalBottomSheet(
-        onDismissRequest = onDismiss,
+        onDismissRequest = { if (!isSummarizing) onDismiss() },
         containerColor = MaterialTheme.colorScheme.surface
     ) {
         Column(
