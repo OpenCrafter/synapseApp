@@ -264,5 +264,27 @@ fun EditProfileScreen(
                 }
             )
         }
+
+        if (uiState.showUnsavedChangesDialog) {
+            AlertDialog(
+                onDismissRequest = { viewModel.onEvent(EditProfileEvent.DismissUnsavedDialog) },
+                title = { Text(stringResource(R.string.dialog_unsaved_changes_title)) },
+                text = { Text(stringResource(R.string.dialog_unsaved_changes_body)) },
+                confirmButton = {
+                    TextButton(
+                        onClick = { viewModel.onEvent(EditProfileEvent.ConfirmDiscardUnsaved) }
+                    ) {
+                        Text(stringResource(R.string.dialog_discard))
+                    }
+                },
+                dismissButton = {
+                    TextButton(
+                        onClick = { viewModel.onEvent(EditProfileEvent.DismissUnsavedDialog) }
+                    ) {
+                        Text(stringResource(R.string.action_cancel))
+                    }
+                }
+            )
+        }
     }
 }
