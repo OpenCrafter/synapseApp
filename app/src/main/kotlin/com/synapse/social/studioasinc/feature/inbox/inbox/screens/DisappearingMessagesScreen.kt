@@ -139,8 +139,18 @@ fun DisappearingMessagesScreen(
                 onClick = {
                     viewModel.setDisappearingMode(chatId, selectedMode)
                 },
+                enabled = !uiState.isDisappearingModeUpdating,
                 modifier = Modifier.fillMaxWidth()
             ) {
+                if (uiState.isDisappearingModeUpdating) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(Spacing.space20),
+                        strokeWidth = 2.dp
+                    )
+                } else {
+                    Icon(Icons.Filled.GroupAdd, contentDescription = null)
+                }
+                Spacer(modifier = Modifier.size(Spacing.space8))
                 Text(stringResource(R.string.action_apply))
             }
         }

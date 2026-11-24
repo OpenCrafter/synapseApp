@@ -44,6 +44,7 @@ data class ChatInfoUiState(
     val isMuted: Boolean = false,
     val isMuteUpdating: Boolean = false,
     val disappearingMode: DisappearingMode = DisappearingMode.OFF,
+    val isDisappearingModeUpdating: Boolean = false,
     val mediaCount: Int = 0,
     val linkCount: Int = 0,
     val fileCount: Int = 0,
@@ -270,15 +271,26 @@ class ChatInfoViewModel @Inject constructor(
 
     fun setDisappearingMode(chatId: String, mode: DisappearingMode) {
         if (chatId.isBlank()) return
+        if (_uiState.value.isDisappearingModeUpdating) return
+        _uiState.update { it.copy(isDisappearingModeUpdating = true) }
         viewModelScope.launch {
             setDisappearingModeUseCase(chatId, mode)
                 .onSuccess {
                     _uiState.update {
-                        it.copy(disappearingMode = mode, userMessageRes = R.string.toast_disappearing_mode_updated)
+                        it.copy(
+                            disappearingMode = mode,
+                            isDisappearingModeUpdating = false,
+                            userMessageRes = R.string.toast_disappearing_mode_updated
+                        )
                     }
                 }
                 .onFailure {
-                    _uiState.update { it.copy(errorMessageRes = R.string.chat_info_error_update_disappearing_mode) }
+                    _uiState.update {
+                        it.copy(
+                            isDisappearingModeUpdating = false,
+                            errorMessageRes = R.string.chat_info_error_update_disappearing_mode
+                        )
+                    }
                 }
         }
     }
