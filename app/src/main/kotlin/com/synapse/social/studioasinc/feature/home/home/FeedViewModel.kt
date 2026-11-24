@@ -87,7 +87,10 @@ data class FeedUiState(
     // Post IDs with a comments toggle currently in flight. Scoped per post so that a rapid tap
     // never fires duplicate toggle comments requests for the same post. Observable via UI state so
     // the toggle comments button can be disabled while the operation is in flight.
-    val inFlightToggleCommentsIds: Set<String> = emptySet()
+    val inFlightToggleCommentsIds: Set<String> = emptySet(),
+    // User IDs with a block operation currently in flight. Scoped per user so that a rapid tap
+    // never fires duplicate block requests for the same user. Other users remain blockable.
+    val inFlightBlockUserIds: Set<String> = emptySet()
 )
 
 @HiltViewModel
@@ -423,10 +426,19 @@ class FeedViewModel @Inject constructor(
     }
 
     suspend fun blockUser(userId: String): Result<Unit> {
+        // Guard against rapid-tap duplicate block requests: ignore a second call for the same user
+        // while a block is in flight. Other users remain blockable.
+        if (currentState.inFlightBlockUserIds.contains(userId)) {
+            return Result.failure(Exception("Block already in flight for user $userId"))
+        }
+        // Mark in flight before any suspension point so a concurrent call sees the marker.
+        updateState { it.copy(inFlightBlockUserIds = it.inFlightBlockUserIds + userId) }
         updateState { it.copy(blockSuccess = false, blockError = null) }
         
-        return blockUserUseCase(userId)
-            .onSuccess {
+        return blockUserUseCase(userId).also { result ->
+            // Always clear the in-flight marker so the user can retry after success or failure.
+            updateState { it.copy(inFlightBlockUserIds = it.inFlightBlockUserIds - userId) }
+            result.onSuccess {
                 updateState { it.copy(blockSuccess = true) }
                 // Refresh feed to remove blocked user's posts
                 refresh()
@@ -436,6 +448,7 @@ class FeedViewModel @Inject constructor(
                     it.copy(blockError = error.message ?: "Failed to block user")
                 }
             }
+        }
     }
     fun clearBlockStatus() {
         updateState { it.copy(blockSuccess = false, blockError = null) }
