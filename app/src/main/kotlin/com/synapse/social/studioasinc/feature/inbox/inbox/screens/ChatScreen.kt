@@ -175,6 +175,7 @@ val currentUserId = currentUserIdState ?: ""
     val chatMessageCornerRadius by viewModel.chatMessageCornerRadius.collectAsState()
     val chatAvatarDisabled by viewModel.chatAvatarDisabled.collectAsState()
     val isDeletingChat by viewModel.isDeletingChat.collectAsState()
+    val isMediaUploading = viewModel.isMediaUploading
     val wordEffects by viewModel.wordEffects.collectAsState(emptyList())
 
     val participantAvatarUrl = participantProfile?.avatar
@@ -1364,7 +1365,7 @@ val currentUserId = currentUserIdState ?: ""
                 selectedFiles = files,
                 context = context,
                 onDismissRequest = {
-                    selectedMediaFiles = null
+                    if (!isMediaUploading) selectedMediaFiles = null
                 },
                 onSendMedia = { finalFiles, caption, quality ->
                     val validFiles = finalFiles.mapNotNull { pickedFile ->

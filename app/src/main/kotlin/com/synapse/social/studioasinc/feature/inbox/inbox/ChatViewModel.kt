@@ -258,6 +258,11 @@ private val messageSyncUseCase: MessageSyncUseCase = MessageSyncUseCase(getMessa
     private val _isDeletingChat = MutableStateFlow(false)
     val isDeletingChat: StateFlow<Boolean> = _isDeletingChat.asStateFlow()
 
+    // True while any media upload/send job is in flight. Used by ChatScreen to keep the
+    // MediaPreviewDialog open and guard its dismissal/send until uploads complete.
+    val isMediaUploading: Boolean
+        get() = mediaDelegate.isMediaUploading
+
     private val _searchResults = MutableStateFlow<List<com.synapse.social.studioasinc.shared.domain.model.chat.Message>>(emptyList())
     val searchResults: StateFlow<List<com.synapse.social.studioasinc.shared.domain.model.chat.Message>> = _searchResults.asStateFlow()
 
@@ -346,6 +351,7 @@ private val messageSyncUseCase: MessageSyncUseCase = MessageSyncUseCase(getMessa
             isMuted = _isMuted.value,
             isMuteUpdating = _isMuteUpdating.value,
             canSendMessage = canSendMessage.value,
+            isMediaUploading = isMediaUploading,
             chatWallpaperType = chatWallpaperType.value,
             chatWallpaperValue = chatWallpaperValue.value,
             chatWallpaperBlur = chatWallpaperBlur.value,
