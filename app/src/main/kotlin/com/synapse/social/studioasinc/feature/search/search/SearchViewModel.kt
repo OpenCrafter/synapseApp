@@ -464,6 +464,10 @@ class SearchViewModel @Inject constructor(
     }
 
     fun submitReport(reason: String) {
+        // Guard against rapid-tap duplicate submissions: ignore a second tap while a report
+        // is already in flight. The flag is set synchronously below before the coroutine
+        // launches, preventing a TOCTOU window where two near-simultaneous taps both pass.
+        if (currentState.isReportSubmitting) return
         val post = currentState.reportDialogPost ?: return
         // Clear any stale error from a previous failed attempt so a retry
         // does not misleadingly show an old failure while the new request is in flight.
