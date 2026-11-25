@@ -204,6 +204,7 @@ fun EditProfileScreen(
             containerColor = AppColors.screenBackground,
             topBar = {
                 EditProfileTopBar(
+                    isLoading = uiState.isLoading,
                     isSaving = uiState.isSaving,
                     canSave = uiState.hasChanges &&
                             uiState.usernameValidation !is UsernameValidation.Error &&
