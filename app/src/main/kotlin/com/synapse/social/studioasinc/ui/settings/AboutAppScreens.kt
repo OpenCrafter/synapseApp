@@ -98,11 +98,11 @@ internal fun AboutAppTheme(content: @Composable () -> Unit) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-internal fun AboutDetailTopAppBar(title: String, onBackClick: () -> Unit) {
+internal fun AboutDetailTopAppBar(title: String, onBackClick: () -> Unit, enabled: Boolean = true) {
     TopAppBar(
         title = { Text(title) },
         navigationIcon = {
-            IconButton(onClick = onBackClick) {
+            IconButton(onClick = onBackClick, enabled = enabled) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                     contentDescription = stringResource(R.string.about_back)
