@@ -55,7 +55,7 @@ fun HashtagFeedScreen(
             TopAppBar(
                 title = { Text(stringResource(R.string.common_hashtag_format, tag)) },
                 navigationIcon = {
-                    IconButton(onClick = onBack) {
+                    IconButton(onClick = onBack, enabled = !uiState.isLoading) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.action_back))
                     }
                 }
