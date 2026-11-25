@@ -153,7 +153,8 @@ fun AboutOpenSourceScreen(
             topBar = {
                 AboutDetailTopAppBar(
                     title = stringResource(R.string.about_open_source_title),
-                    onBackClick = onBackClick
+                    onBackClick = onBackClick,
+                    enabled = !licenseState.isLoading
                 )
             }
         ) { insets ->
