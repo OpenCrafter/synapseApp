@@ -72,7 +72,7 @@ fun PasskeysScreen(
             MediumTopAppBar(
                 title = { Text(stringResource(R.string.settings_passkeys_title)) },
                 navigationIcon = {
-                    IconButton(onClick = onBackClick) {
+                    IconButton(onClick = onBackClick, enabled = !uiState.isAdding && !uiState.isLoading) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = stringResource(R.string.settings_back_button)
