@@ -96,7 +96,7 @@ fun RequestAccountInfoScreen(
             MediumTopAppBar(
                 title = { Text(stringResource(R.string.request_account_info_title)) },
                 navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
+                    IconButton(onClick = onNavigateBack, enabled = uiState.status is RequestStatus.Idle && !uiState.isDownloading) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = stringResource(R.string.back)
