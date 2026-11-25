@@ -43,6 +43,7 @@ fun PermissionManagerScreen(
     onBackClick: () -> Unit
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val isLoading = state.pending != null
     val context = LocalContext.current
     val activity = remember(context) { context.findActivity() }
     val canAsk: (String) -> Boolean = remember(activity) {
@@ -65,13 +66,16 @@ fun PermissionManagerScreen(
             MediumTopAppBar(
                 title = { Text(stringResource(R.string.settings_permissions_title)) },
                 navigationIcon = {
-                    IconButton(onClick = onBackClick) {
+                    IconButton(
+                        onClick = onBackClick,
+                        enabled = !isLoading,
+                    ) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = stringResource(R.string.settings_back_button)
                         )
                     }
-                }
+                },
             )
         }
     ) { paddingValues ->
