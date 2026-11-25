@@ -33,7 +33,7 @@ fun EditProfileTopBar(
     MediumTopAppBar(
         title = { Text(stringResource(R.string.edit_profile_title)) },
         navigationIcon = {
-            IconButton(onClick = onBackClick) {
+            IconButton(onClick = onBackClick, enabled = !isSaving) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                     contentDescription = stringResource(R.string.settings_back_description)
