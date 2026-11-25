@@ -19,6 +19,9 @@ class AccessibilityViewModel @Inject constructor(
     private val syncAccessibilitySettingsUseCase: SyncAccessibilitySettingsUseCase
 ) : ViewModel() {
 
+    private val _isLoading = MutableStateFlow(false)
+    val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
+
     val increaseContrastEnabled: StateFlow<Boolean> = observeAccessibilitySettingsUseCase.increaseContrastEnabled
         .stateIn(
             scope = viewModelScope,
@@ -52,48 +55,56 @@ class AccessibilityViewModel @Inject constructor(
 
     fun updateIncreaseContrast(enabled: Boolean) {
         viewModelScope.launch {
-            _error.value = null
+            _isLoading.value = true
             try {
                 syncAccessibilitySettingsUseCase.updateIncreaseContrast(enabled)
             } catch (e: Exception) {
                 _error.value = "Failed to save increase contrast setting"
                 android.util.Log.e("AccessibilityViewModel", "updateIncreaseContrast failed", e)
+            } finally {
+                _isLoading.value = false
             }
         }
     }
 
     fun updateHighContrastText(enabled: Boolean) {
         viewModelScope.launch {
-            _error.value = null
+            _isLoading.value = true
             try {
                 syncAccessibilitySettingsUseCase.updateHighContrastText(enabled)
             } catch (e: Exception) {
                 _error.value = "Failed to save high contrast text setting"
                 android.util.Log.e("AccessibilityViewModel", "updateHighContrastText failed", e)
+            } finally {
+                _isLoading.value = false
             }
         }
     }
 
     fun updateReduceAnimations(enabled: Boolean) {
         viewModelScope.launch {
-            _error.value = null
+            _isLoading.value = true
             try {
                 syncAccessibilitySettingsUseCase.updateReduceAnimations(enabled)
             } catch (e: Exception) {
                 _error.value = "Failed to save reduce animations setting"
                 android.util.Log.e("AccessibilityViewModel", "updateReduceAnimations failed", e)
+            } finally {
+                _isLoading.value = false
             }
         }
     }
 
     fun updateAutoplayAnimations(enabled: Boolean) {
         viewModelScope.launch {
-            _error.value = null
+            _isLoading.value = true
             try {
                 syncAccessibilitySettingsUseCase.updateAutoplayAnimations(enabled)
             } catch (e: Exception) {
                 _error.value = "Failed to save autoplay animations setting"
                 android.util.Log.e("AccessibilityViewModel", "updateAutoplayAnimations failed", e)
+            } finally {
+                _isLoading.value = false
             }
         }
     }
