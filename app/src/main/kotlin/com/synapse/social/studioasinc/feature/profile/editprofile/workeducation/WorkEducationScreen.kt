@@ -88,7 +88,10 @@ fun WorkEducationScreen(
                 MediumTopAppBar(
                     title = { Text(text = stringResource(R.string.nav_work_education)) },
                     navigationIcon = {
-                        IconButton(onClick = { viewModel.onEvent(WorkEducationEvent.BackClicked) }) {
+                        IconButton(
+                            onClick = { viewModel.onEvent(WorkEducationEvent.BackClicked) },
+                            enabled = !uiState.isLoading && !uiState.isSaving,
+                        ) {
                             Icon(
                                 imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                                 contentDescription = stringResource(R.string.back)
