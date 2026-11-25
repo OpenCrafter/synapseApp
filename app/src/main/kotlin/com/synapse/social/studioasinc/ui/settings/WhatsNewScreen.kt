@@ -100,7 +100,7 @@ fun WhatsNewScreen(
 ) {
     val context = LocalContext.current
     val state by viewModel.uiState.collectAsState()
-    val isLoading by state.isLoading
+    val isLoading = state.isLoading
     val githubReleasesUrl = stringResource(R.string.about_github_releases_url)
     val pullToRefreshState = rememberPullToRefreshState()
 
