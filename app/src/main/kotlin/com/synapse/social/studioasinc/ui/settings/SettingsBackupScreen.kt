@@ -109,7 +109,7 @@ fun SettingsBackupScreen(
             LargeTopAppBar(
                 title = { Text(stringResource(R.string.backup_restore_title)) },
                 navigationIcon = {
-                    IconButton(onClick = onBackClick) {
+                    IconButton(onClick = onBackClick, enabled = !state.isBusy) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = stringResource(R.string.settings_settings_hub_back)
