@@ -24,6 +24,7 @@ import com.synapse.social.studioasinc.feature.shared.theme.AppColors
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EditProfileTopBar(
+    isLoading: Boolean,
     isSaving: Boolean,
     canSave: Boolean,
     scrollBehavior: androidx.compose.material3.TopAppBarScrollBehavior,
@@ -33,7 +34,7 @@ fun EditProfileTopBar(
     MediumTopAppBar(
         title = { Text(stringResource(R.string.edit_profile_title)) },
         navigationIcon = {
-            IconButton(onClick = onBackClick, enabled = !isSaving) {
+            IconButton(onClick = onBackClick, enabled = !isLoading && !isSaving) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                     contentDescription = stringResource(R.string.settings_back_description)
