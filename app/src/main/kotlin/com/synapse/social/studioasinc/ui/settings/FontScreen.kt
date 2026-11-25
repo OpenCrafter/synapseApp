@@ -65,7 +65,6 @@ fun FontScreen(
         floatingActionButton = {
             FloatingActionButton(
                 onClick = { filePickerLauncher.launch("*/*") },
-                enabled = !uiState.isImporting,
                 shape = FloatingActionButtonDefaults.shape,
                 containerColor = MaterialTheme.colorScheme.primaryContainer,
                 contentColor = MaterialTheme.colorScheme.onPrimaryContainer
