@@ -356,7 +356,7 @@ fun PostDetailScreen(
     @OptIn(ExperimentalMaterial3Api::class)
     Scaffold(
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
-        topBar = { PostDetailTopBar(onNavigateBack) },
+        topBar = { PostDetailTopBar(onNavigateBack, uiState.isLoading) },
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         bottomBar = {
             PostDetailBottomBar(
@@ -612,11 +612,11 @@ private fun PostDetailContent(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun PostDetailTopBar(onNavigateBack: () -> Unit) {
+private fun PostDetailTopBar(onNavigateBack: () -> Unit, isLoading: Boolean = false) {
     TopAppBar(
         title = { Text(stringResource(R.string.title_post_detail)) },
         navigationIcon = {
-            IconButton(onClick = onNavigateBack) {
+            IconButton(onClick = onNavigateBack, enabled = !isLoading) {
                 Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.cd_back))
             }
         },
