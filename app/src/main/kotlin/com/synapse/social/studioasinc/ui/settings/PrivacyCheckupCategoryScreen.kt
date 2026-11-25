@@ -77,6 +77,7 @@ fun PrivacyCheckupCategoryScreen(
     }
 
     val silenceUnknownCallers by viewModel.silenceUnknownCallers.collectAsState()
+    val isLoading by viewModel.isLoading.collectAsState()
 
     Scaffold(
         containerColor = AppColors.screenBackground,
@@ -84,7 +85,10 @@ fun PrivacyCheckupCategoryScreen(
             MediumTopAppBar(
                 title = { Text(config.title) },
                 navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
+                    IconButton(
+                        onClick = onNavigateBack,
+                        enabled = !isLoading,
+                    ) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = stringResource(R.string.back)
