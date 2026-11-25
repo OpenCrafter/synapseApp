@@ -63,7 +63,7 @@ fun DisappearingMessagesScreen(
             TopAppBar(
                 title = { Text(stringResource(R.string.disappearing_messages_title)) },
                 navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
+                    IconButton(onClick = onNavigateBack, enabled = !uiState.isDisappearingModeUpdating && !uiState.isLoading) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = stringResource(R.string.cd_back)
