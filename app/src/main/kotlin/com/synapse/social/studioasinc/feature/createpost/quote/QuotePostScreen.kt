@@ -43,7 +43,7 @@ fun QuotePostScreen(
             TopAppBar(
                 title = { Text(stringResource(R.string.quote_post_title)) },
                 navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
+                    IconButton(onClick = onNavigateBack, enabled = !state.isLoading) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.back))
                     }
                 },
