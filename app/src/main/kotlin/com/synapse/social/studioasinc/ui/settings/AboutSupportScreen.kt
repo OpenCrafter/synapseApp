@@ -85,6 +85,7 @@ fun AboutSupportScreen(
     val buildNumber by viewModel.buildNumber.collectAsState()
     val commitHash by viewModel.commitHash.collectAsState()
     val updateStatus by viewModel.updateStatus.collectAsState()
+    val isLoading by viewModel.isLoading.collectAsState()
     val shownVersion = appVersion.substringBefore('-').ifBlank { context.getString(R.string.about_version_unknown) }
     val shownBuild = buildNumber.ifBlank { context.getString(R.string.about_version_unknown) }
     // Gradle stamps the commit into BuildConfig; without it the label falls back to version + build.
@@ -104,7 +105,10 @@ fun AboutSupportScreen(
                 TopAppBar(
                     title = { Text(stringResource(R.string.about_app_title)) },
                     navigationIcon = {
-                        IconButton(onClick = onBackClick) {
+                        IconButton(
+                            onClick = onBackClick,
+                            enabled = !isLoading,
+                        ) {
                             Icon(
                                 imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                                 contentDescription = stringResource(R.string.about_back)
