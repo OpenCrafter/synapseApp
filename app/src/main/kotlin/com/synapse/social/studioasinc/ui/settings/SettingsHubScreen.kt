@@ -54,7 +54,7 @@ fun SettingsHubScreen(
             LargeTopAppBar(
                 title = { Text(stringResource(R.string.settings_hub_title)) },
                 navigationIcon = {
-                    IconButton(onClick = onBackClick) {
+                    IconButton(onClick = onBackClick, enabled = !isLoading) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = stringResource(R.string.settings_settings_hub_back)

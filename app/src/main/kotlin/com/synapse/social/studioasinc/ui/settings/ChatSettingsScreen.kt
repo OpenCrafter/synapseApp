@@ -56,6 +56,7 @@ fun ChatSettingsScreen(
     val chatWallpaperBlur by viewModel.chatWallpaperBlur.collectAsState()
     val chatListLayout by viewModel.chatListLayout.collectAsState()
     val chatSwipeGesture by viewModel.chatSwipeGesture.collectAsState()
+    val isLoading by viewModel.isLoading.collectAsState()
 
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
 
@@ -65,7 +66,10 @@ fun ChatSettingsScreen(
             MediumTopAppBar(
                 title = { Text(stringResource(R.string.settings_chat_title)) },
                 navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
+                    IconButton(
+                        onClick = onNavigateBack,
+                        enabled = !isLoading,
+                    ) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = stringResource(R.string.settings_back_button)

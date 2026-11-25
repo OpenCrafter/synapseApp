@@ -92,7 +92,7 @@ fun GroupParticipantsScreen(
             TopAppBar(
                 title = { Text(stringResource(R.string.group_participants_count, members.size)) },
                 navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
+                    IconButton(onClick = onNavigateBack, enabled = !uiState.isLoading) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
                             contentDescription = stringResource(R.string.cd_back)

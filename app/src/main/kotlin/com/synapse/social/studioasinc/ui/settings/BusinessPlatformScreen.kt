@@ -42,7 +42,7 @@ fun BusinessPlatformScreen(
             MediumTopAppBar(
                 title = { Text(stringResource(R.string.settings_business_platform_title)) },
                 navigationIcon = {
-                    IconButton(onClick = onBackClick) {
+                    IconButton(onClick = onBackClick, enabled = !isLoading) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null)
                     }
                 },

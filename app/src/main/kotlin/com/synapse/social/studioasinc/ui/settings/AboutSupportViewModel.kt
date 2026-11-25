@@ -45,6 +45,9 @@ class AboutSupportViewModel @Inject constructor(
     private val _updateStatus = MutableStateFlow<AboutUpdateStatus>(AboutUpdateStatus.Idle)
     val updateStatus: StateFlow<AboutUpdateStatus> = _updateStatus.asStateFlow()
 
+    private val _isLoading = MutableStateFlow(false)
+    val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
+
     init { loadAppInfo() }
 
     private fun loadAppInfo() {
@@ -78,6 +81,7 @@ class AboutSupportViewModel @Inject constructor(
 
     fun checkForUpdates() {
         if (_updateStatus.value == AboutUpdateStatus.Checking) return
+        _isLoading.value = true
         _updateStatus.value = AboutUpdateStatus.Checking
         viewModelScope.launch {
             try {
@@ -103,6 +107,8 @@ class AboutSupportViewModel @Inject constructor(
                 throw cancelled
             } catch (_: Exception) {
                 _updateStatus.value = AboutUpdateStatus.Unavailable
+            } finally {
+                _isLoading.value = false
             }
         }
     }

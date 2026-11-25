@@ -10,8 +10,10 @@ import com.synapse.social.studioasinc.shared.domain.usecase.settings.ObserveChat
 import com.synapse.social.studioasinc.shared.domain.usecase.settings.SyncChatSettingsUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import com.synapse.social.studioasinc.shared.domain.model.settings.ThemeMode
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -21,6 +23,9 @@ class ChatSettingsViewModel @Inject constructor(
     private val observeChatSettingsUseCase: ObserveChatSettingsUseCase,
     private val syncChatSettingsUseCase: SyncChatSettingsUseCase
 ) : ViewModel() {
+
+    private val _isLoading = MutableStateFlow(false)
+    val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
 
     val chatFontScale: StateFlow<Float> = observeChatSettingsUseCase.chatFontScale
         .stateIn(
@@ -88,56 +93,101 @@ class ChatSettingsViewModel @Inject constructor(
 
     fun updateChatFontScale(scale: Float) {
         viewModelScope.launch {
-            syncChatSettingsUseCase.updateFontScale(scale)
+            _isLoading.value = true
+            try {
+                syncChatSettingsUseCase.updateFontScale(scale)
+            } finally {
+                _isLoading.value = false
+            }
         }
     }
 
     fun updateChatMessageCornerRadius(radius: Int) {
         viewModelScope.launch {
-            syncChatSettingsUseCase.updateMessageCornerRadius(radius)
+            _isLoading.value = true
+            try {
+                syncChatSettingsUseCase.updateMessageCornerRadius(radius)
+            } finally {
+                _isLoading.value = false
+            }
         }
     }
 
     fun updateChatThemePreset(preset: ChatThemePreset) {
         viewModelScope.launch {
-            syncChatSettingsUseCase.updateThemePreset(preset)
+            _isLoading.value = true
+            try {
+                syncChatSettingsUseCase.updateThemePreset(preset)
+            } finally {
+                _isLoading.value = false
+            }
         }
     }
 
     fun updateChatWallpaperType(type: WallpaperType) {
         viewModelScope.launch {
-            syncChatSettingsUseCase.updateWallpaperType(type)
+            _isLoading.value = true
+            try {
+                syncChatSettingsUseCase.updateWallpaperType(type)
+            } finally {
+                _isLoading.value = false
+            }
         }
     }
 
 
     fun updateChatWallpaperValue(value: String?) {
         viewModelScope.launch {
-            syncChatSettingsUseCase.updateWallpaperValue(value)
+            _isLoading.value = true
+            try {
+                syncChatSettingsUseCase.updateWallpaperValue(value)
+            } finally {
+                _isLoading.value = false
+            }
         }
     }
 
     fun updateChatWallpaperBlur(blur: Float) {
         viewModelScope.launch {
-            syncChatSettingsUseCase.updateWallpaperBlur(blur)
+            _isLoading.value = true
+            try {
+                syncChatSettingsUseCase.updateWallpaperBlur(blur)
+            } finally {
+                _isLoading.value = false
+            }
         }
     }
 
     fun updateChatListLayout(layout: ChatListLayout) {
         viewModelScope.launch {
-            syncChatSettingsUseCase.updateListLayout(layout)
+            _isLoading.value = true
+            try {
+                syncChatSettingsUseCase.updateListLayout(layout)
+            } finally {
+                _isLoading.value = false
+            }
         }
     }
 
     fun updateChatSwipeGesture(gesture: ChatSwipeGesture) {
         viewModelScope.launch {
-            syncChatSettingsUseCase.updateSwipeGesture(gesture)
+            _isLoading.value = true
+            try {
+                syncChatSettingsUseCase.updateSwipeGesture(gesture)
+            } finally {
+                _isLoading.value = false
+            }
         }
     }
 
     fun updateThemeMode(mode: ThemeMode) {
         viewModelScope.launch {
-            observeChatSettingsUseCase.updateThemeMode(mode)
+            _isLoading.value = true
+            try {
+                observeChatSettingsUseCase.updateThemeMode(mode)
+            } finally {
+                _isLoading.value = false
+            }
         }
     }
 }

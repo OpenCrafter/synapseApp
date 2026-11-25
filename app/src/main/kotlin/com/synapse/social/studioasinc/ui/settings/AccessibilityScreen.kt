@@ -30,6 +30,7 @@ fun AccessibilityScreen(
     val reduceAnimations by viewModel.reduceAnimationsEnabled.collectAsState()
     val autoplayAnimations by viewModel.autoplayAnimationsEnabled.collectAsState()
     val error by viewModel.error.collectAsState()
+    val isLoading by viewModel.isLoading.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
 
     val dismissLabel = stringResource(R.string.action_dismiss)
@@ -55,7 +56,10 @@ fun AccessibilityScreen(
             MediumTopAppBar(
                 title = { Text(stringResource(R.string.settings_accessibility_title)) },
                 navigationIcon = {
-                    IconButton(onClick = onBackClick) {
+                    IconButton(
+                        onClick = onBackClick,
+                        enabled = !isLoading,
+                    ) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = stringResource(R.string.settings_back_button)

@@ -56,7 +56,7 @@ fun ScheduledPostsScreen(
             TopAppBar(
                 title = { Text(stringResource(R.string.settings_scheduled_posts_title)) },
                 navigationIcon = {
-                    IconButton(onClick = onBackClick) {
+                    IconButton(onClick = onBackClick, enabled = !uiState.isLoading) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Back"

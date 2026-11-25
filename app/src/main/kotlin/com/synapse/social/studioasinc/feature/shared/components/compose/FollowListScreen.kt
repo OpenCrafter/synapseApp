@@ -42,6 +42,8 @@ fun FollowListScreen(
         stringResource(R.string.following)
     )
 
+    val isLoading = uiState.followersLoading || uiState.followingLoading
+
     var hasLoadedFollowers by remember { mutableStateOf(false) }
     var hasLoadedFollowing by remember { mutableStateOf(false) }
 
@@ -60,7 +62,7 @@ fun FollowListScreen(
             TopAppBar(
                 title = { Text(text = stringResource(R.string.users)) },
                 navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
+                    IconButton(onClick = onNavigateBack, enabled = !isLoading) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = stringResource(R.string.back)

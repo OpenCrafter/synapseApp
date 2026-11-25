@@ -40,6 +40,7 @@ fun NotificationSettingsScreen(
     val notificationPreferences by viewModel.notificationPreferences.collectAsState()
     val soundPreferences by viewModel.soundPreferences.collectAsState()
     val error by viewModel.error.collectAsState()
+    val isLoading by viewModel.isLoading.collectAsState()
 
     var showStartTimePicker by remember { mutableStateOf(false) }
     var showEndTimePicker by remember { mutableStateOf(false) }
@@ -48,6 +49,7 @@ fun NotificationSettingsScreen(
         notificationPreferences = notificationPreferences,
         soundPreferences = soundPreferences,
         error = error,
+        isLoading = isLoading,
         onBackClick = onBackClick,
         onClearError = viewModel::clearError,
         onToggleGlobal = viewModel::toggleGlobalNotifications,
@@ -104,6 +106,7 @@ fun NotificationSettingsContent(
     notificationPreferences: NotificationPreferences,
     soundPreferences: SoundPreferences,
     error: String?,
+    isLoading: Boolean,
     onBackClick: () -> Unit,
     onClearError: () -> Unit,
     onToggleGlobal: (Boolean) -> Unit,
@@ -128,7 +131,10 @@ fun NotificationSettingsContent(
             MediumTopAppBar(
                 title = { Text(stringResource(R.string.settings_notifications_title)) },
                 navigationIcon = {
-                    IconButton(onClick = onBackClick) {
+                    IconButton(
+                        onClick = onBackClick,
+                        enabled = !isLoading,
+                    ) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = stringResource(R.string.settings_back_button)
