@@ -189,7 +189,7 @@ fun ProfileMediaScreen(
                         }
                     },
                     navigationIcon = {
-                        IconButton(onClick = { viewModel.onEvent(ProfileMediaEvent.BackClicked) }) {
+                        IconButton(onClick = { viewModel.onEvent(ProfileMediaEvent.BackClicked) }, enabled = !uiState.isLoading) {
                             Icon(
                                 imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                                 contentDescription = stringResource(R.string.back)
