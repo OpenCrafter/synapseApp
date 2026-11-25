@@ -45,7 +45,10 @@ fun FontScreen(
             LargeTopAppBar(
                 title = { Text(stringResource(R.string.settings_font_title)) },
                 navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
+                    IconButton(
+                        onClick = onNavigateBack,
+                        enabled = !uiState.isImporting
+                    ) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = stringResource(R.string.action_back)
@@ -62,6 +65,7 @@ fun FontScreen(
         floatingActionButton = {
             FloatingActionButton(
                 onClick = { filePickerLauncher.launch("*/*") },
+                enabled = !uiState.isImporting,
                 shape = FloatingActionButtonDefaults.shape,
                 containerColor = MaterialTheme.colorScheme.primaryContainer,
                 contentColor = MaterialTheme.colorScheme.onPrimaryContainer
