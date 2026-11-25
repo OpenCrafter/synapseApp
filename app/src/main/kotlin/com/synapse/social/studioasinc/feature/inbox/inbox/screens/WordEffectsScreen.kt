@@ -105,7 +105,7 @@ fun WordEffectsScreen(
             TopAppBar(
                 title = { Text(stringResource(R.string.word_effects_title)) },
                 navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
+                    IconButton(onClick = onNavigateBack, enabled = !uiState.isLoading) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
                             contentDescription = stringResource(R.string.cd_back)
