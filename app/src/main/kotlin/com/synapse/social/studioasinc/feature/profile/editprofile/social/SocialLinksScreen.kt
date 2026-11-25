@@ -97,7 +97,10 @@ fun SocialLinksScreen(
                 TopAppBar(
                     title = { Text(text = stringResource(R.string.social_links_title)) },
                     navigationIcon = {
-                        IconButton(onClick = { viewModel.onEvent(SocialLinksEvent.BackClicked) }) {
+                        IconButton(
+                            onClick = { viewModel.onEvent(SocialLinksEvent.BackClicked) },
+                            enabled = !uiState.isLoading && !uiState.isSaving,
+                        ) {
                             Icon(
                                 imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                                 contentDescription = stringResource(R.string.back)
