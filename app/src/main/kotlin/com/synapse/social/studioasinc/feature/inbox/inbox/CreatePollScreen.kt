@@ -96,7 +96,7 @@ fun CreatePollScreen(
                     )
                 },
                 navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
+                    IconButton(onClick = onNavigateBack, enabled = !state.isSending) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = stringResource(R.string.back)
