@@ -65,7 +65,7 @@ fun SharedContentScreen(
             TopAppBar(
                 title = { Text(stringResource(R.string.shared_content_title)) },
                 navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
+                    IconButton(onClick = onNavigateBack, enabled = !uiState.isLoading) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = stringResource(R.string.cd_back)
