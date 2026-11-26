@@ -54,7 +54,7 @@ fun PrivacyExceptionSelectorScreen(
             MediumTopAppBar(
                 title = { Text(title) },
                 navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
+                    IconButton(onClick = onNavigateBack, enabled = !uiState.isLoading && !uiState.isSaving) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = stringResource(R.string.back)
