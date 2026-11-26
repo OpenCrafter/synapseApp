@@ -10,28 +10,28 @@ class SyncAccessibilitySettingsUseCase constructor(
     private val userPreferencesRepository: UserPreferencesRepository,
     private val authRepository: AuthRepository
 ) {
-    suspend fun updateIncreaseContrast(enabled: Boolean) {
+    suspend fun updateIncreaseContrast(enabled: Boolean): Result<Unit> {
         settingsRepository.setIncreaseContrastEnabled(enabled)
-        syncToRemote { it.copy(increaseContrastEnabled = enabled) }
+        return syncToRemote { it.copy(increaseContrastEnabled = enabled) }
     }
 
-    suspend fun updateHighContrastText(enabled: Boolean) {
+    suspend fun updateHighContrastText(enabled: Boolean): Result<Unit> {
         settingsRepository.setHighContrastTextEnabled(enabled)
-        syncToRemote { it.copy(highContrastTextEnabled = enabled) }
+        return syncToRemote { it.copy(highContrastTextEnabled = enabled) }
     }
 
-    suspend fun updateReduceAnimations(enabled: Boolean) {
+    suspend fun updateReduceAnimations(enabled: Boolean): Result<Unit> {
         settingsRepository.setReduceAnimationsEnabled(enabled)
-        syncToRemote { it.copy(reduceAnimationsEnabled = enabled) }
+        return syncToRemote { it.copy(reduceAnimationsEnabled = enabled) }
     }
 
-    suspend fun updateAutoplayAnimations(enabled: Boolean) {
+    suspend fun updateAutoplayAnimations(enabled: Boolean): Result<Unit> {
         settingsRepository.setAutoplayAnimationsEnabled(enabled)
-        syncToRemote { it.copy(autoplayAnimationsEnabled = enabled) }
+        return syncToRemote { it.copy(autoplayAnimationsEnabled = enabled) }
     }
 
-    private suspend fun syncToRemote(update: (UserPreferences) -> UserPreferences) {
-        val userId = authRepository.getCurrentUserId() ?: return
-        userPreferencesRepository.updatePreferences(userId, update)
+    private suspend fun syncToRemote(update: (UserPreferences) -> UserPreferences): Result<Unit> {
+        val userId = authRepository.getCurrentUserId() ?: return Result.failure(IllegalStateException("Not authenticated"))
+        return userPreferencesRepository.updatePreferences(userId, update)
     }
 }
