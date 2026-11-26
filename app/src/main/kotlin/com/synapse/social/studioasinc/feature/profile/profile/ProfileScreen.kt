@@ -285,7 +285,8 @@ fun ProfileScreen(
             displayName = profile?.name ?: profile?.username ?: state.viewAsUserName ?: "",
             scrollProgressProvider = { scrollProgress.value },
             onBackClick = onNavigateBack,
-            onMoreClick = { viewModel.toggleMoreMenu() }
+            onMoreClick = { viewModel.toggleMoreMenu() },
+            enabled = !(state is ProfileUiState.Loading),
         )
 
         ProfileMoreMenuSection(
