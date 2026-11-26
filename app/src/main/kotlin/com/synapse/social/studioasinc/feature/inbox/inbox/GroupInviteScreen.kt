@@ -63,7 +63,7 @@ fun GroupInviteScreen(
             TopAppBar(
                 title = { Text(stringResource(R.string.group_invite_preview_title)) },
                 navigationIcon = {
-                    androidx.compose.material3.IconButton(onClick = onNavigateBack) {
+                    androidx.compose.material3.IconButton(onClick = onNavigateBack, enabled = !state.isLoading && !state.isJoining) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.back))
                     }
                 },
