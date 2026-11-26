@@ -500,7 +500,7 @@ private fun InboxScreenContent(
                 }
                 InboxDestination.SELECTION -> TopAppBar(
                     title = { Text(pluralStringResource(R.plurals.inbox_selected_conversations, selectedChatIds.size, selectedChatIds.size)) },
-                    navigationIcon = { IconButton(onClick = ::returnToInbox) { Icon(Icons.Rounded.Close, contentDescription = stringResource(R.string.inbox_close_selection)) } },
+                    navigationIcon = { IconButton(onClick = ::returnToInbox, enabled = !isLoading) { Icon(Icons.Rounded.Close, contentDescription = stringResource(R.string.inbox_close_selection)) } },
                     actions = {
                         IconButton(onClick = ::createGroupFromSelection) {
                             Icon(
