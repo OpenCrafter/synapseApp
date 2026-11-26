@@ -59,7 +59,7 @@ fun TwoStepVerificationScreen(
             MediumTopAppBar(
                 title = { Text(stringResource(R.string.settings_two_step_verification_title)) },
                 navigationIcon = {
-                    IconButton(onClick = onBackClick) {
+                    IconButton(onClick = onBackClick, enabled = !isLoading) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = stringResource(R.string.settings_back_button),
