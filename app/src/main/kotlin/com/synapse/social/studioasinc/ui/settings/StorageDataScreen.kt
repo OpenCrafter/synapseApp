@@ -29,6 +29,7 @@ fun StorageDataScreen(
     val useLessDataCalls by viewModel.useLessDataCalls.collectAsState()
     val showMediaQualitySheet by viewModel.showMediaQualitySheet.collectAsState()
     val autoDownloadRuleStatus by viewModel.autoDownloadRuleStatus.collectAsState()
+    val isLoading by viewModel.isLoading.collectAsState()
 
     val snackbarHostState = remember { SnackbarHostState() }
 
@@ -117,7 +118,7 @@ private fun StorageDataContent(
             LargeTopAppBar(
                 title = { Text(stringResource(R.string.settings_storage_data_title)) },
                 navigationIcon = {
-                    IconButton(onClick = onBackClick) {
+                    IconButton(onClick = onBackClick, enabled = !isLoading) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = stringResource(R.string.settings_back_button)
