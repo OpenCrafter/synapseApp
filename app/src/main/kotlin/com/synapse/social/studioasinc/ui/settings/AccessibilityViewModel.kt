@@ -57,12 +57,18 @@ class AccessibilityViewModel @Inject constructor(
         viewModelScope.launch {
             _isLoading.value = true
             _error.value = null
-            val result = syncAccessibilitySettingsUseCase.updateIncreaseContrast(enabled)
-            if (result.isFailure) {
+            try {
+                val result = syncAccessibilitySettingsUseCase.updateIncreaseContrast(enabled)
+                result.onFailure { error ->
+                    _error.value = "Failed to save increase contrast setting"
+                    android.util.Log.e("AccessibilityViewModel", "updateIncreaseContrast failed", error)
+                }
+            } catch (e: Exception) {
                 _error.value = "Failed to save increase contrast setting"
-                android.util.Log.e("AccessibilityViewModel", "updateIncreaseContrast failed", result.exceptionOrNull())
+                android.util.Log.e("AccessibilityViewModel", "updateIncreaseContrast failed", e)
+            } finally {
+                _isLoading.value = false
             }
-            _isLoading.value = false
         }
     }
 
@@ -70,12 +76,18 @@ class AccessibilityViewModel @Inject constructor(
         viewModelScope.launch {
             _isLoading.value = true
             _error.value = null
-            val result = syncAccessibilitySettingsUseCase.updateHighContrastText(enabled)
-            if (result.isFailure) {
+            try {
+                val result = syncAccessibilitySettingsUseCase.updateHighContrastText(enabled)
+                result.onFailure { error ->
+                    _error.value = "Failed to save high contrast text setting"
+                    android.util.Log.e("AccessibilityViewModel", "updateHighContrastText failed", error)
+                }
+            } catch (e: Exception) {
                 _error.value = "Failed to save high contrast text setting"
-                android.util.Log.e("AccessibilityViewModel", "updateHighContrastText failed", result.exceptionOrNull())
+                android.util.Log.e("AccessibilityViewModel", "updateHighContrastText failed", e)
+            } finally {
+                _isLoading.value = false
             }
-            _isLoading.value = false
         }
     }
 
@@ -83,12 +95,18 @@ class AccessibilityViewModel @Inject constructor(
         viewModelScope.launch {
             _isLoading.value = true
             _error.value = null
-            val result = syncAccessibilitySettingsUseCase.updateReduceAnimations(enabled)
-            if (result.isFailure) {
+            try {
+                val result = syncAccessibilitySettingsUseCase.updateReduceAnimations(enabled)
+                result.onFailure { error ->
+                    _error.value = "Failed to save reduce animations setting"
+                    android.util.Log.e("AccessibilityViewModel", "updateReduceAnimations failed", error)
+                }
+            } catch (e: Exception) {
                 _error.value = "Failed to save reduce animations setting"
-                android.util.Log.e("AccessibilityViewModel", "updateReduceAnimations failed", result.exceptionOrNull())
+                android.util.Log.e("AccessibilityViewModel", "updateReduceAnimations failed", e)
+            } finally {
+                _isLoading.value = false
             }
-            _isLoading.value = false
         }
     }
 
@@ -96,12 +114,18 @@ class AccessibilityViewModel @Inject constructor(
         viewModelScope.launch {
             _isLoading.value = true
             _error.value = null
-            val result = syncAccessibilitySettingsUseCase.updateAutoplayAnimations(enabled)
-            if (result.isFailure) {
+            try {
+                val result = syncAccessibilitySettingsUseCase.updateAutoplayAnimations(enabled)
+                result.onFailure { error ->
+                    _error.value = "Failed to save autoplay animations setting"
+                    android.util.Log.e("AccessibilityViewModel", "updateAutoplayAnimations failed", error)
+                }
+            } catch (e: Exception) {
                 _error.value = "Failed to save autoplay animations setting"
-                android.util.Log.e("AccessibilityViewModel", "updateAutoplayAnimations failed", result.exceptionOrNull())
+                android.util.Log.e("AccessibilityViewModel", "updateAutoplayAnimations failed", e)
+            } finally {
+                _isLoading.value = false
             }
-            _isLoading.value = false
         }
     }
 

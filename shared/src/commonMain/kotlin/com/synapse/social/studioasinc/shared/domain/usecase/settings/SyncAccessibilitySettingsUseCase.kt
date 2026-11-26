@@ -31,7 +31,7 @@ class SyncAccessibilitySettingsUseCase constructor(
     }
 
     private suspend fun syncToRemote(update: (UserPreferences) -> UserPreferences): Result<Unit> {
-        val userId = authRepository.getCurrentUserId() ?: return Result.failure(IllegalStateException("Not authenticated"))
+        val userId = authRepository.getCurrentUserId() ?: return Result.failure(IllegalStateException("User not logged in"))
         return userPreferencesRepository.updatePreferences(userId, update)
     }
 }
