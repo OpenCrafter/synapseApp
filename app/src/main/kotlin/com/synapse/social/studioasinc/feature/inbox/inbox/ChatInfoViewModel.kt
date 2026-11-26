@@ -300,31 +300,17 @@ class ChatInfoViewModel @Inject constructor(
     fun toggleChatLock(chatId: String) {
         if (chatId.isBlank() || _uiState.value.isLocking) return
         _uiState.update { it.copy(isLocking = true) }
-        val currentLocked = _uiState.value.isLocked
-        if (currentLocked) {
-            chatLockManager.unlockChat(chatId)
-                .onSuccess {
-                    _uiState.update {
-                        it.copy(isLocked = false, isLocking = false)
-                    }
-                }
-                .onFailure {
-                    _uiState.update {
-                        it.copy(isLocking = false)
-                    }
-                }
-        } else {
-            chatLockManager.lockChat(chatId)
-                .onSuccess {
-                    _uiState.update {
-                        it.copy(isLocked = true, isLocking = false)
-                    }
-                }
-                .onFailure {
-                    _uiState.update {
-                        it.copy(isLocking = false)
-                    }
-                }
+        try {
+            val currentLocked = _uiState.value.isLocked
+            if (currentLocked) {
+                chatLockManager.unlockChat(chatId)
+                _uiState.update { it.copy(isLocked = false, isLocking = false) }
+            } else {
+                chatLockManager.lockChat(chatId)
+                _uiState.update { it.copy(isLocked = true, isLocking = false) }
+            }
+        } catch (e: Exception) {
+            _uiState.update { it.copy(isLocking = false) }
         }
     }
 
