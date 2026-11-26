@@ -89,7 +89,7 @@ fun FavouritesScreen(
             MediumTopAppBar(
                 title = { Text(stringResource(R.string.settings_favourites_title)) },
                 navigationIcon = {
-                    IconButton(onClick = onBackClick) {
+                    IconButton(onClick = onBackClick, enabled = !isLoading) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Back"
