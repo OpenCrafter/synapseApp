@@ -171,7 +171,7 @@ fun CreateGroupScreen(
                     )
                 },
                 navigationIcon = {
-                    IconButton(onClick = ::goBack) {
+                    IconButton(onClick = ::goBack, enabled = !loadingUsers && !creating) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.back))
                     }
                 },
