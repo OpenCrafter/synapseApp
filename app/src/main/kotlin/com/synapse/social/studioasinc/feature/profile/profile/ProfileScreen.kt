@@ -236,6 +236,7 @@ fun ProfileScreen(
         }
 
         val profile = (state.profileState as? ProfileUiState.Success)?.profile
+        val isLoading = state.profileState is ProfileUiState.Loading
 
         val photoOptionsUrl = when (photoOptionsTarget) {
             ProfilePhotoType.AVATAR -> profile?.avatar
