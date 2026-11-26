@@ -60,7 +60,7 @@ internal fun PermissionSummaryScreen(
             MediumTopAppBar(
                 title = { Text(stringResource(R.string.permission_summary_title)) },
                 navigationIcon = {
-                    IconButton(onClick = onBack) {
+                    IconButton(onClick = onBack, enabled = !state.isCompleting) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = stringResource(R.string.settings_back_button)
