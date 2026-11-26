@@ -43,6 +43,8 @@ data class ChatInfoUiState(
     val isLocked: Boolean = false,
     val isMuted: Boolean = false,
     val isMuteUpdating: Boolean = false,
+    /** True while the chat lock/unlock operation is in flight; used to disable the toggle switch. */
+    val isLocking: Boolean = false,
     val disappearingMode: DisappearingMode = DisappearingMode.OFF,
     val isDisappearingModeUpdating: Boolean = false,
     val mediaCount: Int = 0,
@@ -296,14 +298,33 @@ class ChatInfoViewModel @Inject constructor(
     }
 
     fun toggleChatLock(chatId: String) {
-        if (chatId.isBlank()) return
+        if (chatId.isBlank() || _uiState.value.isLocking) return
+        _uiState.update { it.copy(isLocking = true) }
         val currentLocked = _uiState.value.isLocked
         if (currentLocked) {
             chatLockManager.unlockChat(chatId)
-            _uiState.update { it.copy(isLocked = false) }
+                .onSuccess {
+                    _uiState.update {
+                        it.copy(isLocked = false, isLocking = false)
+                    }
+                }
+                .onFailure {
+                    _uiState.update {
+                        it.copy(isLocking = false)
+                    }
+                }
         } else {
             chatLockManager.lockChat(chatId)
-            _uiState.update { it.copy(isLocked = true) }
+                .onSuccess {
+                    _uiState.update {
+                        it.copy(isLocked = true, isLocking = false)
+                    }
+                }
+                .onFailure {
+                    _uiState.update {
+                        it.copy(isLocking = false)
+                    }
+                }
         }
     }
 
