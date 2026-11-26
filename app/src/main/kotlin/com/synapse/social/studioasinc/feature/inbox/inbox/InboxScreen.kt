@@ -290,6 +290,7 @@ private fun InboxScreenContent(
     val isLoadingArchived by viewModel.isLoadingArchived.collectAsState()
     val isCreatingFolder by viewModel.isCreatingFolder.collectAsState()
     val isDeletingConversations by viewModel.isDeletingConversations.collectAsState()
+    val isUnarchiving by viewModel.isUnarchiving.collectAsState()
     val error by viewModel.error.collectAsState()
     val selectedFilter by viewModel.selectedFilter.collectAsState()
     val selectedFolderId by viewModel.selectedFolderId.collectAsState()
@@ -482,7 +483,7 @@ private fun InboxScreenContent(
                         title = { Text(pluralStringResource(R.plurals.inbox_selected_conversations, selectedArchivedIds.size, selectedArchivedIds.size)) },
                         navigationIcon = { IconButton(onClick = { selectedArchivedIds = emptySet() }) { Icon(Icons.Rounded.Close, contentDescription = stringResource(R.string.inbox_close_selection)) } },
                         actions = {
-                            IconButton(onClick = { viewModel.unarchiveConversations(selectedArchivedIds); selectedArchivedIds = emptySet() }) {
+                            IconButton(onClick = { viewModel.unarchiveConversations(selectedArchivedIds); selectedArchivedIds = emptySet() }, enabled = !isUnarchiving) {
                                 Icon(Icons.Rounded.Unarchive, contentDescription = stringResource(R.string.inbox_action_unarchive))
                             }
                             Box {
