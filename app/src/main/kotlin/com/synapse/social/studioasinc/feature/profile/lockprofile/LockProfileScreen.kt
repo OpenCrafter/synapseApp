@@ -49,7 +49,7 @@ fun LockProfileScreen(
             TopAppBar(
                 title = { Text(stringResource(R.string.lock_profile_title)) },
                 navigationIcon = {
-                    IconButton(onClick = onNavigateBack, enabled = uiState.isProfileLoaded && !uiState.isLoading) {
+                    IconButton(onClick = onNavigateBack, enabled = !uiState.isLoading) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = stringResource(R.string.back)
