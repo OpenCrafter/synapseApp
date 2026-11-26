@@ -706,6 +706,7 @@ fun GroupInfoScreen(
     if (showRequestsDialog) {
         JoinRequestsDialog(
             requests = uiState.pendingRequests,
+            isProcessingJoinRequest = uiState.isProcessingJoinRequest,
             onApprove = { viewModel.approveRequest(it) },
             onDecline = { viewModel.declineRequest(it) },
             onDismiss = { showRequestsDialog = false }
@@ -1319,6 +1320,7 @@ internal fun ErrorBanner(message: String, onRetry: () -> Unit) {
 @Composable
 private fun JoinRequestsDialog(
     requests: List<GroupJoinRequest>,
+    isProcessingJoinRequest: Boolean,
     onApprove: (String) -> Unit,
     onDecline: (String) -> Unit,
     onDismiss: () -> Unit
@@ -1346,10 +1348,16 @@ private fun JoinRequestsDialog(
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                             Row(horizontalArrangement = Arrangement.spacedBy(Spacing.space8)) {
-                                TextButton(onClick = { onApprove(request.id) }) {
+                                TextButton(
+                                    onClick = { onApprove(request.id) },
+                                    enabled = !isProcessingJoinRequest
+                                ) {
                                     Text(stringResource(R.string.group_approve))
                                 }
-                                TextButton(onClick = { onDecline(request.id) }) {
+                                TextButton(
+                                    onClick = { onDecline(request.id) },
+                                    enabled = !isProcessingJoinRequest
+                                ) {
                                     Text(
                                         text = stringResource(R.string.group_decline),
                                         color = MaterialTheme.colorScheme.error

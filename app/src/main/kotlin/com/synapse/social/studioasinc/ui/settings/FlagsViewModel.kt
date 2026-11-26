@@ -5,8 +5,10 @@ import androidx.lifecycle.viewModelScope
 import com.synapse.social.studioasinc.data.local.database.settings.SettingsConstants
 import com.synapse.social.studioasinc.data.repository.SettingsRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -44,27 +46,50 @@ class FlagsViewModel @Inject constructor(
             initialValue = SettingsConstants.DEFAULT_CHAT_MESSAGE_PAGINATION_LIMIT
         )
 
+    private val _isLoading = MutableStateFlow(false)
+    val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
+
     fun setNavigationPlacement(placement: NavigationPlacement) {
         viewModelScope.launch {
-            settingsRepository.setNavigationPlacement(placement)
+            _isLoading.value = true
+            try {
+                settingsRepository.setNavigationPlacement(placement)
+            } finally {
+                _isLoading.value = false
+            }
         }
     }
 
     fun setMessageSuggestionEnabled(enabled: Boolean) {
         viewModelScope.launch {
-            settingsRepository.setMessageSuggestionEnabled(enabled)
+            _isLoading.value = true
+            try {
+                settingsRepository.setMessageSuggestionEnabled(enabled)
+            } finally {
+                _isLoading.value = false
+            }
         }
     }
 
     fun setChatAvatarDisabled(disabled: Boolean) {
         viewModelScope.launch {
-            settingsRepository.setChatAvatarDisabled(disabled)
+            _isLoading.value = true
+            try {
+                settingsRepository.setChatAvatarDisabled(disabled)
+            } finally {
+                _isLoading.value = false
+            }
         }
     }
 
     fun setChatMessagePaginationLimit(limit: Int) {
         viewModelScope.launch {
-            settingsRepository.setChatMessagePaginationLimit(limit)
+            _isLoading.value = true
+            try {
+                settingsRepository.setChatMessagePaginationLimit(limit)
+            } finally {
+                _isLoading.value = false
+            }
         }
     }
 }

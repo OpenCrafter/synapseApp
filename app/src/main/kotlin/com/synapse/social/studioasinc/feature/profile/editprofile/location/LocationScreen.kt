@@ -88,7 +88,10 @@ fun LocationScreen(
                 MediumTopAppBar(
                     title = { Text(text = stringResource(R.string.nav_location)) },
                     navigationIcon = {
-                        IconButton(onClick = { viewModel.onEvent(LocationEvent.BackClicked) }) {
+                        IconButton(
+                            onClick = { viewModel.onEvent(LocationEvent.BackClicked) },
+                            enabled = !uiState.isLoading && !uiState.isSaving
+                        ) {
                             Icon(
                                 imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                                 contentDescription = stringResource(R.string.back)

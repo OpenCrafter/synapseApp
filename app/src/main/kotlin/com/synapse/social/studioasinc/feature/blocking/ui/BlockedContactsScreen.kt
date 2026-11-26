@@ -58,7 +58,7 @@ fun BlockedContactsScreen(
                     )
                 },
                 navigationIcon = {
-                    IconButton(onClick = onNavigateBack, enabled = uiState !is BlockingUiState.Loading) {
+                    IconButton(onClick = onNavigateBack, enabled = !(uiState is BlockingUiState.Loading)) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = stringResource(R.string.navigate_back),

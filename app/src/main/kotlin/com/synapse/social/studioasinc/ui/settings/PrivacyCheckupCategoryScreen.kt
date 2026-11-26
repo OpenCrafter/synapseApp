@@ -85,10 +85,7 @@ fun PrivacyCheckupCategoryScreen(
             MediumTopAppBar(
                 title = { Text(config.title) },
                 navigationIcon = {
-                    IconButton(
-                        onClick = onNavigateBack,
-                        enabled = !isLoading,
-                    ) {
+                    IconButton(onClick = onNavigateBack, enabled = !isLoading) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = stringResource(R.string.back)

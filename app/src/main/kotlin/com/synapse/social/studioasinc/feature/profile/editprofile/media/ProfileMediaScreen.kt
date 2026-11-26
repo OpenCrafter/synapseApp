@@ -189,7 +189,14 @@ fun ProfileMediaScreen(
                         }
                     },
                     navigationIcon = {
-                        IconButton(onClick = { viewModel.onEvent(ProfileMediaEvent.BackClicked) }) {
+                        IconButton(
+                            onClick = { viewModel.onEvent(ProfileMediaEvent.BackClicked) },
+                            enabled = !uiState.isLoading &&
+                                uiState.avatarUploadState !is UploadState.Uploading &&
+                                uiState.coverUploadState !is UploadState.Uploading &&
+                                !uiState.removingAvatar &&
+                                !uiState.removingCover
+                        ) {
                             Icon(
                                 imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                                 contentDescription = stringResource(R.string.back)

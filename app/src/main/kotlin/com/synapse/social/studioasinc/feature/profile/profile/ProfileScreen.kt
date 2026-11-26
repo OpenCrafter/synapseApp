@@ -236,6 +236,7 @@ fun ProfileScreen(
         }
 
         val profile = (state.profileState as? ProfileUiState.Success)?.profile
+        val isLoading = state.profileState is ProfileUiState.Loading
 
         val photoOptionsUrl = when (photoOptionsTarget) {
             ProfilePhotoType.AVATAR -> profile?.avatar
@@ -285,7 +286,8 @@ fun ProfileScreen(
             displayName = profile?.name ?: profile?.username ?: state.viewAsUserName ?: "",
             scrollProgressProvider = { scrollProgress.value },
             onBackClick = onNavigateBack,
-            onMoreClick = { viewModel.toggleMoreMenu() }
+            onMoreClick = { viewModel.toggleMoreMenu() },
+            enabled = !isLoading
         )
 
         ProfileMoreMenuSection(

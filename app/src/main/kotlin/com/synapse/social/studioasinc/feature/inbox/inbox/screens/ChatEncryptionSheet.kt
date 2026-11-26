@@ -255,7 +255,7 @@ private fun VerificationContent(
     ) {
         Row(modifier = Modifier.fillMaxWidth().height(ChatEncryptionMetrics.topBarHeight), verticalAlignment = Alignment.CenterVertically) {
             val backSource = remember { MutableInteractionSource() }
-            IconButton(onClick = onBack, interactionSource = backSource, modifier = Modifier.pressScale(backSource)) {
+            IconButton(onClick = onBack, enabled = !state.isLoading, interactionSource = backSource, modifier = Modifier.pressScale(backSource)) {
                 Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = stringResource(R.string.chat_security_back))
             }
             Text(stringResource(R.string.chat_security_verify_title), style = MaterialTheme.typography.titleLarge, color = colors.onSurface, modifier = Modifier.weight(1f))

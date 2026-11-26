@@ -64,7 +64,7 @@ fun ScheduledPostsScreen(
                     }
                 },
                 actions = {
-                    IconButton(onClick = { viewModel.loadScheduledPosts() }) {
+                    IconButton(onClick = { viewModel.loadScheduledPosts() }, enabled = !uiState.isLoading) {
                         Icon(
                             imageVector = Icons.Default.Refresh,
                             contentDescription = stringResource(R.string.action_refresh)

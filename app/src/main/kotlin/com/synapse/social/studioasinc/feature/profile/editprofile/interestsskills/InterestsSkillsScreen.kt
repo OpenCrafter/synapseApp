@@ -108,6 +108,7 @@ fun InterestsSkillsScreen(
                     navigationIcon = {
                         IconButton(
                             onClick = { viewModel.onEvent(InterestsSkillsEvent.BackClicked) },
+                            enabled = !uiState.isLoading && !uiState.isSaving,
                             modifier = Modifier.size(48.dp)
                         ) {
                             Icon(

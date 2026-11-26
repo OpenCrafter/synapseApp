@@ -426,7 +426,7 @@ private fun InboxScreenContent(
                     navigationIcon = {
                         val back = onNavigateBack
                         if (back != null) {
-                            IconButton(onClick = back) {
+                            IconButton(onClick = back, enabled = !isLoading) {
                                 Icon(
                                     Icons.AutoMirrored.Rounded.ArrowBack,
                                     contentDescription = stringResource(R.string.inbox_back)
@@ -468,13 +468,13 @@ private fun InboxScreenContent(
                 )
                 InboxDestination.SEARCH -> TopAppBar(
                     title = { Text(stringResource(R.string.inbox_search_title)) },
-                    navigationIcon = { IconButton(onClick = ::returnToInbox) { Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = stringResource(R.string.inbox_back)) } },
+                    navigationIcon = { IconButton(onClick = ::returnToInbox, enabled = !isLoading) { Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = stringResource(R.string.inbox_back)) } },
                     colors = barColors
                 )
                 InboxDestination.ARCHIVED -> if (selectedArchivedIds.isEmpty()) {
                     TopAppBar(
                         title = { Text(stringResource(R.string.inbox_archive_screen_title)) },
-                        navigationIcon = { IconButton(onClick = ::returnToInbox) { Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = stringResource(R.string.inbox_back)) } },
+                        navigationIcon = { IconButton(onClick = ::returnToInbox, enabled = !isLoading) { Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = stringResource(R.string.inbox_back)) } },
                         colors = barColors
                     )
                 } else {

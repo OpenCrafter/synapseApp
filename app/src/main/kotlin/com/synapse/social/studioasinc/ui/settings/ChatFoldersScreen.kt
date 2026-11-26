@@ -72,10 +72,7 @@ fun ChatFoldersScreen(
             TopAppBar(
                 title = { Text(stringResource(R.string.settings_chat_folders_title)) },
                 navigationIcon = {
-                    IconButton(
-                        onClick = onNavigateBack,
-                        enabled = saveStatus is FolderSaveStatus.Idle || saveStatus is FolderSaveStatus.Failure
-                    ) {
+                    IconButton(onClick = onNavigateBack, enabled = saveStatus is FolderSaveStatus.Idle || saveStatus is FolderSaveStatus.Failure) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.back))
                     }
                 },

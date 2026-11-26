@@ -107,7 +107,7 @@ fun EchoRoomScreen(
         }
     }
 
-    BackHandler(onBack = requestClose)
+    BackHandler(enabled = !state.busy, onBack = requestClose)
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
@@ -277,7 +277,7 @@ private fun EchoRoomTopBar(
             }
         },
         navigationIcon = {
-            IconButton(onClick = onBack) {
+            IconButton(onClick = onBack, enabled = !state.busy) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                     contentDescription = stringResource(R.string.action_back)

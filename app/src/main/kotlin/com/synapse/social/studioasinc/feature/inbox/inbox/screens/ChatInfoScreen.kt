@@ -193,6 +193,7 @@ fun ChatInfoScreen(
                     val interaction = remember { MutableInteractionSource() }
                     IconButton(
                         onClick = onNavigateBack,
+                        enabled = !uiState.isLoading,
                         interactionSource = interaction,
                         modifier = Modifier.pressScale(interaction)
                     ) {
@@ -385,10 +386,12 @@ fun ChatInfoScreen(
                                 checked = uiState.isLocked,
                                 onCheckedChange = { viewModel.toggleChatLock(chatId) },
                                 interactionSource = lockInteraction,
-                                modifier = Modifier.pressScale(lockInteraction)
+                                modifier = Modifier.pressScale(lockInteraction),
+                                enabled = !uiState.isLocking
                             )
                     },
-                        onClick = { viewModel.toggleChatLock(chatId) }
+                        onClick = { viewModel.toggleChatLock(chatId) },
+                        enabled = !uiState.isLocking
                     )
                     SettingsItem(
                         icon = Icons.Rounded.Security,
@@ -869,14 +872,15 @@ private fun SettingsItem(
     textColor: Color = MaterialTheme.colorScheme.onSurface,
     trailingIcon: ImageVector? = null,
     trailingContent: (@Composable () -> Unit)? = null,
-    onClick: (() -> Unit)? = null
+    onClick: (() -> Unit)? = null,
+    enabled: Boolean = true
 ) {
     val interaction = remember { MutableInteractionSource() }
     val rowModifier = Modifier
         .fillMaxWidth()
         .clip(shape)
         .then(
-            if (onClick != null) {
+            if (onClick != null && enabled) {
                 Modifier.clickable(interactionSource = interaction, onClick = onClick)
             } else {
                 Modifier
@@ -887,6 +891,7 @@ private fun SettingsItem(
 
     ListItem(
         modifier = rowModifier,
+        enabled = enabled,
         content = {
             Text(
                 text = title,

@@ -19,9 +19,6 @@ class AccessibilityViewModel @Inject constructor(
     private val syncAccessibilitySettingsUseCase: SyncAccessibilitySettingsUseCase
 ) : ViewModel() {
 
-    private val _isLoading = MutableStateFlow(false)
-    val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
-
     val increaseContrastEnabled: StateFlow<Boolean> = observeAccessibilitySettingsUseCase.increaseContrastEnabled
         .stateIn(
             scope = viewModelScope,
@@ -53,9 +50,13 @@ class AccessibilityViewModel @Inject constructor(
     private val _error = MutableStateFlow<String?>(null)
     val error: StateFlow<String?> = _error.asStateFlow()
 
+    private val _isLoading = MutableStateFlow(false)
+    val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
+
     fun updateIncreaseContrast(enabled: Boolean) {
         viewModelScope.launch {
             _isLoading.value = true
+            _error.value = null
             try {
                 syncAccessibilitySettingsUseCase.updateIncreaseContrast(enabled)
             } catch (e: Exception) {
@@ -70,6 +71,7 @@ class AccessibilityViewModel @Inject constructor(
     fun updateHighContrastText(enabled: Boolean) {
         viewModelScope.launch {
             _isLoading.value = true
+            _error.value = null
             try {
                 syncAccessibilitySettingsUseCase.updateHighContrastText(enabled)
             } catch (e: Exception) {
@@ -84,6 +86,7 @@ class AccessibilityViewModel @Inject constructor(
     fun updateReduceAnimations(enabled: Boolean) {
         viewModelScope.launch {
             _isLoading.value = true
+            _error.value = null
             try {
                 syncAccessibilitySettingsUseCase.updateReduceAnimations(enabled)
             } catch (e: Exception) {
@@ -98,6 +101,7 @@ class AccessibilityViewModel @Inject constructor(
     fun updateAutoplayAnimations(enabled: Boolean) {
         viewModelScope.launch {
             _isLoading.value = true
+            _error.value = null
             try {
                 syncAccessibilitySettingsUseCase.updateAutoplayAnimations(enabled)
             } catch (e: Exception) {

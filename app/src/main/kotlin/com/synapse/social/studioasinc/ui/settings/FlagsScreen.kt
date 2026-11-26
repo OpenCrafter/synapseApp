@@ -35,6 +35,7 @@ fun FlagsScreen(
     val messageSuggestionEnabled by viewModel.messageSuggestionEnabled.collectAsState()
     val chatAvatarDisabled by viewModel.chatAvatarDisabled.collectAsState()
     val chatMessagePaginationLimit by viewModel.chatMessagePaginationLimit.collectAsState()
+    val isLoading by viewModel.isLoading.collectAsState()
     var paginationLimitInput by remember(chatMessagePaginationLimit) {
         mutableStateOf(chatMessagePaginationLimit.toString())
     }
@@ -46,7 +47,7 @@ fun FlagsScreen(
             TopAppBar(
                 title = { Text(stringResource(R.string.settings_flags_title)) },
                 navigationIcon = {
-                    IconButton(onClick = onBackClick) {
+                    IconButton(onClick = onBackClick, enabled = !isLoading) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = stringResource(R.string.settings_back_button)

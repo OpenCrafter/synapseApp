@@ -819,7 +819,8 @@ val currentUserId = currentUserIdState ?: ""
                         },
                         onViewEarliestMessage = viewEarliestMessage,
                         onAddToChatFolder = { showChatFolderSheet = true },
-                        onDeleteChat = { showDeleteChatDialog = true }
+                        onDeleteChat = { showDeleteChatDialog = true },
+                        isLoading = isLoading
                     )
                 }
             }
