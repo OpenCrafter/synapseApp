@@ -107,7 +107,7 @@ fun EchoRoomScreen(
         }
     }
 
-    BackHandler(onBack = requestClose)
+    BackHandler(enabled = !state.busy, onBack = requestClose)
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
