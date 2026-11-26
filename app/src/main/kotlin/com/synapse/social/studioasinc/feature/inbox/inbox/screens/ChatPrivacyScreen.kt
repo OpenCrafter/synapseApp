@@ -34,7 +34,7 @@ fun ChatPrivacyScreen(
             TopAppBar(
                 title = { Text(stringResource(R.string.chat_privacy_title)) },
                 navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
+                    IconButton(onClick = onNavigateBack, enabled = !uiState.isLoading) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = stringResource(R.string.cd_back)
