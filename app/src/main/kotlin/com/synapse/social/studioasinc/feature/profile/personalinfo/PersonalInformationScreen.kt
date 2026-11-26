@@ -75,7 +75,10 @@ fun PersonalInformationScreen(
                 MediumTopAppBar(
                     title = { Text(text = stringResource(R.string.nav_personal_info)) },
                     navigationIcon = {
-                        IconButton(onClick = { viewModel.onEvent(PersonalInformationEvent.BackClicked) }) {
+                        IconButton(
+                            onClick = { viewModel.onEvent(PersonalInformationEvent.BackClicked) },
+                            enabled = !uiState.isLoading && !uiState.isSaving
+                        ) {
                             Icon(
                                 imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                                 contentDescription = stringResource(R.string.back)
