@@ -296,6 +296,7 @@ private fun InboxScreenContent(
     val selectedFolderId by viewModel.selectedFolderId.collectAsState()
     val isAssigningToFolder by viewModel.isAssigningToFolder.collectAsState()
     val isPinning by viewModel.isPinning.collectAsState()
+    val isMuting by viewModel.isMuting.collectAsState()
     val folders by viewModel.chatFolders.collectAsState()
     val searchState by viewModel.searchState.collectAsState()
     val unreadThreadCount = conversations.count { it.unreadCount > 0 }
@@ -698,6 +699,7 @@ private fun InboxScreenContent(
                     onPin = { viewModel.setConversationsPinned(selectedChatIds, selectedConversations.any { !it.isPinned }) },
                     onMute = { viewModel.setConversationsMuted(selectedChatIds, selectedConversations.any { !it.isMuted }) },
                     enabledPin = !isPinning,
+                    enabledMute = !isMuting,
                     onArchive = ::archiveSelected,
                     onFolder = { showFolderSheet = true },
                     onDelete = { showDeleteDialog = true },
@@ -1038,7 +1040,8 @@ private fun SelectionContent(
     onFolder: () -> Unit,
     onDelete: () -> Unit,
     onDone: () -> Unit,
-    enabledPin: Boolean = true
+    enabledPin: Boolean = true,
+    enabledMute: Boolean = true
 ) {
     Column(
         Modifier
@@ -1055,7 +1058,8 @@ private fun SelectionContent(
                 onArchive = onArchive,
                 onFolder = onFolder,
                 onDelete = onDelete,
-                enabledPin = enabledPin
+                enabledPin = enabledPin,
+                enabledMute = enabledMute
             )
         }
         LazyColumn(
