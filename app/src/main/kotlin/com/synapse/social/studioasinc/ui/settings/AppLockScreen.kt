@@ -64,7 +64,7 @@ fun AppLockContent(
             MediumTopAppBar(
                 title = { Text(stringResource(R.string.settings_app_lock_title)) },
                 navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
+                    IconButton(onClick = onNavigateBack, enabled = !isLoading) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = stringResource(R.string.settings_back_description)
