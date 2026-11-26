@@ -32,6 +32,7 @@ fun ProfileTopAppBar(
     scrollProgressProvider: () -> Float,
     onBackClick: () -> Unit,
     onMoreClick: () -> Unit,
+    enabled: Boolean = true,
     modifier: Modifier = Modifier
 ) {
     val isScrolledHalf by androidx.compose.runtime.remember {
@@ -79,7 +80,8 @@ fun ProfileTopAppBar(
         navigationIcon = {
             AnimatedIconButton(
                 onClick = onBackClick,
-                contentDescription = "Back"
+                contentDescription = "Back",
+                enabled = enabled
             ) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
@@ -115,6 +117,7 @@ fun ProfileTopAppBar(
 private fun AnimatedIconButton(
     onClick: () -> Unit,
     contentDescription: String,
+    enabled: Boolean = true,
     content: @Composable () -> Unit
 ) {
     val haptic = LocalHapticFeedback.current
@@ -135,6 +138,7 @@ private fun AnimatedIconButton(
             haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
             onClick()
         },
+        enabled = enabled,
         interactionSource = interactionSource,
         modifier = Modifier
             .scale(scale)
