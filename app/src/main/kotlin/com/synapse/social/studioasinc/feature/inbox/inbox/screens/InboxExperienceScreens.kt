@@ -533,6 +533,7 @@ fun InboxSelectionToolbar(
     onFolder: () -> Unit,
     onDelete: () -> Unit,
     enabledPin: Boolean = true,
+    enabledMute: Boolean = true,
     modifier: Modifier = Modifier
 ) {
     Surface(
@@ -548,7 +549,7 @@ fun InboxSelectionToolbar(
             IconButton(onClick = onPin, enabled = enabledPin, modifier = Modifier.size(InboxExpressiveDimens.IconTouchTarget)) {
                 Icon(Icons.Rounded.PushPin, contentDescription = stringResource(if (allPinned) R.string.inbox_action_unpin else R.string.inbox_action_pin))
             }
-            IconButton(onClick = onMute, modifier = Modifier.size(InboxExpressiveDimens.IconTouchTarget)) {
+            IconButton(onClick = onMute, enabled = enabledMute, modifier = Modifier.size(InboxExpressiveDimens.IconTouchTarget)) {
                 Icon(Icons.AutoMirrored.Rounded.VolumeOff, contentDescription = stringResource(if (allMuted) R.string.inbox_action_unmute else R.string.inbox_action_mute))
             }
             IconButton(onClick = onArchive, modifier = Modifier.size(InboxExpressiveDimens.IconTouchTarget)) {

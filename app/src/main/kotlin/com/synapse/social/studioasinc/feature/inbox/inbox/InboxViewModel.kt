@@ -92,6 +92,10 @@ class InboxViewModel @Inject constructor(
     private val _isPinning = MutableStateFlow(false)
     val isPinning: StateFlow<Boolean> = _isPinning.asStateFlow()
 
+    /** True while muting/unmuting selected conversations is in flight; guards against rapid-tap duplicate requests. */
+    private val _isMuting = MutableStateFlow(false)
+    val isMuting: StateFlow<Boolean> = _isMuting.asStateFlow()
+
     private val _error = MutableStateFlow<String?>(null)
     val error: StateFlow<String?> = _error.asStateFlow()
 
@@ -406,17 +410,22 @@ class InboxViewModel @Inject constructor(
         setConversationsPinned(setOf(chatId), isFavourite)
 
     fun setConversationsMuted(chatIds: Set<String>, isMuted: Boolean) {
-        if (chatIds.isEmpty()) return
+        if (chatIds.isEmpty() || _isMuting.value) return
+        _isMuting.value = true
         viewModelScope.launch {
-            var failures = 0
-            chatIds.forEach { chatId ->
-                chatRepository.updateConversationMutedStatus(chatId, isMuted)
-                    .onSuccess {
-                        _conversations.value = _conversations.value.map { if (it.chatId == chatId) it.copy(isMuted = isMuted) else it }
-                    }
-                    .onFailure { failures++ }
+            try {
+                var failures = 0
+                chatIds.forEach { chatId ->
+                    chatRepository.updateConversationMutedStatus(chatId, isMuted)
+                        .onSuccess {
+                            _conversations.value = _conversations.value.map { if (it.chatId == chatId) it.copy(isMuted = isMuted) else it }
+                        }
+                        .onFailure { failures++ }
+                }
+                if (failures > 0) _error.value = "Failed to update $failures conversation(s)."
+            } finally {
+                _isMuting.value = false
             }
-            if (failures > 0) _error.value = "Failed to update $failures conversation(s)."
         }
     }
 
