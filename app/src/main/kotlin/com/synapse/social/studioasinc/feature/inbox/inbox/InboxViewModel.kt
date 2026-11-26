@@ -84,6 +84,10 @@ class InboxViewModel @Inject constructor(
     private val _isDeletingConversations = MutableStateFlow(false)
     val isDeletingConversations: StateFlow<Boolean> = _isDeletingConversations.asStateFlow()
 
+    /** True while unarchiving selected conversations is in flight; used to guard the unarchive button against rapid-tap duplicate requests. */
+    private val _isUnarchiving = MutableStateFlow(false)
+    val isUnarchiving: StateFlow<Boolean> = _isUnarchiving.asStateFlow()
+
     private val _error = MutableStateFlow<String?>(null)
     val error: StateFlow<String?> = _error.asStateFlow()
 
@@ -470,18 +474,23 @@ class InboxViewModel @Inject constructor(
     }
 
     fun unarchiveConversations(chatIds: Set<String>) {
-        if (chatIds.isEmpty()) return
+        if (chatIds.isEmpty() || _isUnarchiving.value) return
+        _isUnarchiving.value = true
         viewModelScope.launch {
-            val restored = mutableSetOf<String>()
-            chatIds.forEach { chatId ->
-                chatRepository.updateConversationArchiveStatus(chatId, false)
-                    .onSuccess { restored += chatId }
-            }
-            val failures = chatIds.size - restored.size
-            if (failures > 0) _error.value = "Failed to unarchive $failures conversation(s)."
-            if (restored.isNotEmpty()) {
-                _archivedConversations.value = _archivedConversations.value.filterNot { it.chatId in restored }
-                refreshConversations()
+            try {
+                val restored = mutableSetOf<String>()
+                chatIds.forEach { chatId ->
+                    chatRepository.updateConversationArchiveStatus(chatId, false)
+                        .onSuccess { restored += chatId }
+                }
+                val failures = chatIds.size - restored.size
+                if (failures > 0) _error.value = "Failed to unarchive $failures conversation(s)."
+                if (restored.isNotEmpty()) {
+                    _archivedConversations.value = _archivedConversations.value.filterNot { it.chatId in restored }
+                    refreshConversations()
+                }
+            } finally {
+                _isUnarchiving.value = false
             }
         }
     }
