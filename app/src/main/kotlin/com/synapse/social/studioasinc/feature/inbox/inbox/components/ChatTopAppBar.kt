@@ -105,7 +105,8 @@ fun ChatTopAppBar(
     onExportChat: () -> Unit = {},
     onViewEarliestMessage: () -> Unit = {},
     onAddToChatFolder: () -> Unit = {},
-    onDeleteChat: () -> Unit = {}
+    onDeleteChat: () -> Unit = {},
+    isLoading: Boolean = false
 ) {
     val clipboard = LocalClipboard.current
     val clipLabel = stringResource(R.string.clip_label_message)
@@ -230,7 +231,8 @@ fun ChatTopAppBar(
             onExportChat = onExportChat,
             onViewEarliestMessage = onViewEarliestMessage,
             onAddToChatFolder = onAddToChatFolder,
-            onDeleteChat = onDeleteChat
+            onDeleteChat = onDeleteChat,
+            isLoading = isLoading
         )
     }
 }
@@ -317,6 +319,7 @@ private fun ChatFloatingTopBar(
     disappearingEnabled: Boolean,
     contactInfoLabel: String,
     onNavigateBack: () -> Unit,
+    isLoading: Boolean = false,
     onViewContact: () -> Unit,
     showCallActions: Boolean,
     onStartVoiceCall: () -> Unit,
@@ -347,7 +350,7 @@ private fun ChatFloatingTopBar(
             .padding(horizontal = Spacing.space4, vertical = Spacing.space4),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        FloatingBackButton(backdrop = backdrop, onNavigateBack = onNavigateBack)
+        FloatingBackButton(backdrop = backdrop, onNavigateBack = onNavigateBack, isLoading = isLoading)
         Spacer(modifier = Modifier.width(Spacing.space4))
         FloatingTitlePill(
             modifier = Modifier.weight(1f),
@@ -457,7 +460,7 @@ private fun FloatingHeaderSurface(
 }
 
 @Composable
-private fun FloatingBackButton(backdrop: Backdrop?, onNavigateBack: () -> Unit) {
+private fun FloatingBackButton(backdrop: Backdrop?, onNavigateBack: () -> Unit, isLoading: Boolean = false) {
     val interactionSource = remember { MutableInteractionSource() }
     FloatingHeaderSurface(
         modifier = Modifier.size(FloatingHeaderHeight),
@@ -468,7 +471,7 @@ private fun FloatingBackButton(backdrop: Backdrop?, onNavigateBack: () -> Unit) 
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             // The button reports into the surface's own source, so holding it shrinks the glass
             // disc together with the icon.
-            IconButton(onClick = onNavigateBack, interactionSource = interactionSource) {
+            IconButton(onClick = onNavigateBack, enabled = !isLoading, interactionSource = interactionSource) {
                 Icon(
                     Icons.AutoMirrored.Filled.ArrowBack,
                     contentDescription = stringResource(R.string.cd_back)
