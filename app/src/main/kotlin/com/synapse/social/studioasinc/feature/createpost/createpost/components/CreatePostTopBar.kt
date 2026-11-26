@@ -79,7 +79,7 @@ fun CreatePostTopBar(
             )
         },
         navigationIcon = {
-            IconButton(onClick = onNavigateUp) {
+            IconButton(onClick = onNavigateUp, enabled = !isLoading) {
                 with(sharedTransitionScope) {
                     Icon(
                         imageVector = Icons.Default.Close,
