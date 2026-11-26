@@ -88,6 +88,10 @@ class InboxViewModel @Inject constructor(
     private val _isUnarchiving = MutableStateFlow(false)
     val isUnarchiving: StateFlow<Boolean> = _isUnarchiving.asStateFlow()
 
+    /** True while pinning/unpinning selected conversations is in flight; guards against rapid-tap duplicate requests. */
+    private val _isPinning = MutableStateFlow(false)
+    val isPinning: StateFlow<Boolean> = _isPinning.asStateFlow()
+
     private val _error = MutableStateFlow<String?>(null)
     val error: StateFlow<String?> = _error.asStateFlow()
 
@@ -371,17 +375,22 @@ class InboxViewModel @Inject constructor(
     }
 
     fun setConversationsPinned(chatIds: Set<String>, isPinned: Boolean) {
-        if (chatIds.isEmpty()) return
+        if (chatIds.isEmpty() || _isPinning.value) return
+        _isPinning.value = true
         viewModelScope.launch {
-            var failures = 0
-            chatIds.forEach { chatId ->
-                chatRepository.updateConversationPinnedStatus(chatId, isPinned)
-                    .onSuccess {
-                        _conversations.value = _conversations.value.map { if (it.chatId == chatId) it.copy(isPinned = isPinned) else it }
-                    }
-                    .onFailure { failures++ }
+            try {
+                var failures = 0
+                chatIds.forEach { chatId ->
+                    chatRepository.updateConversationPinnedStatus(chatId, isPinned)
+                        .onSuccess {
+                            _conversations.value = _conversations.value.map { if (it.chatId == chatId) it.copy(isPinned = isPinned) else it }
+                        }
+                        .onFailure { failures++ }
+                }
+                if (failures > 0) _error.value = "Failed to update $failures conversation(s)."
+            } finally {
+                _isPinning.value = false
             }
-            if (failures > 0) _error.value = "Failed to update $failures conversation(s)."
         }
     }
 
