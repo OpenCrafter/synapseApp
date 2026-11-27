@@ -291,6 +291,7 @@ private fun InboxScreenContent(
     val isCreatingFolder by viewModel.isCreatingFolder.collectAsState()
     val isDeletingConversations by viewModel.isDeletingConversations.collectAsState()
     val isUnarchiving by viewModel.isUnarchiving.collectAsState()
+    val isArchiving by viewModel.isArchiving.collectAsState()
     val error by viewModel.error.collectAsState()
     val selectedFilter by viewModel.selectedFilter.collectAsState()
     val selectedFolderId by viewModel.selectedFolderId.collectAsState()
@@ -700,6 +701,7 @@ private fun InboxScreenContent(
                     onMute = { viewModel.setConversationsMuted(selectedChatIds, selectedConversations.any { !it.isMuted }) },
                     enabledPin = !isPinning,
                     enabledMute = !isMuting,
+                    enabledArchive = !isArchiving,
                     enabledDelete = !isDeletingConversations,
                     onArchive = ::archiveSelected,
                     onFolder = { showFolderSheet = true },
@@ -1043,6 +1045,7 @@ private fun SelectionContent(
     onDone: () -> Unit,
     enabledPin: Boolean = true,
     enabledMute: Boolean = true,
+    enabledArchive: Boolean = true,
     enabledDelete: Boolean = true
 ) {
     Column(
@@ -1062,6 +1065,7 @@ private fun SelectionContent(
                 onDelete = onDelete,
                 enabledPin = enabledPin,
                 enabledMute = enabledMute,
+                enabledArchive = enabledArchive,
                 enabledDelete = enabledDelete
             )
         }
