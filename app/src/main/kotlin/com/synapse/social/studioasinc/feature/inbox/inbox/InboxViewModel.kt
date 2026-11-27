@@ -88,6 +88,10 @@ class InboxViewModel @Inject constructor(
     private val _isUnarchiving = MutableStateFlow(false)
     val isUnarchiving: StateFlow<Boolean> = _isUnarchiving.asStateFlow()
 
+    /** True while archiving selected conversations is in flight; guards against rapid-tap duplicate requests. */
+    private val _isArchiving = MutableStateFlow(false)
+    val isArchiving: StateFlow<Boolean> = _isArchiving.asStateFlow()
+
     /** True while pinning/unpinning selected conversations is in flight; guards against rapid-tap duplicate requests. */
     private val _isPinning = MutableStateFlow(false)
     val isPinning: StateFlow<Boolean> = _isPinning.asStateFlow()
@@ -430,21 +434,26 @@ class InboxViewModel @Inject constructor(
     }
 
     fun archiveConversations(chatIds: Set<String>, onArchived: (Set<String>) -> Unit = {}) {
-        if (chatIds.isEmpty()) return
+        if (chatIds.isEmpty() || _isArchiving.value) return
+        _isArchiving.value = true
         viewModelScope.launch {
-            val archived = mutableSetOf<String>()
-            chatIds.forEach { chatId ->
-                chatRepository.updateConversationArchiveStatus(chatId, true)
-                    .onSuccess {
-                        archived += chatId
-                        _conversations.value = _conversations.value.filterNot { it.chatId == chatId }
-                    }
-            }
-            val failures = chatIds.size - archived.size
-            if (failures > 0) _error.value = "Failed to archive $failures conversation(s)."
-            if (archived.isNotEmpty()) {
-                loadArchivedConversations()
-                onArchived(archived)
+            try {
+                val archived = mutableSetOf<String>()
+                chatIds.forEach { chatId ->
+                    chatRepository.updateConversationArchiveStatus(chatId, true)
+                        .onSuccess {
+                            archived += chatId
+                            _conversations.value = _conversations.value.filterNot { it.chatId == chatId }
+                        }
+                }
+                val failures = chatIds.size - archived.size
+                if (failures > 0) _error.value = "Failed to archive $failures conversation(s)."
+                if (archived.isNotEmpty()) {
+                    loadArchivedConversations()
+                    onArchived(archived)
+                }
+            } finally {
+                _isArchiving.value = false
             }
         }
     }
