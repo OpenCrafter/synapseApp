@@ -130,8 +130,10 @@ fun ApiKeySettingsScreen(
                                     DropdownMenuItem(
                                         text = { Text(viewModel.getProviderDisplayName(provider)) },
                                         onClick = {
-                                            viewModel.updatePreferredProvider(provider)
-                                            expanded = false
+                                            if (!isLoading) {
+                                                viewModel.updatePreferredProvider(provider)
+                                                expanded = false
+                                            }
                                         }
                                     )
                                 }
