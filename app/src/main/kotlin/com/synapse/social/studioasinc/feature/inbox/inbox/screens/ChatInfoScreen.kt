@@ -193,7 +193,7 @@ fun ChatInfoScreen(
                     val interaction = remember { MutableInteractionSource() }
                     IconButton(
                         onClick = onNavigateBack,
-                        enabled = !uiState.isLoading,
+                        enabled = !uiState.isLoading && !uiState.isLocking,
                         interactionSource = interaction,
                         modifier = Modifier.pressScale(interaction)
                     ) {
