@@ -50,7 +50,8 @@ internal fun GroupedNotificationSettingsSections(
     onToggleGlobal: (Boolean) -> Unit,
     onToggleReminders: (Boolean) -> Unit,
     onToggleHighPriority: (Boolean) -> Unit,
-    onToggleReactions: (Boolean) -> Unit
+    onToggleReactions: (Boolean) -> Unit,
+    isLoading: Boolean
 ) {
     val defaultValue = stringResource(R.string.settings_notification_value_default)
     val chimeValue = stringResource(R.string.settings_notification_value_chime)
@@ -104,7 +105,8 @@ internal fun GroupedNotificationSettingsSections(
             onConversationTonesChange = onConversationTonesChange,
             remindersEnabled = notificationPreferences.remindersEnabled,
             onRemindersChange = onToggleReminders,
-            onToggle = onToggleGlobal
+            onToggle = onToggleGlobal,
+            isLoading = isLoading
         )
         MessagesNotificationSection(
             tone = messagesTone,
@@ -212,7 +214,8 @@ internal fun SoundEffectsSection(
     soundPreferences: SoundPreferences,
     onToggleSoundEffects: (Boolean) -> Unit,
     onToggleMessageTones: (Boolean) -> Unit,
-    onToggleCallTones: (Boolean) -> Unit
+    onToggleCallTones: (Boolean) -> Unit,
+    isLoading: Boolean
 ) {
     SettingsSection(title = stringResource(R.string.settings_sound_effects_section_title)) {
         SettingsToggleItem(
@@ -221,14 +224,15 @@ internal fun SoundEffectsSection(
             subtitle = if (soundPreferences.masterEnabled) stringResource(R.string.settings_on) else stringResource(R.string.settings_off),
             checked = soundPreferences.masterEnabled,
             onCheckedChange = onToggleSoundEffects,
-            position = SettingsItemPosition.Top
+            position = SettingsItemPosition.Top,
+            enabled = !isLoading
         )
         SettingsToggleItem(
             title = stringResource(R.string.settings_sound_message_tones_title),
             subtitle = stringResource(R.string.settings_sound_message_tones_subtitle),
             checked = soundPreferences.messageTonesEnabled,
             onCheckedChange = onToggleMessageTones,
-            enabled = soundPreferences.masterEnabled,
+            enabled = !isLoading && soundPreferences.masterEnabled,
             position = SettingsItemPosition.Middle
         )
         SettingsToggleItem(
@@ -236,7 +240,7 @@ internal fun SoundEffectsSection(
             subtitle = stringResource(R.string.settings_sound_call_tones_subtitle),
             checked = soundPreferences.callTonesEnabled,
             onCheckedChange = onToggleCallTones,
-            enabled = soundPreferences.masterEnabled,
+            enabled = !isLoading && soundPreferences.masterEnabled,
             position = SettingsItemPosition.Bottom
         )
     }
@@ -249,7 +253,8 @@ private fun GeneralNotificationSettingsSection(
     onConversationTonesChange: (Boolean) -> Unit,
     remindersEnabled: Boolean,
     onRemindersChange: (Boolean) -> Unit,
-    onToggle: (Boolean) -> Unit
+    onToggle: (Boolean) -> Unit,
+    isLoading: Boolean
 ) {
     SettingsSection(title = stringResource(R.string.settings_general_section_title)) {
         SettingsToggleItem(
@@ -258,7 +263,8 @@ private fun GeneralNotificationSettingsSection(
             subtitle = if (notificationPreferences.globalEnabled) stringResource(R.string.settings_on) else stringResource(R.string.settings_off),
             checked = notificationPreferences.globalEnabled,
             onCheckedChange = onToggle,
-            position = SettingsItemPosition.Top
+            position = SettingsItemPosition.Top,
+            enabled = !isLoading
         )
         SettingsToggleItem(
             title = stringResource(R.string.settings_conversation_tones_title),

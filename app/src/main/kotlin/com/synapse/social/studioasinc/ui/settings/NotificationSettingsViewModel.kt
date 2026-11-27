@@ -139,6 +139,7 @@ class NotificationSettingsViewModel @Inject constructor(
         val requestVersion = latestPreferenceUpdateVersion.incrementAndGet()
 
         viewModelScope.launch {
+            _isLoading.value = true
             try {
                 val userId = authRepository.getCurrentUserId()
                     ?: throw IllegalStateException("User is not authenticated")
@@ -166,6 +167,8 @@ class NotificationSettingsViewModel @Inject constructor(
                         _notificationPreferences.value = persistedPreferences
                     }
                 }
+            } finally {
+                _isLoading.value = false
             }
         }
     }
