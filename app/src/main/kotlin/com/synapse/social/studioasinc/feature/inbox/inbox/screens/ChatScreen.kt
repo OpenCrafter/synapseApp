@@ -523,7 +523,8 @@ val currentUserId = currentUserIdState ?: ""
                 ChatSearchTopAppBar(
                     query = searchQuery,
                     onQueryChange = { searchQuery = it },
-                    onCloseSearch = closeMessageSearch
+                    onCloseSearch = closeMessageSearch,
+                    isLoading = isLoading
                 )
             }
         },

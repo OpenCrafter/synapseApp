@@ -678,7 +678,8 @@ private fun FloatingActionsPill(
 fun ChatSearchTopAppBar(
     query: String,
     onQueryChange: (String) -> Unit,
-    onCloseSearch: () -> Unit
+    onCloseSearch: () -> Unit,
+    isLoading: Boolean = false
 ) {
     val focusRequester = remember { FocusRequester() }
     val focusManager = LocalFocusManager.current
