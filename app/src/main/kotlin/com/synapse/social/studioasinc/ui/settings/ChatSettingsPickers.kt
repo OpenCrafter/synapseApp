@@ -44,7 +44,8 @@ import com.synapse.social.studioasinc.feature.shared.theme.AppTypography
 @Composable
 internal fun ThemePicker(
     selectedTheme: ChatThemePreset,
-    onThemeSelected: (ChatThemePreset) -> Unit
+    onThemeSelected: (ChatThemePreset) -> Unit,
+    enabled: Boolean = true
 ) {
     val themes = ChatThemePreset.entries.toList()
     Row(
@@ -74,6 +75,7 @@ internal fun ThemePicker(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = Modifier
                     .clickable(
+                        enabled = enabled,
                         role = Role.RadioButton,
                         onClick = { onThemeSelected(theme) }
                     )
@@ -123,12 +125,13 @@ internal fun WallpaperPicker(
     selectedWallpaperValue: String?,
     onWallpaperValueSelected: (String?) -> Unit,
     blurIntensity: Float,
-    onBlurIntensityChanged: (Float) -> Unit
+    onBlurIntensityChanged: (Float) -> Unit,
+    enabled: Boolean = true
 ) {
     Column(
         modifier = Modifier.fillMaxWidth()
     ) {
-        WallpaperTypeSelector(selectedWallpaper, onWallpaperSelected)
+        WallpaperTypeSelector(selectedWallpaper, onWallpaperSelected, enabled = enabled)
 
         if (selectedWallpaper == WallpaperType.SOLID_COLOR) {
             HorizontalDivider(
@@ -136,7 +139,7 @@ internal fun WallpaperPicker(
                 thickness = Sizes.BorderThin,
                 modifier = Modifier.padding(horizontal = AppSpacing.itemHorizontalPadding)
             )
-            SolidColorSelector(selectedWallpaperValue, onWallpaperValueSelected)
+            SolidColorSelector(selectedWallpaperValue, onWallpaperValueSelected, enabled = enabled)
         }
 
         if (selectedWallpaper == WallpaperType.PATTERN || selectedWallpaper == WallpaperType.PRESET_IMAGE) {
@@ -145,7 +148,7 @@ internal fun WallpaperPicker(
                 thickness = Sizes.BorderThin,
                 modifier = Modifier.padding(horizontal = AppSpacing.itemHorizontalPadding)
             )
-            PatternSelector(selectedWallpaper, selectedWallpaperValue, onWallpaperValueSelected)
+            PatternSelector(selectedWallpaper, selectedWallpaperValue, onWallpaperValueSelected, enabled = enabled)
         }
 
         if (selectedWallpaper == WallpaperType.PATTERN || selectedWallpaper == WallpaperType.PRESET_IMAGE || selectedWallpaper == WallpaperType.DEFAULT) {
@@ -154,7 +157,7 @@ internal fun WallpaperPicker(
                 thickness = Sizes.BorderThin,
                 modifier = Modifier.padding(horizontal = AppSpacing.itemHorizontalPadding)
             )
-            BlurSlider(blurIntensity, onBlurIntensityChanged)
+            BlurSlider(blurIntensity, onBlurIntensityChanged, enabled = enabled)
         }
     }
 }
@@ -162,7 +165,8 @@ internal fun WallpaperPicker(
 @Composable
 internal fun WallpaperTypeSelector(
     selectedWallpaper: WallpaperType,
-    onWallpaperSelected: (WallpaperType) -> Unit
+    onWallpaperSelected: (WallpaperType) -> Unit,
+    enabled: Boolean = true
 ) {
     val wallpapers = remember {
         WallpaperType.entries.filter { wallpaper ->
@@ -206,6 +210,7 @@ internal fun WallpaperTypeSelector(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     modifier = Modifier
                         .clickable(
+                            enabled = enabled,
                             role = Role.RadioButton,
                             onClick = { onWallpaperSelected(wallpaper) }
                         )
@@ -250,7 +255,8 @@ internal fun WallpaperTypeSelector(
 @Composable
 internal fun SolidColorSelector(
     selectedColor: String?,
-    onColorSelected: (String?) -> Unit
+    onColorSelected: (String?) -> Unit,
+    enabled: Boolean = true
 ) {
     var showColorPickerPicker by remember { mutableStateOf(false) }
 
@@ -280,7 +286,8 @@ internal fun SolidColorSelector(
             )
 
             TextButton(
-                onClick = { showColorPickerPicker = true }
+                onClick = { if (enabled) showColorPickerPicker = true },
+                enabled = enabled
             ) {
                 Icon(
                     imageVector = Icons.Default.ColorLens,
@@ -311,7 +318,9 @@ internal fun SolidColorSelector(
                         if (isCustomSelected) safeParseColorHex(selectedColor, MaterialTheme.colorScheme.primary)
                         else MaterialTheme.colorScheme.primaryContainer
                     )
-                    .clickable { showColorPickerPicker = true }
+                    .clickable {
+                        if (enabled) showColorPickerPicker = true
+                    }
                     .border(
                         width = if (isCustomSelected) 3.dp else 1.dp,
                         color = if (isCustomSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant,
@@ -347,6 +356,7 @@ internal fun SolidColorSelector(
                         .clip(CircleShape)
                         .background(color)
                         .clickable(
+                            enabled = enabled,
                             role = Role.RadioButton,
                             onClick = { onColorSelected(colorHex) }
                         )
@@ -371,7 +381,7 @@ internal fun SolidColorSelector(
         }
     }
 
-    if (showColorPickerPicker) {
+    if (showColorPickerPicker && enabled) {
         ExpressiveColorPickerDialog(
             initialColorHex = selectedColor ?: "#BBDEFB",
             onDismiss = { showColorPickerPicker = false },
@@ -517,7 +527,8 @@ private fun ExpressiveColorPickerDialog(
 internal fun PatternSelector(
     selectedWallpaper: WallpaperType,
     selectedWallpaperValue: String?,
-    onWallpaperValueSelected: (String?) -> Unit
+    onWallpaperValueSelected: (String?) -> Unit,
+    enabled: Boolean = true
 ) {
     val isPattern = selectedWallpaper == WallpaperType.PATTERN
     val context = LocalContext.current
@@ -526,7 +537,7 @@ internal fun PatternSelector(
     }
 
     LaunchedEffect(items) {
-        if (selectedWallpaperValue.isNullOrBlank() && items.isNotEmpty()) {
+        if (enabled && selectedWallpaperValue.isNullOrBlank() && items.isNotEmpty()) {
             onWallpaperValueSelected(items.first())
         }
     }
@@ -561,6 +572,7 @@ internal fun PatternSelector(
                         .size(width = 64.dp, height = 64.dp)
                         .clip(AppShapes.inputShape)
                         .clickable(
+                            enabled = enabled,
                             role = Role.RadioButton,
                             onClick = { onWallpaperValueSelected(item) }
                         )
@@ -613,7 +625,8 @@ internal fun PatternSelector(
 @Composable
 internal fun BlurSlider(
     blurIntensity: Float,
-    onBlurIntensityChanged: (Float) -> Unit
+    onBlurIntensityChanged: (Float) -> Unit,
+    enabled: Boolean = true
 ) {
     var localBlur by remember(blurIntensity) { mutableStateOf(blurIntensity) }
 
@@ -654,10 +667,13 @@ internal fun BlurSlider(
         Slider(
             state = blurSliderState,
             onValueChange = { newValue ->
-                blurSliderState.value = newValue
-                localBlur = newValue
+                if (enabled) {
+                    blurSliderState.value = newValue
+                    localBlur = newValue
+                }
             },
-            onValueChangeFinished = { onBlurIntensityChanged(blurSliderState.value) },
+            onValueChangeFinished = { if (enabled) onBlurIntensityChanged(blurSliderState.value) },
+            enabled = enabled,
             colors = SliderDefaults.colors(
                 thumbColor = MaterialTheme.colorScheme.primary,
                 activeTrackColor = MaterialTheme.colorScheme.primary,
