@@ -454,26 +454,29 @@ class InboxViewModel @Inject constructor(
     fun deleteConversation(chatId: String) = deleteConversations(setOf(chatId))
 
     fun deleteConversations(chatIds: Set<String>, onResult: (Boolean) -> Unit = {}) {
-        if (chatIds.isEmpty()) {
-            onResult(true)
+        if (chatIds.isEmpty() || _isDeletingConversations.value) {
+            if (chatIds.isEmpty()) onResult(true)
             return
         }
+        _isDeletingConversations.value = true
         viewModelScope.launch {
-            _isDeletingConversations.value = true
-            var failures = 0
-            chatIds.forEach { chatId ->
-                chatRepository.deleteConversation(chatId)
-                    .onSuccess {
-                        _conversations.value = _conversations.value.filterNot { it.chatId == chatId }
-                    }
-                    .onFailure { failures++ }
-            }
-            _isDeletingConversations.value = false
-            if (failures > 0) {
-                _error.value = "Failed to delete $failures conversation(s)."
-                onResult(false)
-            } else {
-                onResult(true)
+            try {
+                var failures = 0
+                chatIds.forEach { chatId ->
+                    chatRepository.deleteConversation(chatId)
+                        .onSuccess {
+                            _conversations.value = _conversations.value.filterNot { it.chatId == chatId }
+                        }
+                        .onFailure { failures++ }
+                }
+                if (failures > 0) {
+                    _error.value = "Failed to delete $failures conversation(s)."
+                    onResult(false)
+                } else {
+                    onResult(true)
+                }
+            } finally {
+                _isDeletingConversations.value = false
             }
         }
     }
