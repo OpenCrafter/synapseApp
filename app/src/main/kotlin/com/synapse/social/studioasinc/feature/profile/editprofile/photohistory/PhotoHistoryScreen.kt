@@ -131,7 +131,7 @@ fun PhotoHistoryScreen(
                     )
                 },
                 navigationIcon = {
-                    IconButton(onClick = onNavigateBack, enabled = !uiState.isLoading) {
+                    IconButton(onClick = onNavigateBack, enabled = !uiState.isLoading && !uiState.isDeleting) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = stringResource(R.string.back)
