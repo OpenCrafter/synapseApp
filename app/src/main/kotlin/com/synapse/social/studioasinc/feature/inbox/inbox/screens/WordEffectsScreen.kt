@@ -137,6 +137,7 @@ fun WordEffectsScreen(
                 isLoading = uiState.isLoading,
                 canRetry = uiState.canRetry,
                 effects = uiState.effects,
+                togglingIds = uiState.togglingIds,
                 onRetry = { viewModel.retryLoad(chatId) },
                 onToggle = { effect, enabled -> viewModel.setEffectEnabled(effect, enabled) },
                 onEdit = { effect ->
@@ -267,6 +268,7 @@ private fun EffectsSection(
     isLoading: Boolean,
     canRetry: Boolean,
     effects: List<WordEffect>,
+    togglingIds: Set<String>,
     onRetry: () -> Unit,
     onToggle: (WordEffect, Boolean) -> Unit,
     onEdit: (WordEffect) -> Unit,
@@ -310,6 +312,7 @@ private fun EffectsSection(
             else -> effects.forEach { effect ->
                 WordEffectRow(
                     effect = effect,
+                    enabled = !togglingIds.contains(effect.id),
                     onToggle = { enabled -> onToggle(effect, enabled) },
                     onEdit = { onEdit(effect) },
                     onDelete = { onDelete(effect) }
@@ -328,6 +331,7 @@ private fun EffectsSection(
 @Composable
 private fun WordEffectRow(
     effect: WordEffect,
+    enabled: Boolean,
     onToggle: (Boolean) -> Unit,
     onEdit: () -> Unit,
     onDelete: () -> Unit
@@ -357,7 +361,11 @@ private fun WordEffectRow(
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
-            Switch(checked = effect.isEnabled, onCheckedChange = onToggle)
+            Switch(
+                checked = effect.isEnabled,
+                onCheckedChange = onToggle,
+                enabled = enabled
+            )
             IconButton(onClick = onEdit) {
                 Icon(
                     imageVector = Icons.Rounded.Edit,

@@ -28,6 +28,8 @@ data class WordEffectsUiState(
     val isSaving: Boolean = false,
     /** Word effects currently being deleted, used to guard against concurrent invocations. */
     val deletingIds: Set<String> = emptySet(),
+    /** Word effects whose enabled-state write is currently in flight, used to guard against concurrent toggles. */
+    val togglingIds: Set<String> = emptySet(),
     @StringRes val errorMessageRes: Int? = null,
     val canRetry: Boolean = false,
     @StringRes val editorErrorRes: Int? = null,
@@ -146,15 +148,23 @@ class WordEffectsViewModel @Inject constructor(
      * does not have.
      */
     fun setEffectEnabled(effect: WordEffect, isEnabled: Boolean) {
+        if (_uiState.value.togglingIds.contains(effect.id)) return
         val optimistic = effect.copy(isEnabled = isEnabled)
         replaceEffect(optimistic)
+        _uiState.update { it.copy(togglingIds = it.togglingIds + effect.id) }
 
         viewModelScope.launch {
             updateWordEffectUseCase(optimistic)
-                .onSuccess { saved -> replaceEffect(saved) }
+                .onSuccess { saved ->
+                    replaceEffect(saved)
+                    _uiState.update { it.copy(togglingIds = it.togglingIds - saved.id) }
+                }
                 .onFailure {
                     replaceEffect(effect)
-                    _uiState.update { it.copy(errorMessageRes = R.string.word_effects_error_save) }
+                    _uiState.update { it.copy(
+                        togglingIds = it.togglingIds - effect.id,
+                        errorMessageRes = R.string.word_effects_error_save
+                    )}
                 }
             resolvePreview()
         }
