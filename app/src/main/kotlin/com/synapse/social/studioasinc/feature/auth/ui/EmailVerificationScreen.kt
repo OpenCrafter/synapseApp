@@ -111,7 +111,8 @@ fun EmailVerificationScreen(
             Spacer(modifier = Modifier.height(Spacing.space24))
 
             OutlinedButton(
-                onClick = onBackToSignInClick
+                onClick = onBackToSignInClick,
+                enabled = !state.isLoading
             ) {
                 Text(stringResource(R.string.forgot_password_back))
             }
