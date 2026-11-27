@@ -122,7 +122,8 @@ fun ForgotPasswordScreen(
                 Spacer(modifier = Modifier.height(Spacing.space16))
 
                 OutlinedButton(
-                    onClick = onBackClick
+                    onClick = onBackClick,
+                    enabled = !state.isLoading
                 ) {
                     Text(stringResource(R.string.forgot_password_back))
                 }
