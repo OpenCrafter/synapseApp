@@ -258,4 +258,8 @@ class ChatSettingsViewModel @Inject constructor(
             }
         }
     }
+
+    fun clearError() {
+        _error.value = null
+    }
 }
