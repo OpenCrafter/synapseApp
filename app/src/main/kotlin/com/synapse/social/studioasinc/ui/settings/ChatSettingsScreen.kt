@@ -114,7 +114,8 @@ fun ChatSettingsScreen(
                         steps = 8,
                         onValueChange = { viewModel.updateChatFontScale(it) },
                         valueLabel = { fontSizeLabel },
-                        position = SettingsItemPosition.Top
+                        position = SettingsItemPosition.Top,
+                        enabled = !isLoading
                     )
 
                     Surface(
@@ -136,7 +137,8 @@ fun ChatSettingsScreen(
                             Spacer(modifier = Modifier.height(Spacing.space4))
                             ThemePicker(
                                 selectedTheme = chatThemePreset,
-                                onThemeSelected = { viewModel.updateChatThemePreset(it) }
+                                onThemeSelected = { viewModel.updateChatThemePreset(it) },
+                                enabled = !isLoading
                             )
                         }
                     }
@@ -149,7 +151,8 @@ fun ChatSettingsScreen(
                         steps = 23,
                         onValueChange = { viewModel.updateChatMessageCornerRadius(it.toInt()) },
                         valueLabel = { cornersLabel },
-                        position = SettingsItemPosition.Bottom
+                        position = SettingsItemPosition.Bottom,
+                        enabled = !isLoading
                     )
                 }
             }
@@ -167,7 +170,8 @@ fun ChatSettingsScreen(
                             selectedWallpaperValue = chatWallpaperValue,
                             onWallpaperValueSelected = { viewModel.updateChatWallpaperValue(it) },
                             blurIntensity = chatWallpaperBlur,
-                            onBlurIntensityChanged = { viewModel.updateChatWallpaperBlur(it) }
+                            onBlurIntensityChanged = { viewModel.updateChatWallpaperBlur(it) },
+                            enabled = !isLoading
                         )
                     }
                 }
@@ -180,14 +184,16 @@ fun ChatSettingsScreen(
                         subtitle = "More compact, fits more chats.",
                         selected = chatListLayout == ChatListLayout.SINGLE_LINE,
                         onClick = { viewModel.updateChatListLayout(ChatListLayout.SINGLE_LINE) },
-                        position = SettingsItemPosition.Top
+                        position = SettingsItemPosition.Top,
+                        enabled = !isLoading
                     )
                     ChatRadioItem(
                         title = "Two Lines",
                         subtitle = "Shows a snippet of the last message.",
                         selected = chatListLayout == ChatListLayout.DOUBLE_LINE,
                         onClick = { viewModel.updateChatListLayout(ChatListLayout.DOUBLE_LINE) },
-                        position = SettingsItemPosition.Bottom
+                        position = SettingsItemPosition.Bottom,
+                        enabled = !isLoading
                     )
                 }
             }
@@ -207,7 +213,8 @@ fun ChatSettingsScreen(
                             title = gestureTitle,
                             selected = gesture == chatSwipeGesture,
                             onClick = { viewModel.updateChatSwipeGesture(gesture) },
-                            position = position
+                            position = position,
+                            enabled = !isLoading
                         )
                     }
                 }
