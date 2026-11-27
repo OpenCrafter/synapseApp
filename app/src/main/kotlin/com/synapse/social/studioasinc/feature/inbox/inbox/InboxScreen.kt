@@ -527,7 +527,7 @@ private fun InboxScreenContent(
                 )
                 InboxDestination.CONTACTS -> TopAppBar(
                     title = { Text(stringResource(R.string.inbox_contacts_title)) },
-                    navigationIcon = { IconButton(onClick = ::returnToInbox) { Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = stringResource(R.string.inbox_back)) } },
+                    navigationIcon = { IconButton(onClick = ::returnToInbox, enabled = !isLoading) { Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = stringResource(R.string.inbox_back)) } },
                     colors = barColors
                 )
             }
