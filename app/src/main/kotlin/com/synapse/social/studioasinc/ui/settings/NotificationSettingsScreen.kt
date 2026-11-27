@@ -179,7 +179,8 @@ fun NotificationSettingsContent(
                     onToggleGlobal = onToggleGlobal,
                     onToggleReminders = onToggleReminders,
                     onToggleHighPriority = onToggleHighPriority,
-                    onToggleReactions = onToggleReactions
+                    onToggleReactions = onToggleReactions,
+                    isLoading = isLoading
                 )
             }
 
@@ -188,28 +189,32 @@ fun NotificationSettingsContent(
                     soundPreferences = soundPreferences,
                     onToggleSoundEffects = onToggleSoundEffects,
                     onToggleMessageTones = onToggleMessageTones,
-                    onToggleCallTones = onToggleCallTones
+                    onToggleCallTones = onToggleCallTones,
+                    isLoading = isLoading
                 )
             }
 
             item {
                 SocialInteractionsSection(
                     notificationPreferences = notificationPreferences,
-                    onToggleCategory = onToggleCategory
+                    onToggleCategory = onToggleCategory,
+                    isLoading = isLoading
                 )
             }
 
             item {
                 ContentUpdatesSection(
                     notificationPreferences = notificationPreferences,
-                    onToggleCategory = onToggleCategory
+                    onToggleCategory = onToggleCategory,
+                    isLoading = isLoading
                 )
             }
 
             item {
                 SystemSecuritySection(
                     notificationPreferences = notificationPreferences,
-                    onToggleCategory = onToggleCategory
+                    onToggleCategory = onToggleCategory,
+                    isLoading = isLoading
                 )
             }
 
@@ -218,7 +223,8 @@ fun NotificationSettingsContent(
                     notificationPreferences = notificationPreferences,
                     onToggleQuietHours = onToggleQuietHours,
                     onToggleDoNotDisturb = onToggleDoNotDisturb,
-                    onShowStartTimePicker = onShowStartTimePicker
+                    onShowStartTimePicker = onShowStartTimePicker,
+                    isLoading = isLoading
                 )
             }
         }
@@ -228,7 +234,8 @@ fun NotificationSettingsContent(
 @Composable
 private fun SocialInteractionsSection(
     notificationPreferences: NotificationPreferences,
-    onToggleCategory: (NotificationCategory, Boolean) -> Unit
+    onToggleCategory: (NotificationCategory, Boolean) -> Unit,
+    isLoading: Boolean
 ) {
     SettingsSection(title = stringResource(R.string.settings_social_interactions_title)) {
         SocialNotificationTypes.forEachIndexed { index, (category, label) ->
@@ -249,7 +256,7 @@ private fun SocialInteractionsSection(
                 subtitle = if (isEnabled) stringResource(R.string.settings_enabled) else stringResource(R.string.settings_disabled),
                 checked = isEnabled,
                 onCheckedChange = { onToggleCategory(category, it) },
-                enabled = notificationPreferences.globalEnabled,
+                enabled = !isLoading && notificationPreferences.globalEnabled,
                 position = position
             )
         }
@@ -259,7 +266,8 @@ private fun SocialInteractionsSection(
 @Composable
 private fun ContentUpdatesSection(
     notificationPreferences: NotificationPreferences,
-    onToggleCategory: (NotificationCategory, Boolean) -> Unit
+    onToggleCategory: (NotificationCategory, Boolean) -> Unit,
+    isLoading: Boolean
 ) {
     SettingsSection(title = stringResource(R.string.settings_content_updates_title)) {
         ContentNotificationTypes.forEachIndexed { index, (category, label) ->
@@ -276,7 +284,7 @@ private fun ContentUpdatesSection(
                 subtitle = if (isEnabled) stringResource(R.string.settings_enabled) else stringResource(R.string.settings_disabled),
                 checked = isEnabled,
                 onCheckedChange = { onToggleCategory(category, it) },
-                enabled = notificationPreferences.globalEnabled,
+                enabled = !isLoading && notificationPreferences.globalEnabled,
                 position = position
             )
         }
@@ -286,7 +294,8 @@ private fun ContentUpdatesSection(
 @Composable
 private fun SystemSecuritySection(
     notificationPreferences: NotificationPreferences,
-    onToggleCategory: (NotificationCategory, Boolean) -> Unit
+    onToggleCategory: (NotificationCategory, Boolean) -> Unit,
+    isLoading: Boolean
 ) {
     SettingsSection(title = stringResource(R.string.settings_system_security_section)) {
         SettingsToggleItem(
@@ -295,7 +304,7 @@ private fun SystemSecuritySection(
             subtitle = stringResource(R.string.settings_security_alerts_subtitle),
             checked = notificationPreferences.securityEnabled,
             onCheckedChange = { onToggleCategory(NotificationCategory.SECURITY_ALERTS, it) },
-            enabled = notificationPreferences.globalEnabled,
+            enabled = !isLoading && notificationPreferences.globalEnabled,
             position = SettingsItemPosition.Top
         )
         SettingsToggleItem(
@@ -304,7 +313,7 @@ private fun SystemSecuritySection(
             subtitle = if (notificationPreferences.updatesEnabled) stringResource(R.string.settings_enabled) else stringResource(R.string.settings_disabled),
             checked = notificationPreferences.updatesEnabled,
             onCheckedChange = { onToggleCategory(NotificationCategory.SYSTEM_UPDATES, it) },
-            enabled = notificationPreferences.globalEnabled,
+            enabled = !isLoading && notificationPreferences.globalEnabled,
             position = SettingsItemPosition.Bottom
         )
     }
@@ -315,14 +324,16 @@ private fun AdvancedSettingsSection(
     notificationPreferences: NotificationPreferences,
     onToggleQuietHours: (Boolean) -> Unit,
     onToggleDoNotDisturb: (Boolean) -> Unit,
-    onShowStartTimePicker: () -> Unit
+    onShowStartTimePicker: () -> Unit,
+    isLoading: Boolean
 ) {
     SettingsSection(title = stringResource(R.string.settings_advanced_settings_title)) {
         QuietHoursItem(
             notificationPreferences = notificationPreferences,
             onToggleQuietHours = onToggleQuietHours,
             onShowStartTimePicker = onShowStartTimePicker,
-            position = SettingsItemPosition.Top
+            position = SettingsItemPosition.Top,
+            isLoading = isLoading
         )
         SettingsToggleItem(
             imageVector = Icons.Default.DoNotDisturb,
@@ -330,7 +341,7 @@ private fun AdvancedSettingsSection(
             subtitle = if (notificationPreferences.doNotDisturb) stringResource(R.string.settings_active) else stringResource(R.string.settings_inactive),
             checked = notificationPreferences.doNotDisturb,
             onCheckedChange = onToggleDoNotDisturb,
-            enabled = notificationPreferences.globalEnabled,
+            enabled = !isLoading && notificationPreferences.globalEnabled,
             position = SettingsItemPosition.Bottom
         )
     }
@@ -341,9 +352,10 @@ private fun QuietHoursItem(
     notificationPreferences: NotificationPreferences,
     onToggleQuietHours: (Boolean) -> Unit,
     onShowStartTimePicker: () -> Unit,
-    position: SettingsItemPosition = SettingsItemPosition.Single
+    position: SettingsItemPosition = SettingsItemPosition.Single,
+    isLoading: Boolean
 ) {
-    val enabled = notificationPreferences.globalEnabled
+    val enabled = !isLoading && notificationPreferences.globalEnabled
     val quietHoursSummary = if (notificationPreferences.quietHoursEnabled) {
         "${notificationPreferences.quietHoursStart} - ${notificationPreferences.quietHoursEnd}"
     } else {
@@ -355,7 +367,7 @@ private fun QuietHoursItem(
         subtitle = quietHoursSummary,
         position = position,
         enabled = enabled,
-        onClick = onShowStartTimePicker,
+        onClick = if (enabled) onShowStartTimePicker else null,
         leadingContent = {
             SettingsIconBadge(imageVector = Icons.Default.Schedule)
         },
