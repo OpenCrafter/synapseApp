@@ -535,6 +535,7 @@ fun InboxSelectionToolbar(
     enabledPin: Boolean = true,
     enabledMute: Boolean = true,
     enabledArchive: Boolean = true,
+    enabledDelete: Boolean = true,
     modifier: Modifier = Modifier
 ) {
     Surface(
@@ -559,7 +560,7 @@ fun InboxSelectionToolbar(
             IconButton(onClick = onFolder, modifier = Modifier.size(InboxExpressiveDimens.IconTouchTarget)) {
                 Icon(Icons.Rounded.Folder, contentDescription = stringResource(R.string.inbox_action_folder))
             }
-            IconButton(onClick = onDelete, modifier = Modifier.size(InboxExpressiveDimens.IconTouchTarget)) {
+            IconButton(onClick = onDelete, enabled = enabledDelete, modifier = Modifier.size(InboxExpressiveDimens.IconTouchTarget)) {
                 Icon(Icons.Rounded.Delete, contentDescription = stringResource(R.string.inbox_action_delete), tint = MaterialTheme.colorScheme.error)
             }
         }

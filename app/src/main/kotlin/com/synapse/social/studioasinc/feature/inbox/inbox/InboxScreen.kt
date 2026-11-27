@@ -702,6 +702,7 @@ private fun InboxScreenContent(
                     enabledPin = !isPinning,
                     enabledMute = !isMuting,
                     enabledArchive = !isArchiving,
+                    enabledDelete = !isDeletingConversations,
                     onArchive = ::archiveSelected,
                     onFolder = { showFolderSheet = true },
                     onDelete = { showDeleteDialog = true },
@@ -1044,7 +1045,8 @@ private fun SelectionContent(
     onDone: () -> Unit,
     enabledPin: Boolean = true,
     enabledMute: Boolean = true,
-    enabledArchive: Boolean = true
+    enabledArchive: Boolean = true,
+    enabledDelete: Boolean = true
 ) {
     Column(
         Modifier
@@ -1063,7 +1065,8 @@ private fun SelectionContent(
                 onDelete = onDelete,
                 enabledPin = enabledPin,
                 enabledMute = enabledMute,
-                enabledArchive = enabledArchive
+                enabledArchive = enabledArchive,
+                enabledDelete = enabledDelete
             )
         }
         LazyColumn(
