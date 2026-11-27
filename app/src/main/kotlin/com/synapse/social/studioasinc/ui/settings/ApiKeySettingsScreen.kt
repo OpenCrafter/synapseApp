@@ -192,7 +192,8 @@ fun ApiKeySettingsScreen(
                         )
 
                         TextButton(
-                            onClick = { showAddKeyDialog = true }
+                            onClick = { showAddKeyDialog = true },
+                            enabled = !isLoading
                         ) {
                             Icon(Icons.Default.Add, contentDescription = "Add API Key")
                             Spacer(modifier = Modifier.width(Spacing.space8))
@@ -229,7 +230,8 @@ fun ApiKeySettingsScreen(
                                 )
                                 Spacer(modifier = Modifier.height(Spacing.space16))
                                 Button(
-                                    onClick = { showAddKeyDialog = true }
+                                    onClick = { showAddKeyDialog = true },
+                                    enabled = !isLoading
                                 ) {
                                     Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(Sizes.IconMedium))
                                     Spacer(modifier = Modifier.width(Spacing.space8))
