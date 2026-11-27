@@ -307,6 +307,7 @@ fun SettingsNavHost(
             }
             val viewModel: PrivacySecurityViewModel = hiltViewModel(parentEntry)
             val selectedTimer by viewModel.disappearingMessagesTimer.collectAsState()
+            val isLoading by viewModel.isLoading.collectAsState()
 
             val timerOptions = listOf(
                 PrivacyOptionItem(
@@ -337,7 +338,8 @@ fun SettingsNavHost(
                 options = timerOptions,
                 selectedOption = selectedTimer,
                 onOptionSelected = { viewModel.setDisappearingMessagesTimer(it) },
-                onNavigateBack = { navController.popBackStack() }
+                onNavigateBack = { navController.popBackStack() },
+                isLoading = isLoading
             )
         }
 
