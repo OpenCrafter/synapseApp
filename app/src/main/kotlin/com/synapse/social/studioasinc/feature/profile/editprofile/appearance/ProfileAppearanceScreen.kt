@@ -149,7 +149,7 @@ fun ProfileAppearanceScreen(
                         }
                     },
                     navigationIcon = {
-                        IconButton(onClick = { viewModel.onEvent(ProfileAppearanceEvent.BackClicked) }, enabled = !uiState.isSaving) {
+                        IconButton(onClick = { viewModel.onEvent(ProfileAppearanceEvent.BackClicked) }, enabled = !uiState.isLoading && !uiState.isSaving) {
                             Icon(
                                 imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                                 contentDescription = stringResource(R.string.back)
