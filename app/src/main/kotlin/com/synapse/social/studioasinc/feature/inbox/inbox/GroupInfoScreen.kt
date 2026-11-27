@@ -251,9 +251,19 @@ fun GroupInfoScreen(
                     IconButton(
                         onClick = onNavigateBack,
                         enabled = !uiState.isLoading
+                            && !uiState.isRemoving
+                            && !uiState.isLeaving
+                            && !uiState.isDeleting
                             && !uiState.isUpdatingName
                             && !uiState.isUpdatingDescription
-                            && !uiState.isAvatarUploading,
+                            && !uiState.isUpdatingDisappearingMode
+                            && !uiState.isRevokingInvite
+                            && !uiState.isProcessingJoinRequest
+                            && !uiState.isProcessingMemberRole
+                            && !uiState.isAddingMembers
+                            && !uiState.isAvatarUploading
+                            && !uiState.isReporting
+                            && !uiState.isMuteUpdating,
                         interactionSource = interaction,
                         modifier = Modifier.pressScale(interaction)
                     ) {
