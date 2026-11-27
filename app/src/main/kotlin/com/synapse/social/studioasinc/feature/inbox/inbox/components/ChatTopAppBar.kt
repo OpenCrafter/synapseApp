@@ -679,6 +679,10 @@ fun ChatSearchTopAppBar(
     query: String,
     onQueryChange: (String) -> Unit,
     onCloseSearch: () -> Unit,
+    /**
+     * When true, disables the close-search navigation icon while chat messages are loading
+     * asynchronously, preventing the user from exiting search mode mid-load.
+     */
     isLoading: Boolean = false
 ) {
     val focusRequester = remember { FocusRequester() }
