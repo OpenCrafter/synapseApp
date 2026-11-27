@@ -767,6 +767,7 @@ val currentUserId = currentUserIdState ?: ""
                         onClearSelection = viewModel::clearSelection,
                         onDeleteSelectedMessages = { showDeleteSelectedDialog = true },
                         onNavigateBack = onNavigateBack,
+                        isLoading = isLoading,
                         onSummarizeChat = viewModel::summarizeChat,
                         onNavigateToGroupInfo = onNavigateToGroupInfo,
                         onNavigateToChatInfo = { targetChatId, targetUserId ->
