@@ -678,7 +678,12 @@ private fun FloatingActionsPill(
 fun ChatSearchTopAppBar(
     query: String,
     onQueryChange: (String) -> Unit,
-    onCloseSearch: () -> Unit
+    onCloseSearch: () -> Unit,
+    /**
+     * When true, disables the close-search navigation icon while chat messages are loading
+     * asynchronously, preventing the user from exiting search mode mid-load.
+     */
+    isLoading: Boolean = false
 ) {
     val focusRequester = remember { FocusRequester() }
     val focusManager = LocalFocusManager.current
@@ -717,7 +722,7 @@ fun ChatSearchTopAppBar(
             )
         },
         navigationIcon = {
-            IconButton(onClick = onCloseSearch) {
+            IconButton(onClick = onCloseSearch, enabled = !isLoading) {
                 Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.cd_back))
             }
         },
