@@ -156,6 +156,7 @@ fun FlagsScreen(
                             imageVector = Icons.Filled.Build,
                             checked = messageSuggestionEnabled,
                             onCheckedChange = { viewModel.setMessageSuggestionEnabled(it) },
+                            enabled = !isLoading,
                             position = SettingsItemPosition.Middle
                         )
                         SettingsToggleItem(
@@ -164,6 +165,7 @@ fun FlagsScreen(
                             imageVector = Icons.Filled.Person,
                             checked = chatAvatarDisabled,
                             onCheckedChange = { viewModel.setChatAvatarDisabled(it) },
+                            enabled = !isLoading,
                             position = SettingsItemPosition.Bottom
                         )
                     }
