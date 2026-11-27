@@ -700,6 +700,7 @@ private fun InboxScreenContent(
                     onMute = { viewModel.setConversationsMuted(selectedChatIds, selectedConversations.any { !it.isMuted }) },
                     enabledPin = !isPinning,
                     enabledMute = !isMuting,
+                    enabledDelete = !isDeletingConversations,
                     onArchive = ::archiveSelected,
                     onFolder = { showFolderSheet = true },
                     onDelete = { showDeleteDialog = true },
@@ -1041,7 +1042,8 @@ private fun SelectionContent(
     onDelete: () -> Unit,
     onDone: () -> Unit,
     enabledPin: Boolean = true,
-    enabledMute: Boolean = true
+    enabledMute: Boolean = true,
+    enabledDelete: Boolean = true
 ) {
     Column(
         Modifier
@@ -1059,7 +1061,8 @@ private fun SelectionContent(
                 onFolder = onFolder,
                 onDelete = onDelete,
                 enabledPin = enabledPin,
-                enabledMute = enabledMute
+                enabledMute = enabledMute,
+                enabledDelete = enabledDelete
             )
         }
         LazyColumn(
