@@ -113,7 +113,8 @@ fun ChatPrivacyScreen(
                     }
                     Switch(
                         checked = uiState.isLocked,
-                        onCheckedChange = { viewModel.toggleChatLock(chatId) }
+                        onCheckedChange = { viewModel.toggleChatLock(chatId) },
+                        enabled = !uiState.isLocking
                     )
                 }
             }
