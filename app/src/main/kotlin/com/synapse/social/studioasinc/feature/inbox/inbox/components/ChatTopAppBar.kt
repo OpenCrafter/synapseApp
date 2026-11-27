@@ -717,7 +717,7 @@ fun ChatSearchTopAppBar(
             )
         },
         navigationIcon = {
-            IconButton(onClick = onCloseSearch) {
+            IconButton(onClick = onCloseSearch, enabled = !isLoading) {
                 Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.cd_back))
             }
         },
