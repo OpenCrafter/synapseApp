@@ -57,8 +57,25 @@ fun ChatSettingsScreen(
     val chatListLayout by viewModel.chatListLayout.collectAsState()
     val chatSwipeGesture by viewModel.chatSwipeGesture.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
+    val error by viewModel.error.collectAsState()
 
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
+    val snackbarHostState = remember { SnackbarHostState() }
+    val dismissLabel = stringResource(R.string.action_dismiss)
+
+    LaunchedEffect(error) {
+        val currentError = error
+        if (currentError != null) {
+            val result = snackbarHostState.showSnackbar(
+                message = currentError,
+                actionLabel = dismissLabel,
+                duration = SnackbarDuration.Indefinite
+            )
+            if (result == SnackbarResult.ActionPerformed) {
+                viewModel.clearError()
+            }
+        }
+    }
 
     Scaffold(
         containerColor = AppColors.screenBackground,
@@ -82,7 +99,8 @@ fun ChatSettingsScreen(
                     scrolledContainerColor = AppColors.cardBackground
                 )
             )
-        }
+        },
+        snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { paddingValues ->
         LazyColumn(
             modifier = Modifier

@@ -7,54 +7,55 @@ import com.synapse.social.studioasinc.shared.domain.model.settings.ChatThemePres
 import com.synapse.social.studioasinc.shared.domain.model.settings.WallpaperType
 import com.synapse.social.studioasinc.shared.domain.repository.AuthRepository
 import com.synapse.social.studioasinc.shared.domain.repository.UserPreferencesRepository
+import kotlin.Result
 
 class SyncChatSettingsUseCase constructor(
     private val settingsRepository: SettingsRepository,
     private val userPreferencesRepository: UserPreferencesRepository,
     private val authRepository: AuthRepository
 ) {
-    suspend fun updateFontScale(scale: Float) {
+    suspend fun updateFontScale(scale: Float): Result<Unit> {
         settingsRepository.setChatFontScale(scale)
-        syncToRemote { it.copy(chatFontScale = scale) }
+        return syncToRemote { it.copy(chatFontScale = scale) }
     }
 
-    suspend fun updateMessageCornerRadius(radius: Int) {
+    suspend fun updateMessageCornerRadius(radius: Int): Result<Unit> {
         settingsRepository.setChatMessageCornerRadius(radius)
-        syncToRemote { it.copy(chatMessageCornerRadius = radius) }
+        return syncToRemote { it.copy(chatMessageCornerRadius = radius) }
     }
 
-    suspend fun updateThemePreset(preset: ChatThemePreset) {
+    suspend fun updateThemePreset(preset: ChatThemePreset): Result<Unit> {
         settingsRepository.setChatThemePreset(preset)
-        syncToRemote { it.copy(chatThemePreset = preset.name) }
+        return syncToRemote { it.copy(chatThemePreset = preset.name) }
     }
 
-    suspend fun updateWallpaperType(type: WallpaperType) {
+    suspend fun updateWallpaperType(type: WallpaperType): Result<Unit> {
         settingsRepository.setChatWallpaperType(type)
-        syncToRemote { it.copy(chatWallpaperType = type.name) }
+        return syncToRemote { it.copy(chatWallpaperType = type.name) }
     }
 
-    suspend fun updateWallpaperValue(value: String?) {
+    suspend fun updateWallpaperValue(value: String?): Result<Unit> {
         settingsRepository.setChatWallpaperValue(value)
-        syncToRemote { it.copy(chatWallpaperValue = value) }
+        return syncToRemote { it.copy(chatWallpaperValue = value) }
     }
 
-    suspend fun updateWallpaperBlur(blur: Float) {
+    suspend fun updateWallpaperBlur(blur: Float): Result<Unit> {
         settingsRepository.setChatWallpaperBlur(blur)
-        syncToRemote { it.copy(chatWallpaperBlur = blur) }
+        return syncToRemote { it.copy(chatWallpaperBlur = blur) }
     }
 
-    suspend fun updateListLayout(layout: ChatListLayout) {
+    suspend fun updateListLayout(layout: ChatListLayout): Result<Unit> {
         settingsRepository.setChatListLayout(layout)
-        syncToRemote { it.copy(chatListLayout = layout.name) }
+        return syncToRemote { it.copy(chatListLayout = layout.name) }
     }
 
-    suspend fun updateSwipeGesture(gesture: ChatSwipeGesture) {
+    suspend fun updateSwipeGesture(gesture: ChatSwipeGesture): Result<Unit> {
         settingsRepository.setChatSwipeGesture(gesture)
-        syncToRemote { it.copy(chatSwipeGesture = gesture.name) }
+        return syncToRemote { it.copy(chatSwipeGesture = gesture.name) }
     }
 
-    private suspend fun syncToRemote(update: (com.synapse.social.studioasinc.shared.domain.model.UserPreferences) -> com.synapse.social.studioasinc.shared.domain.model.UserPreferences) {
-        val userId = authRepository.getCurrentUserId() ?: return
-        userPreferencesRepository.updatePreferences(userId, update)
+    private suspend fun syncToRemote(update: (com.synapse.social.studioasinc.shared.domain.model.UserPreferences) -> com.synapse.social.studioasinc.shared.domain.model.UserPreferences): Result<Unit> {
+        val userId = authRepository.getCurrentUserId() ?: return Result.failure(IllegalStateException("User not logged in"))
+        return userPreferencesRepository.updatePreferences(userId, update)
     }
 }
