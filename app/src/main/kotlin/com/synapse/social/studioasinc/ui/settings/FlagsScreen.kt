@@ -136,6 +136,7 @@ fun FlagsScreen(
                             subtitle = stringResource(R.string.settings_message_suggestions_subtitle),
                             imageVector = Icons.Filled.Build,
                             checked = messageSuggestionEnabled,
+                            enabled = !isLoading,
                             onCheckedChange = { viewModel.setMessageSuggestionEnabled(it) },
                             position = SettingsItemPosition.Middle
                         )
@@ -144,6 +145,7 @@ fun FlagsScreen(
                             subtitle = stringResource(R.string.settings_disable_chat_avatars_subtitle),
                             imageVector = Icons.Filled.Person,
                             checked = chatAvatarDisabled,
+                            enabled = !isLoading,
                             onCheckedChange = { viewModel.setChatAvatarDisabled(it) },
                             position = SettingsItemPosition.Bottom
                         )
