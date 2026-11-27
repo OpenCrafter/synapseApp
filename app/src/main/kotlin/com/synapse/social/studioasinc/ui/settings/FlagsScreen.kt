@@ -136,6 +136,7 @@ fun FlagsScreen(
                             subtitle = stringResource(R.string.settings_message_suggestions_subtitle),
                             imageVector = Icons.Filled.Build,
                             checked = messageSuggestionEnabled,
+                            // Guarded: prevent concurrent async settings writes while a save is in flight.
                             enabled = !isLoading,
                             onCheckedChange = { viewModel.setMessageSuggestionEnabled(it) },
                             position = SettingsItemPosition.Middle
