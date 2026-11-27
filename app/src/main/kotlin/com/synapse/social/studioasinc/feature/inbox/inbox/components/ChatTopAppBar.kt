@@ -116,7 +116,7 @@ fun ChatTopAppBar(
         TopAppBar(
             title = { Text(stringResource(R.string.selected_count_title, selectedMessageIds.size)) },
             navigationIcon = {
-                IconButton(onClick = onClearSelection) {
+                IconButton(onClick = onClearSelection, enabled = !isLoading) {
                     Icon(Icons.Default.Close, contentDescription = "Clear Selection")
                 }
             },
