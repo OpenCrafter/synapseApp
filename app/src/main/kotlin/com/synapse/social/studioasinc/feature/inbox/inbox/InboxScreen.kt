@@ -484,7 +484,7 @@ private fun InboxScreenContent(
                 } else {
                     TopAppBar(
                         title = { Text(pluralStringResource(R.plurals.inbox_selected_conversations, selectedArchivedIds.size, selectedArchivedIds.size)) },
-                        navigationIcon = { IconButton(onClick = { selectedArchivedIds = emptySet() }) { Icon(Icons.Rounded.Close, contentDescription = stringResource(R.string.inbox_close_selection)) } },
+                        navigationIcon = { IconButton(onClick = { selectedArchivedIds = emptySet() }, enabled = !isLoading) { Icon(Icons.Rounded.Close, contentDescription = stringResource(R.string.inbox_close_selection)) } },
                         actions = {
                             IconButton(onClick = { viewModel.unarchiveConversations(selectedArchivedIds); selectedArchivedIds = emptySet() }, enabled = !isUnarchiving) {
                                 Icon(Icons.Rounded.Unarchive, contentDescription = stringResource(R.string.inbox_action_unarchive))
