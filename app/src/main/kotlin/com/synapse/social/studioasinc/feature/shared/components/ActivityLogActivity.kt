@@ -36,6 +36,7 @@ class ActivityLogActivity : AppCompatActivity() {
         setContent {
             val appearanceViewModel: AppearanceViewModel = viewModel()
             val appearanceSettings by appearanceViewModel.appearanceSettings.collectAsState()
+            val isLoading by appearanceViewModel.isLoading.collectAsState()
 
             val darkTheme = when (appearanceSettings.themeMode) {
                 com.synapse.social.studioasinc.ui.settings.ThemeMode.LIGHT -> false
@@ -50,7 +51,8 @@ class ActivityLogActivity : AppCompatActivity() {
             ) {
                 Surface(color = MaterialTheme.colorScheme.background) {
                     ActivityLogScreen(
-                        onNavigateBack = { finish() }
+                        onNavigateBack = { finish() },
+                        isLoading = isLoading
                     )
                 }
             }
@@ -61,7 +63,8 @@ class ActivityLogActivity : AppCompatActivity() {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun ActivityLogScreen(
-    onNavigateBack: () -> Unit
+    onNavigateBack: () -> Unit,
+    isLoading: Boolean
 ) {
     Column(
         modifier = Modifier.fillMaxSize()
@@ -69,7 +72,7 @@ private fun ActivityLogScreen(
         TopAppBar(
             title = { Text(stringResource(R.string.activity_log_title)) },
             navigationIcon = {
-                IconButton(onClick = onNavigateBack) {
+                IconButton(onClick = onNavigateBack, enabled = !isLoading) {
                     Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                 }
             }
