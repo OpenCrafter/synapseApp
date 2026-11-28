@@ -65,7 +65,7 @@ fun UserSearchDialog(
                         text = stringResource(R.string.search_user),
                         style = MaterialTheme.typography.titleLarge
                     )
-                    IconButton(onClick = onDismiss) {
+                    IconButton(onClick = onDismiss, enabled = !isSearching) {
                         Icon(Icons.Default.Close, contentDescription = "Close")
                     }
                 }
