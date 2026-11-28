@@ -68,8 +68,18 @@ fun AuthScreen(
         authViewModel.navigationEvent.collect { handleNavigationEvent(it) }
     }
 
+    val authUiState by authViewModel.uiState.collectAsState()
+    val isLoading = when (authUiState) {
+        is AuthUiState.SignIn -> authUiState.isLoading
+        is AuthUiState.SignUp -> authUiState.isLoading
+        is AuthUiState.EmailVerification -> authUiState.isLoading
+        is AuthUiState.ForgotPassword -> authUiState.isLoading
+        is AuthUiState.ResetPassword -> authUiState.isLoading
+        else -> false
+    }
+
     LoadingOverlay(
-        isLoading = false
+        isLoading = isLoading
     ) {
         NavHost(
             navController = navController,
