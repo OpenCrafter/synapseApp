@@ -155,6 +155,7 @@ private fun StorageDataContent(
             item {
                 CallSettingsSection(
                     useLessDataCalls = useLessDataCalls,
+                    isLoading = isLoading,
                     onUseLessDataCallsChanged = onUseLessDataCallsChanged
                 )
             }
@@ -291,6 +292,7 @@ private fun StorageManagementSection(
 @Composable
 private fun CallSettingsSection(
     useLessDataCalls: Boolean,
+    isLoading: Boolean,
     onUseLessDataCallsChanged: (Boolean) -> Unit
 ) {
     SettingsSection(title = stringResource(R.string.settings_call_settings_section)) {
@@ -299,7 +301,8 @@ private fun CallSettingsSection(
             subtitle = stringResource(R.string.settings_use_less_data_calls_subtitle),
             imageVector = Icons.Filled.Call,
             checked = useLessDataCalls,
-            onCheckedChange = onUseLessDataCallsChanged
+            onCheckedChange = onUseLessDataCallsChanged,
+            enabled = !isLoading
         )
     }
 }

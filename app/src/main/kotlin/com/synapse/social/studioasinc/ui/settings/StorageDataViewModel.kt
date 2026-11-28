@@ -73,7 +73,12 @@ class StorageDataViewModel(
 
     fun setUseLessDataCalls(enabled: Boolean) {
         viewModelScope.launch {
-            settingsRepository.setUseLessDataCalls(enabled)
+            _isLoading.value = true
+            try {
+                settingsRepository.setUseLessDataCalls(enabled)
+            } finally {
+                _isLoading.value = false
+            }
         }
     }
 
