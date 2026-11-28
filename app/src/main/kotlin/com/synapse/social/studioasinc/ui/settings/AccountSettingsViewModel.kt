@@ -58,6 +58,7 @@ class AccountSettingsViewModel @Inject constructor(
 
     fun toggleSecurityNotifications(enabled: Boolean) {
         viewModelScope.launch {
+            _isLoading.value = true
             // Optimistic update
             _securityNotificationsEnabled.value = enabled
 
@@ -67,6 +68,9 @@ class AccountSettingsViewModel @Inject constructor(
                     _securityNotificationsEnabled.value = !enabled
                     android.util.Log.e("AccountSettingsViewModel", "Failed to update security notifications", e)
                     _error.value = "Failed to update security notifications"
+                }
+                .finally {
+                    _isLoading.value = false
                 }
         }
     }
