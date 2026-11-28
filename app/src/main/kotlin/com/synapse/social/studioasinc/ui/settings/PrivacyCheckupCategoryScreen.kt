@@ -181,6 +181,7 @@ fun PrivacyCheckupCategoryScreen(
                                 imageVector = Icons.AutoMirrored.Filled.VolumeOff,
                                 checked = silenceUnknownCallers,
                                 onCheckedChange = { viewModel.setSilenceUnknownCallers(it) },
+                                enabled = !isLoading,
                                 position = SettingsItemPosition.Middle
                             )
                             SettingsNavigationItem(
