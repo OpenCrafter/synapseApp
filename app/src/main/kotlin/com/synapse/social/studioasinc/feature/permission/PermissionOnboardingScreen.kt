@@ -91,7 +91,7 @@ fun PermissionOnboardingScreen(
         onResult = { viewModel.onRequestResult(canAsk) }
     )
 
-    BackHandler {
+    BackHandler(enabled = state.pending == null) {
         when (state.step) {
             PermissionOnboardingStep.CARDS -> viewModel.skip(canAsk)
             PermissionOnboardingStep.SUMMARY -> viewModel.backToCards(canAsk)
