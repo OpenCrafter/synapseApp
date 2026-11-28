@@ -32,6 +32,7 @@ data class RequestAccountInfoUiState(
     val isAccountInfoSelected: Boolean = false,
     val isChannelActivitySelected: Boolean = false,
     val isAutoReportEnabled: Boolean = false,
+    val isAutoReportToggling: Boolean = false,
     val status: RequestStatus = RequestStatus.Idle,
     val error: String? = null,
     val isDownloading: Boolean = false,
@@ -88,10 +89,15 @@ class RequestAccountInfoViewModel @Inject constructor(application: Application) 
 
     fun toggleAutoReport(enabled: Boolean) {
         viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isAutoReportEnabled = enabled)
+            _uiState.value = _uiState.value.copy(isAutoReportToggling = true)
+            try {
+                _uiState.value = _uiState.value.copy(isAutoReportEnabled = enabled)
 
-            settingsDataStore.setAccountReportsAutoCreate(enabled)
-            settingsDataStore.setChannelsReportsAutoCreate(enabled)
+                settingsDataStore.setAccountReportsAutoCreate(enabled)
+                settingsDataStore.setChannelsReportsAutoCreate(enabled)
+            } finally {
+                _uiState.value = _uiState.value.copy(isAutoReportToggling = false)
+            }
         }
     }
 
