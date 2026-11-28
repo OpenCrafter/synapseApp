@@ -132,6 +132,7 @@ internal fun StoryEditor(
             onAddText = { viewModel.addTextOverlay() },
             onAddSticker = { showStickerPicker = true },
             onCycleScaleMode = { viewModel.cycleContentScale() },
+            isPosting = state.isPosting,
             modifier = Modifier.align(Alignment.TopCenter)
         )
 
