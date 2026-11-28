@@ -189,7 +189,7 @@ fun RequestAccountInfoScreen(
                     imageVector = Icons.Outlined.Settings,
                     checked = uiState.isAutoReportEnabled,
                     onCheckedChange = { viewModel.toggleAutoReport(it) },
-                    enabled = true,
+                    enabled = !uiState.isAutoReportToggling,
                     position = SettingsItemPosition.Single
                 )
             }
