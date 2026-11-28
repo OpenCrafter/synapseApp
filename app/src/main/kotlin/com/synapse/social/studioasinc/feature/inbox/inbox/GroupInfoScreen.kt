@@ -1099,6 +1099,7 @@ private fun GroupSettingsSection(
                 imageVector = Icons.Filled.Lock,
                 checked = onlyAdminsCanMessage,
                 onCheckedChange = onToggleOnlyAdmins,
+                enabled = !uiState.isLoading,
                 position = onlyAdminsPos
             )
         }
@@ -1108,6 +1109,7 @@ private fun GroupSettingsSection(
                 imageVector = Icons.Filled.Tune,
                 checked = allowMemberSettingsEdits,
                 onCheckedChange = onToggleMemberSettings,
+                enabled = !uiState.isLoading,
                 position = memberSettingsPos
             )
             SettingsToggleItem(
@@ -1115,6 +1117,7 @@ private fun GroupSettingsSection(
                 imageVector = Icons.Filled.HowToReg,
                 checked = requireJoinApproval,
                 onCheckedChange = onToggleApproval,
+                enabled = !uiState.isLoading,
                 position = approvalPos
             )
             SettingsToggleItem(
@@ -1122,6 +1125,7 @@ private fun GroupSettingsSection(
                 imageVector = Icons.Filled.Share,
                 checked = allowMemberInvites,
                 onCheckedChange = onToggleInvites,
+                enabled = !uiState.isLoading,
                 position = invitesPos
             )
         }

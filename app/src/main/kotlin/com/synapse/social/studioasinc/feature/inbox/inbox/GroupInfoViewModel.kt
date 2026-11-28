@@ -286,15 +286,17 @@ class GroupInfoViewModel @Inject constructor(
     fun toggleOnlyAdminsCanMessage(enabled: Boolean) {
         val chatId = currentChatId ?: return
         viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isLoading = true)
             chatRepository.toggleOnlyAdminsCanMessage(chatId, enabled)
                 .onSuccess {
                     _uiState.value = _uiState.value.copy(
                         groupInfo = _uiState.value.groupInfo?.copy(onlyAdminsCanMessage = enabled),
-                        errorRes = null
+                        errorRes = null,
+                        isLoading = false
                     )
                 }
                 .onFailure {
-                    _uiState.value = _uiState.value.copy(errorRes = R.string.group_error_create)
+                    _uiState.value = _uiState.value.copy(errorRes = R.string.group_error_create, isLoading = false)
                 }
         }
     }
@@ -302,15 +304,17 @@ class GroupInfoViewModel @Inject constructor(
     fun toggleAllowMemberInvites(enabled: Boolean) {
         val chatId = currentChatId ?: return
         viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isLoading = true)
             chatRepository.updateGroupPrivacy(chatId, allowMemberInvites = enabled)
                 .onSuccess {
                     _uiState.value = _uiState.value.copy(
                         groupInfo = _uiState.value.groupInfo?.copy(allowMemberInvites = enabled),
-                        errorRes = null
+                        errorRes = null,
+                        isLoading = false
                     )
                 }
                 .onFailure {
-                    _uiState.value = _uiState.value.copy(errorRes = R.string.group_error_create)
+                    _uiState.value = _uiState.value.copy(errorRes = R.string.group_error_create, isLoading = false)
                 }
         }
     }
@@ -318,15 +322,17 @@ class GroupInfoViewModel @Inject constructor(
     fun toggleRequireJoinApproval(enabled: Boolean) {
         val chatId = currentChatId ?: return
         viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isLoading = true)
             chatRepository.updateGroupPrivacy(chatId, requireJoinApproval = enabled)
                 .onSuccess {
                     _uiState.value = _uiState.value.copy(
                         groupInfo = _uiState.value.groupInfo?.copy(requireJoinApproval = enabled),
-                        errorRes = null
+                        errorRes = null,
+                        isLoading = false
                     )
                 }
                 .onFailure {
-                    _uiState.value = _uiState.value.copy(errorRes = R.string.group_error_create)
+                    _uiState.value = _uiState.value.copy(errorRes = R.string.group_error_create, isLoading = false)
                 }
         }
     }
@@ -334,15 +340,17 @@ class GroupInfoViewModel @Inject constructor(
     fun toggleAllowMemberSettingsEdits(enabled: Boolean) {
         val chatId = currentChatId ?: return
         viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isLoading = true)
             chatRepository.updateGroupPrivacy(chatId, allowMemberSettingsEdits = enabled)
                 .onSuccess {
                     _uiState.value = _uiState.value.copy(
                         groupInfo = _uiState.value.groupInfo?.copy(allowMemberSettingsEdits = enabled),
-                        errorRes = null
+                        errorRes = null,
+                        isLoading = false
                     )
                 }
                 .onFailure {
-                    _uiState.value = _uiState.value.copy(errorRes = R.string.group_error_create)
+                    _uiState.value = _uiState.value.copy(errorRes = R.string.group_error_create, isLoading = false)
                 }
         }
     }
