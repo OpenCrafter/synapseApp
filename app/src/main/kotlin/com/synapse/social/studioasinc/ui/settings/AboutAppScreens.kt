@@ -346,7 +346,8 @@ fun FeedbackScreen(
             topBar = {
                 AboutDetailTopAppBar(
                     title = stringResource(R.string.about_feedback_screen_title),
-                    onBackClick = onBackClick
+                    onBackClick = onBackClick,
+                    enabled = submissionState != FeedbackSubmissionState.Sending
                 )
             }
         ) { insets ->
