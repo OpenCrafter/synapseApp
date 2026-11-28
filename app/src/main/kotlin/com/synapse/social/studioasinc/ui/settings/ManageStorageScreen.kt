@@ -129,6 +129,7 @@ fun ManageStorageScreen(
                     item {
                         LargeFilesSection(
                             largeFiles = largeFiles,
+                            isLoading = isLoading,
                             onDeleteClick = { viewModel.deleteLargeFile(it) }
                         )
                     }
@@ -280,6 +281,7 @@ private fun CacheCategoryRow(name: String, size: String) {
 @Composable
 fun LargeFilesSection(
     largeFiles: List<LargeFileInfo>,
+    isLoading: Boolean,
     onDeleteClick: (String) -> Unit
 ) {
     SettingsSection(title = stringResource(R.string.storage_review_large_files)) {
@@ -311,7 +313,7 @@ fun LargeFilesSection(
                             )
                         }
 
-                        IconButton(onClick = { onDeleteClick(file.fileId) }) {
+                        IconButton(onClick = { onDeleteClick(file.fileId) }, enabled = !isLoading) {
                             Icon(
                                 imageVector = Icons.Outlined.Delete,
                                 contentDescription = "Delete file",
