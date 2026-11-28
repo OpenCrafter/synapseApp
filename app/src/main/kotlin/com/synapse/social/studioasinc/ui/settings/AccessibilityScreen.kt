@@ -87,6 +87,7 @@ fun AccessibilityScreen(
                         imageVector = Icons.Filled.Contrast,
                         checked = increaseContrast,
                         onCheckedChange = { viewModel.updateIncreaseContrast(it) },
+                        enabled = !isLoading,
                         position = SettingsItemPosition.Top
                     )
                     SettingsToggleItem(
@@ -95,6 +96,7 @@ fun AccessibilityScreen(
                         imageVector = Icons.Filled.TextFormat,
                         checked = highContrastText,
                         onCheckedChange = { viewModel.updateHighContrastText(it) },
+                        enabled = !isLoading,
                         position = SettingsItemPosition.Bottom
                     )
                 }
@@ -109,6 +111,7 @@ fun AccessibilityScreen(
                         imageVector = Icons.Filled.Animation,
                         checked = reduceAnimations,
                         onCheckedChange = { viewModel.updateReduceAnimations(it) },
+                        enabled = !isLoading,
                         position = SettingsItemPosition.Top
                     )
                     SettingsToggleItem(
@@ -117,6 +120,7 @@ fun AccessibilityScreen(
                         imageVector = Icons.Filled.PlayCircle,
                         checked = autoplayAnimations,
                         onCheckedChange = { viewModel.updateAutoplayAnimations(it) },
+                        enabled = !isLoading,
                         position = SettingsItemPosition.Bottom
                     )
                 }
