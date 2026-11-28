@@ -97,6 +97,7 @@ fun AccountSettingsScreen(
                         subtitle = stringResource(R.string.settings_security_notifications_subtitle),
                         checked = securityNotificationsEnabled,
                         onCheckedChange = { viewModel.toggleSecurityNotifications(it) },
+                        enabled = !isLoading,
                         position = SettingsItemPosition.Top
                     )
                     SettingsNavigationItem(
