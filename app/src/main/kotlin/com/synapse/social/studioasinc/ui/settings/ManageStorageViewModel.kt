@@ -94,21 +94,26 @@ class ManageStorageViewModel @Inject constructor(
     }
 
     fun deleteLargeFile(fileId: String) {
-        viewModelScope.launch(Dispatchers.IO) {
+        viewModelScope.launch {
+            _isLoading.value = true
             try {
-                // Delete using direct File and clear from MediaCache if it matches
-                val file = File(fileId)
-                if (file.exists()) {
-                    if (file.delete()) {
-                        mediaCache.remove(fileId) // Keep cache in sync
-                        withContext(Dispatchers.Main) {
-                            refreshStorageData()
+                withContext(Dispatchers.IO) {
+                    // Delete using direct File and clear from MediaCache if it matches
+                    val file = File(fileId)
+                    if (file.exists()) {
+                        if (file.delete()) {
+                            mediaCache.remove(fileId) // Keep cache in sync
+                            withContext(Dispatchers.Main) {
+                                refreshStorageData()
+                            }
                         }
                     }
                 }
             } catch (e: Exception) {
                 android.util.Log.e("ManageStorageViewModel", "Error deleting large file", e)
                 _error.value = e.message ?: "Failed to delete file"
+            } finally {
+                _isLoading.value = false
             }
         }
     }
