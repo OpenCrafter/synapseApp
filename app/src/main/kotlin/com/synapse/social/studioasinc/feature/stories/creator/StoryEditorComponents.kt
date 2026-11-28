@@ -216,6 +216,7 @@ internal fun StoryTopControls(
     onAddText: () -> Unit,
     onAddSticker: () -> Unit,
     onCycleScaleMode: () -> Unit,
+    isPosting: Boolean = false,
     modifier: Modifier = Modifier
 ) {
     Row(
@@ -225,7 +226,7 @@ internal fun StoryTopControls(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        IconButton(onClick = onClose) {
+        IconButton(onClick = onClose, enabled = !isPosting) {
             Icon(Icons.Default.Close, contentDescription = stringResource(R.string.story_discard), tint = MaterialTheme.colorScheme.onPrimary)
         }
 
