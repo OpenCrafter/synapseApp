@@ -52,6 +52,7 @@ fun FullScreenSearchDialog(
     onSearchQueryChange: (String) -> Unit,
     searchPlaceholder: String = "Search...",
     onDone: (() -> Unit)? = null,
+    isLoading: Boolean = false,
     content: @Composable (PaddingValues) -> Unit
 ) {
     Dialog(
@@ -64,7 +65,7 @@ fun FullScreenSearchDialog(
                     TopAppBar(
                         title = { Text(title) },
                         navigationIcon = {
-                            IconButton(onClick = onDismiss) {
+                            IconButton(onClick = onDismiss, enabled = !isLoading) {
                                 Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                             }
                         },
@@ -132,7 +133,8 @@ fun TagPeopleScreen(
         searchQuery = searchQuery,
         onSearchQueryChange = onSearchQueryChange,
         onDone = onDone,
-        searchPlaceholder = "Search for friends..."
+        searchPlaceholder = "Search for friends...",
+        isLoading = isLoading,
     ) { padding ->
         LazyColumn(
             contentPadding = padding,
@@ -181,7 +183,8 @@ fun LocationSelectScreen(
         title = "Add Location",
         searchQuery = searchQuery,
         onSearchQueryChange = onSearchQueryChange,
-        searchPlaceholder = "Search for places..."
+        searchPlaceholder = "Search for places...",
+        isLoading = isLoading,
     ) { padding ->
         LazyColumn(
             contentPadding = padding,
