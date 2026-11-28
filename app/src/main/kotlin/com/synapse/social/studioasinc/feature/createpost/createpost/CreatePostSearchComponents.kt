@@ -134,7 +134,7 @@ fun TagPeopleScreen(
         onSearchQueryChange = onSearchQueryChange,
         onDone = onDone,
         searchPlaceholder = "Search for friends...",
-        isLoading = isLoading,
+        isLoading = isLoading
     ) { padding ->
         LazyColumn(
             contentPadding = padding,
@@ -184,7 +184,7 @@ fun LocationSelectScreen(
         searchQuery = searchQuery,
         onSearchQueryChange = onSearchQueryChange,
         searchPlaceholder = "Search for places...",
-        isLoading = isLoading,
+        isLoading = isLoading
     ) { padding ->
         LazyColumn(
             contentPadding = padding,
