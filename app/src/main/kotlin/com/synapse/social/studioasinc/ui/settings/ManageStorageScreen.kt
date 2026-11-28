@@ -110,6 +110,7 @@ fun ManageStorageScreen(
                     AutomatedCleanupSection(
                         keepMediaDays = keepMediaDays,
                         maxCacheSizeGB = maxCacheSizeGB,
+                        isLoading = isLoading,
                         onKeepMediaChanged = { viewModel.setKeepMediaDays(it) },
                         onMaxCacheChanged = { viewModel.setMaxCacheSizeGB(it) }
                     )
@@ -143,6 +144,7 @@ fun ManageStorageScreen(
 fun AutomatedCleanupSection(
     keepMediaDays: Int,
     maxCacheSizeGB: Int,
+    isLoading: Boolean,
     onKeepMediaChanged: (Int) -> Unit,
     onMaxCacheChanged: (Int) -> Unit
 ) {
@@ -162,6 +164,7 @@ fun AutomatedCleanupSection(
             steps = 3,
             onValueChange = { onKeepMediaChanged(keepMediaOptions[it.toInt()]) },
             valueLabel = { keepMediaLabels[it.toInt().coerceIn(0, 3)] },
+            enabled = !isLoading,
             position = SettingsItemPosition.Top
         )
 
@@ -172,6 +175,7 @@ fun AutomatedCleanupSection(
             steps = 3,
             onValueChange = { onMaxCacheChanged(maxCacheOptions[it.toInt()]) },
             valueLabel = { maxCacheLabels[it.toInt().coerceIn(0, 3)] },
+            enabled = !isLoading,
             position = SettingsItemPosition.Bottom
         )
     }

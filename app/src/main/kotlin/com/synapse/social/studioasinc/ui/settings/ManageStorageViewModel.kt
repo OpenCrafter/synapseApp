@@ -120,13 +120,29 @@ class ManageStorageViewModel @Inject constructor(
 
     fun setKeepMediaDays(days: Int) {
         viewModelScope.launch {
-            settingsRepository.setKeepMediaDays(days)
+            _isLoading.value = true
+            try {
+                settingsRepository.setKeepMediaDays(days)
+            } catch (e: Exception) {
+                android.util.Log.e("ManageStorageViewModel", "Error setting keep media days", e)
+                _error.value = e.message ?: "Failed to set keep media days"
+            } finally {
+                _isLoading.value = false
+            }
         }
     }
 
     fun setMaxCacheSizeGB(gb: Int) {
         viewModelScope.launch {
-            settingsRepository.setMaxCacheSizeGB(gb)
+            _isLoading.value = true
+            try {
+                settingsRepository.setMaxCacheSizeGB(gb)
+            } catch (e: Exception) {
+                android.util.Log.e("ManageStorageViewModel", "Error setting max cache size", e)
+                _error.value = e.message ?: "Failed to set max cache size"
+            } finally {
+                _isLoading.value = false
+            }
         }
     }
 }
