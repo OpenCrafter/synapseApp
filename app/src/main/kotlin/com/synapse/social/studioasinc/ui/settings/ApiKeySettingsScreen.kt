@@ -170,6 +170,7 @@ fun ApiKeySettingsScreen(
                         subtitle = stringResource(R.string.api_fallback_support),
                         checked = providerSettings.fallbackToPlatform,
                         onCheckedChange = { viewModel.updateFallbackSetting(it) },
+                        enabled = !isLoading,
                         position = SettingsItemPosition.Bottom
                     )
                 }
