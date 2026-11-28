@@ -592,14 +592,17 @@ fun SettingsNavHost(
                 onRegionSelected = { region ->
                     scope.launch {
                         isLoading = true
-                        editProfileRepository?.let { repository ->
-                            val userId = repository.getCurrentUserId()
-                            if (userId != null) {
-                                repository.updateProfile(userId, mapOf("region" to region))
+                        try {
+                            editProfileRepository?.let { repository ->
+                                val userId = repository.getCurrentUserId()
+                                if (userId != null) {
+                                    repository.updateProfile(userId, mapOf("region" to region))
+                                }
                             }
+                        } finally {
+                            isLoading = false
+                            navController.popBackStack()
                         }
-                        isLoading = false
-                        navController.popBackStack()
                     }
                 },
                 onBackClick = {
