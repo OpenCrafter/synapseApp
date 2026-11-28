@@ -194,7 +194,12 @@ class SettingsViewModel @Inject constructor(
 
     fun updateCompression(enabled: Boolean) {
         viewModelScope.launch {
-            storageRepository.updateCompression(enabled)
+            _isSavingConfig.value = true
+            try {
+                storageRepository.updateCompression(enabled)
+            } finally {
+                _isSavingConfig.value = false
+            }
         }
     }
 
