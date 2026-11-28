@@ -586,22 +586,28 @@ fun SettingsNavHost(
 
         composable(route = SettingsDestination.ROUTE_REGION) {
             val scope = rememberCoroutineScope()
+            var isLoading by remember { mutableStateOf(false) }
             SelectRegionScreen(
                 currentRegion = "",
                 onRegionSelected = { region ->
                     scope.launch {
+                        isLoading = true
                         editProfileRepository?.let { repository ->
                             val userId = repository.getCurrentUserId()
                             if (userId != null) {
                                 repository.updateProfile(userId, mapOf("region" to region))
                             }
                         }
+                        isLoading = false
                         navController.popBackStack()
                     }
                 },
                 onBackClick = {
-                    navController.popBackStack()
-                }
+                    if (!isLoading) {
+                        navController.popBackStack()
+                    }
+                },
+                isLoading = isLoading
             )
         }
 

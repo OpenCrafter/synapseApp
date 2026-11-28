@@ -38,7 +38,8 @@ import com.synapse.social.studioasinc.feature.shared.theme.AppColors
 fun SelectRegionScreen(
     currentRegion: String,
     onRegionSelected: (String) -> Unit,
-    onBackClick: () -> Unit
+    onBackClick: () -> Unit,
+    isLoading: Boolean = false
 ) {
     var isSearchActive by remember { mutableStateOf(false) }
     var searchQuery by remember { mutableStateOf("") }
@@ -120,7 +121,7 @@ fun SelectRegionScreen(
                 TopAppBar(
                     title = { Text(stringResource(R.string.select_region)) },
                     navigationIcon = {
-                        IconButton(onClick = onBackClick) {
+                        IconButton(onClick = onBackClick, enabled = !isLoading) {
                             Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.cd_back))
                         }
                     },
