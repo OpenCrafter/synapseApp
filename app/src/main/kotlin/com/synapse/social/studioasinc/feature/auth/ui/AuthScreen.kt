@@ -69,12 +69,13 @@ fun AuthScreen(
     }
 
     val authUiState by authViewModel.uiState.collectAsState()
-    val isLoading = when (authUiState) {
-        is AuthUiState.SignIn -> authUiState.isLoading
-        is AuthUiState.SignUp -> authUiState.isLoading
-        is AuthUiState.EmailVerification -> authUiState.isLoading
-        is AuthUiState.ForgotPassword -> authUiState.isLoading
-        is AuthUiState.ResetPassword -> authUiState.isLoading
+    val currentAuthState = authUiState
+    val isLoading = when (currentAuthState) {
+        is AuthUiState.SignIn -> currentAuthState.isLoading
+        is AuthUiState.SignUp -> currentAuthState.isLoading
+        is AuthUiState.EmailVerification -> currentAuthState.isLoading
+        is AuthUiState.ForgotPassword -> currentAuthState.isLoading
+        is AuthUiState.ResetPassword -> currentAuthState.isLoading
         else -> false
     }
 
