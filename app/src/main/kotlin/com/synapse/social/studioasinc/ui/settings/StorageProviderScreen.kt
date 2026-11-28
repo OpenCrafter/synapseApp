@@ -153,6 +153,7 @@ private fun AssignProvidersTab(
     viewModel: SettingsViewModel
 ) {
     val isUpdatingProvider by viewModel.isUpdatingProvider.collectAsState()
+    val isSavingConfig by viewModel.isSavingConfig.collectAsState()
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -203,7 +204,8 @@ private fun AssignProvidersTab(
                     title = stringResource(R.string.storage_high_quality_uploads),
                     subtitle = stringResource(R.string.storage_high_quality_uploads_desc),
                     checked = !storageConfig.compressImages,
-                    onCheckedChange = { viewModel.updateCompression(!it) }
+                    onCheckedChange = { viewModel.updateCompression(!it) },
+                    enabled = !isSavingConfig
                 )
             }
         }
