@@ -290,10 +290,14 @@ private fun InboxScreenContent(
     val isLoadingArchived by viewModel.isLoadingArchived.collectAsState()
     val isCreatingFolder by viewModel.isCreatingFolder.collectAsState()
     val isDeletingConversations by viewModel.isDeletingConversations.collectAsState()
+    val isUnarchiving by viewModel.isUnarchiving.collectAsState()
+    val isArchiving by viewModel.isArchiving.collectAsState()
     val error by viewModel.error.collectAsState()
     val selectedFilter by viewModel.selectedFilter.collectAsState()
     val selectedFolderId by viewModel.selectedFolderId.collectAsState()
     val isAssigningToFolder by viewModel.isAssigningToFolder.collectAsState()
+    val isPinning by viewModel.isPinning.collectAsState()
+    val isMuting by viewModel.isMuting.collectAsState()
     val folders by viewModel.chatFolders.collectAsState()
     val searchState by viewModel.searchState.collectAsState()
     val unreadThreadCount = conversations.count { it.unreadCount > 0 }
@@ -480,9 +484,9 @@ private fun InboxScreenContent(
                 } else {
                     TopAppBar(
                         title = { Text(pluralStringResource(R.plurals.inbox_selected_conversations, selectedArchivedIds.size, selectedArchivedIds.size)) },
-                        navigationIcon = { IconButton(onClick = { selectedArchivedIds = emptySet() }) { Icon(Icons.Rounded.Close, contentDescription = stringResource(R.string.inbox_close_selection)) } },
+                        navigationIcon = { IconButton(onClick = { selectedArchivedIds = emptySet() }, enabled = !isLoading) { Icon(Icons.Rounded.Close, contentDescription = stringResource(R.string.inbox_close_selection)) } },
                         actions = {
-                            IconButton(onClick = { viewModel.unarchiveConversations(selectedArchivedIds); selectedArchivedIds = emptySet() }) {
+                            IconButton(onClick = { viewModel.unarchiveConversations(selectedArchivedIds); selectedArchivedIds = emptySet() }, enabled = !isUnarchiving) {
                                 Icon(Icons.Rounded.Unarchive, contentDescription = stringResource(R.string.inbox_action_unarchive))
                             }
                             Box {
@@ -647,7 +651,8 @@ private fun InboxScreenContent(
                             onRetry = viewModel::loadConversations,
                             onOpenConversation = ::openConversation,
                             onSelectConversation = { chatId -> selectedChatIds = setOf(chatId); destination = InboxDestination.SELECTION },
-                            onToggleFavourite = viewModel::setConversationFavourite
+                            onToggleFavourite = viewModel::setConversationFavourite,
+                            enabledFavourite = !isPinning
                         )
                         InboxTab.CALLS -> CallsTabScreen(
                             contentPadding = PaddingValues(),
@@ -694,6 +699,10 @@ private fun InboxScreenContent(
                     },
                     onPin = { viewModel.setConversationsPinned(selectedChatIds, selectedConversations.any { !it.isPinned }) },
                     onMute = { viewModel.setConversationsMuted(selectedChatIds, selectedConversations.any { !it.isMuted }) },
+                    enabledPin = !isPinning,
+                    enabledMute = !isMuting,
+                    enabledArchive = !isArchiving,
+                    enabledDelete = !isDeletingConversations,
                     onArchive = ::archiveSelected,
                     onFolder = { showFolderSheet = true },
                     onDelete = { showDeleteDialog = true },
@@ -835,7 +844,9 @@ private fun HomeMessages(
     // as an item of the actions menu a hold opens, and a tap keeps opening the conversation.
     onSelectConversation: (String) -> Unit,
     // The row actions menu's favourite action. The Boolean is the state the row moves to.
-    onToggleFavourite: (chatId: String, isFavourite: Boolean) -> Unit
+    onToggleFavourite: (chatId: String, isFavourite: Boolean) -> Unit,
+    // Disabled while a pin operation is in flight to prevent rapid-tap duplicate requests.
+    enabledFavourite: Boolean = true
 ) {
     val sections = remember(conversations) { groupConversations(conversations) }
     val reducedMotion = AnimationUtil.rememberReducedMotion()
@@ -921,6 +932,7 @@ private fun HomeMessages(
                             onClick = { onOpenConversation(conversation) },
                             onSelect = { onSelectConversation(conversation.chatId) },
                             onToggleFavourite = { isFavourite -> onToggleFavourite(conversation.chatId, isFavourite) },
+                            enabledFavourite = enabledFavourite,
                             // The chat id is still the row's key after the pin flip, so the list knows this
                             // is the same row changing slot rather than a row leaving and another arriving:
                             // the placement modifier carries it up into PINNED and pushes the rows it passed
@@ -1030,7 +1042,11 @@ private fun SelectionContent(
     onArchive: () -> Unit,
     onFolder: () -> Unit,
     onDelete: () -> Unit,
-    onDone: () -> Unit
+    onDone: () -> Unit,
+    enabledPin: Boolean = true,
+    enabledMute: Boolean = true,
+    enabledArchive: Boolean = true,
+    enabledDelete: Boolean = true
 ) {
     Column(
         Modifier
@@ -1046,7 +1062,11 @@ private fun SelectionContent(
                 onMute = onMute,
                 onArchive = onArchive,
                 onFolder = onFolder,
-                onDelete = onDelete
+                onDelete = onDelete,
+                enabledPin = enabledPin,
+                enabledMute = enabledMute,
+                enabledArchive = enabledArchive,
+                enabledDelete = enabledDelete
             )
         }
         LazyColumn(

@@ -2,6 +2,7 @@ package com.synapse.social.studioasinc.ui.settings
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import android.util.Log
 import com.synapse.social.studioasinc.shared.domain.model.settings.ChatListLayout
 import com.synapse.social.studioasinc.shared.domain.model.settings.ChatSwipeGesture
 import com.synapse.social.studioasinc.shared.domain.model.settings.ChatThemePreset
@@ -26,6 +27,9 @@ class ChatSettingsViewModel @Inject constructor(
 
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
+
+    private val _error = MutableStateFlow<String?>(null)
+    val error: StateFlow<String?> = _error.asStateFlow()
 
     val chatFontScale: StateFlow<Float> = observeChatSettingsUseCase.chatFontScale
         .stateIn(
@@ -94,8 +98,16 @@ class ChatSettingsViewModel @Inject constructor(
     fun updateChatFontScale(scale: Float) {
         viewModelScope.launch {
             _isLoading.value = true
+            _error.value = null
             try {
-                syncChatSettingsUseCase.updateFontScale(scale)
+                val result = syncChatSettingsUseCase.updateFontScale(scale)
+                result.onFailure { error ->
+                    _error.value = "Failed to save chat font scale"
+                    Log.e("ChatSettingsViewModel", "updateFontScale failed", error)
+                }
+            } catch (e: Exception) {
+                _error.value = "Failed to save chat font scale"
+                Log.e("ChatSettingsViewModel", "updateFontScale failed", e)
             } finally {
                 _isLoading.value = false
             }
@@ -105,8 +117,16 @@ class ChatSettingsViewModel @Inject constructor(
     fun updateChatMessageCornerRadius(radius: Int) {
         viewModelScope.launch {
             _isLoading.value = true
+            _error.value = null
             try {
-                syncChatSettingsUseCase.updateMessageCornerRadius(radius)
+                val result = syncChatSettingsUseCase.updateMessageCornerRadius(radius)
+                result.onFailure { error ->
+                    _error.value = "Failed to save chat message corner radius"
+                    Log.e("ChatSettingsViewModel", "updateMessageCornerRadius failed", error)
+                }
+            } catch (e: Exception) {
+                _error.value = "Failed to save chat message corner radius"
+                Log.e("ChatSettingsViewModel", "updateMessageCornerRadius failed", e)
             } finally {
                 _isLoading.value = false
             }
@@ -116,8 +136,16 @@ class ChatSettingsViewModel @Inject constructor(
     fun updateChatThemePreset(preset: ChatThemePreset) {
         viewModelScope.launch {
             _isLoading.value = true
+            _error.value = null
             try {
-                syncChatSettingsUseCase.updateThemePreset(preset)
+                val result = syncChatSettingsUseCase.updateThemePreset(preset)
+                result.onFailure { error ->
+                    _error.value = "Failed to save chat theme preset"
+                    Log.e("ChatSettingsViewModel", "updateThemePreset failed", error)
+                }
+            } catch (e: Exception) {
+                _error.value = "Failed to save chat theme preset"
+                Log.e("ChatSettingsViewModel", "updateThemePreset failed", e)
             } finally {
                 _isLoading.value = false
             }
@@ -127,8 +155,16 @@ class ChatSettingsViewModel @Inject constructor(
     fun updateChatWallpaperType(type: WallpaperType) {
         viewModelScope.launch {
             _isLoading.value = true
+            _error.value = null
             try {
-                syncChatSettingsUseCase.updateWallpaperType(type)
+                val result = syncChatSettingsUseCase.updateWallpaperType(type)
+                result.onFailure { error ->
+                    _error.value = "Failed to save chat wallpaper type"
+                    Log.e("ChatSettingsViewModel", "updateWallpaperType failed", error)
+                }
+            } catch (e: Exception) {
+                _error.value = "Failed to save chat wallpaper type"
+                Log.e("ChatSettingsViewModel", "updateWallpaperType failed", e)
             } finally {
                 _isLoading.value = false
             }
@@ -139,8 +175,16 @@ class ChatSettingsViewModel @Inject constructor(
     fun updateChatWallpaperValue(value: String?) {
         viewModelScope.launch {
             _isLoading.value = true
+            _error.value = null
             try {
-                syncChatSettingsUseCase.updateWallpaperValue(value)
+                val result = syncChatSettingsUseCase.updateWallpaperValue(value)
+                result.onFailure { error ->
+                    _error.value = "Failed to save chat wallpaper value"
+                    Log.e("ChatSettingsViewModel", "updateWallpaperValue failed", error)
+                }
+            } catch (e: Exception) {
+                _error.value = "Failed to save chat wallpaper value"
+                Log.e("ChatSettingsViewModel", "updateWallpaperValue failed", e)
             } finally {
                 _isLoading.value = false
             }
@@ -150,8 +194,16 @@ class ChatSettingsViewModel @Inject constructor(
     fun updateChatWallpaperBlur(blur: Float) {
         viewModelScope.launch {
             _isLoading.value = true
+            _error.value = null
             try {
-                syncChatSettingsUseCase.updateWallpaperBlur(blur)
+                val result = syncChatSettingsUseCase.updateWallpaperBlur(blur)
+                result.onFailure { error ->
+                    _error.value = "Failed to save chat wallpaper blur"
+                    Log.e("ChatSettingsViewModel", "updateWallpaperBlur failed", error)
+                }
+            } catch (e: Exception) {
+                _error.value = "Failed to save chat wallpaper blur"
+                Log.e("ChatSettingsViewModel", "updateWallpaperBlur failed", e)
             } finally {
                 _isLoading.value = false
             }
@@ -161,8 +213,16 @@ class ChatSettingsViewModel @Inject constructor(
     fun updateChatListLayout(layout: ChatListLayout) {
         viewModelScope.launch {
             _isLoading.value = true
+            _error.value = null
             try {
-                syncChatSettingsUseCase.updateListLayout(layout)
+                val result = syncChatSettingsUseCase.updateListLayout(layout)
+                result.onFailure { error ->
+                    _error.value = "Failed to save chat list layout"
+                    Log.e("ChatSettingsViewModel", "updateListLayout failed", error)
+                }
+            } catch (e: Exception) {
+                _error.value = "Failed to save chat list layout"
+                Log.e("ChatSettingsViewModel", "updateListLayout failed", e)
             } finally {
                 _isLoading.value = false
             }
@@ -172,8 +232,16 @@ class ChatSettingsViewModel @Inject constructor(
     fun updateChatSwipeGesture(gesture: ChatSwipeGesture) {
         viewModelScope.launch {
             _isLoading.value = true
+            _error.value = null
             try {
-                syncChatSettingsUseCase.updateSwipeGesture(gesture)
+                val result = syncChatSettingsUseCase.updateSwipeGesture(gesture)
+                result.onFailure { error ->
+                    _error.value = "Failed to save chat swipe gesture"
+                    Log.e("ChatSettingsViewModel", "updateSwipeGesture failed", error)
+                }
+            } catch (e: Exception) {
+                _error.value = "Failed to save chat swipe gesture"
+                Log.e("ChatSettingsViewModel", "updateSwipeGesture failed", e)
             } finally {
                 _isLoading.value = false
             }
@@ -189,5 +257,9 @@ class ChatSettingsViewModel @Inject constructor(
                 _isLoading.value = false
             }
         }
+    }
+
+    fun clearError() {
+        _error.value = null
     }
 }

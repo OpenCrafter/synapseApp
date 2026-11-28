@@ -84,6 +84,22 @@ class InboxViewModel @Inject constructor(
     private val _isDeletingConversations = MutableStateFlow(false)
     val isDeletingConversations: StateFlow<Boolean> = _isDeletingConversations.asStateFlow()
 
+    /** True while unarchiving selected conversations is in flight; used to guard the unarchive button against rapid-tap duplicate requests. */
+    private val _isUnarchiving = MutableStateFlow(false)
+    val isUnarchiving: StateFlow<Boolean> = _isUnarchiving.asStateFlow()
+
+    /** True while archiving selected conversations is in flight; guards against rapid-tap duplicate requests. */
+    private val _isArchiving = MutableStateFlow(false)
+    val isArchiving: StateFlow<Boolean> = _isArchiving.asStateFlow()
+
+    /** True while pinning/unpinning selected conversations is in flight; guards against rapid-tap duplicate requests. */
+    private val _isPinning = MutableStateFlow(false)
+    val isPinning: StateFlow<Boolean> = _isPinning.asStateFlow()
+
+    /** True while muting/unmuting selected conversations is in flight; guards against rapid-tap duplicate requests. */
+    private val _isMuting = MutableStateFlow(false)
+    val isMuting: StateFlow<Boolean> = _isMuting.asStateFlow()
+
     private val _error = MutableStateFlow<String?>(null)
     val error: StateFlow<String?> = _error.asStateFlow()
 
@@ -367,17 +383,22 @@ class InboxViewModel @Inject constructor(
     }
 
     fun setConversationsPinned(chatIds: Set<String>, isPinned: Boolean) {
-        if (chatIds.isEmpty()) return
+        if (chatIds.isEmpty() || _isPinning.value) return
+        _isPinning.value = true
         viewModelScope.launch {
-            var failures = 0
-            chatIds.forEach { chatId ->
-                chatRepository.updateConversationPinnedStatus(chatId, isPinned)
-                    .onSuccess {
-                        _conversations.value = _conversations.value.map { if (it.chatId == chatId) it.copy(isPinned = isPinned) else it }
-                    }
-                    .onFailure { failures++ }
+            try {
+                var failures = 0
+                chatIds.forEach { chatId ->
+                    chatRepository.updateConversationPinnedStatus(chatId, isPinned)
+                        .onSuccess {
+                            _conversations.value = _conversations.value.map { if (it.chatId == chatId) it.copy(isPinned = isPinned) else it }
+                        }
+                        .onFailure { failures++ }
+                }
+                if (failures > 0) _error.value = "Failed to update $failures conversation(s)."
+            } finally {
+                _isPinning.value = false
             }
-            if (failures > 0) _error.value = "Failed to update $failures conversation(s)."
         }
     }
 
@@ -393,36 +414,46 @@ class InboxViewModel @Inject constructor(
         setConversationsPinned(setOf(chatId), isFavourite)
 
     fun setConversationsMuted(chatIds: Set<String>, isMuted: Boolean) {
-        if (chatIds.isEmpty()) return
+        if (chatIds.isEmpty() || _isMuting.value) return
+        _isMuting.value = true
         viewModelScope.launch {
-            var failures = 0
-            chatIds.forEach { chatId ->
-                chatRepository.updateConversationMutedStatus(chatId, isMuted)
-                    .onSuccess {
-                        _conversations.value = _conversations.value.map { if (it.chatId == chatId) it.copy(isMuted = isMuted) else it }
-                    }
-                    .onFailure { failures++ }
+            try {
+                var failures = 0
+                chatIds.forEach { chatId ->
+                    chatRepository.updateConversationMutedStatus(chatId, isMuted)
+                        .onSuccess {
+                            _conversations.value = _conversations.value.map { if (it.chatId == chatId) it.copy(isMuted = isMuted) else it }
+                        }
+                        .onFailure { failures++ }
+                }
+                if (failures > 0) _error.value = "Failed to update $failures conversation(s)."
+            } finally {
+                _isMuting.value = false
             }
-            if (failures > 0) _error.value = "Failed to update $failures conversation(s)."
         }
     }
 
     fun archiveConversations(chatIds: Set<String>, onArchived: (Set<String>) -> Unit = {}) {
-        if (chatIds.isEmpty()) return
+        if (chatIds.isEmpty() || _isArchiving.value) return
+        _isArchiving.value = true
         viewModelScope.launch {
-            val archived = mutableSetOf<String>()
-            chatIds.forEach { chatId ->
-                chatRepository.updateConversationArchiveStatus(chatId, true)
-                    .onSuccess {
-                        archived += chatId
-                        _conversations.value = _conversations.value.filterNot { it.chatId == chatId }
-                    }
-            }
-            val failures = chatIds.size - archived.size
-            if (failures > 0) _error.value = "Failed to archive $failures conversation(s)."
-            if (archived.isNotEmpty()) {
-                loadArchivedConversations()
-                onArchived(archived)
+            try {
+                val archived = mutableSetOf<String>()
+                chatIds.forEach { chatId ->
+                    chatRepository.updateConversationArchiveStatus(chatId, true)
+                        .onSuccess {
+                            archived += chatId
+                            _conversations.value = _conversations.value.filterNot { it.chatId == chatId }
+                        }
+                }
+                val failures = chatIds.size - archived.size
+                if (failures > 0) _error.value = "Failed to archive $failures conversation(s)."
+                if (archived.isNotEmpty()) {
+                    loadArchivedConversations()
+                    onArchived(archived)
+                }
+            } finally {
+                _isArchiving.value = false
             }
         }
     }
@@ -432,26 +463,29 @@ class InboxViewModel @Inject constructor(
     fun deleteConversation(chatId: String) = deleteConversations(setOf(chatId))
 
     fun deleteConversations(chatIds: Set<String>, onResult: (Boolean) -> Unit = {}) {
-        if (chatIds.isEmpty()) {
-            onResult(true)
+        if (chatIds.isEmpty() || _isDeletingConversations.value) {
+            if (chatIds.isEmpty()) onResult(true)
             return
         }
+        _isDeletingConversations.value = true
         viewModelScope.launch {
-            _isDeletingConversations.value = true
-            var failures = 0
-            chatIds.forEach { chatId ->
-                chatRepository.deleteConversation(chatId)
-                    .onSuccess {
-                        _conversations.value = _conversations.value.filterNot { it.chatId == chatId }
-                    }
-                    .onFailure { failures++ }
-            }
-            _isDeletingConversations.value = false
-            if (failures > 0) {
-                _error.value = "Failed to delete $failures conversation(s)."
-                onResult(false)
-            } else {
-                onResult(true)
+            try {
+                var failures = 0
+                chatIds.forEach { chatId ->
+                    chatRepository.deleteConversation(chatId)
+                        .onSuccess {
+                            _conversations.value = _conversations.value.filterNot { it.chatId == chatId }
+                        }
+                        .onFailure { failures++ }
+                }
+                if (failures > 0) {
+                    _error.value = "Failed to delete $failures conversation(s)."
+                    onResult(false)
+                } else {
+                    onResult(true)
+                }
+            } finally {
+                _isDeletingConversations.value = false
             }
         }
     }
@@ -470,18 +504,23 @@ class InboxViewModel @Inject constructor(
     }
 
     fun unarchiveConversations(chatIds: Set<String>) {
-        if (chatIds.isEmpty()) return
+        if (chatIds.isEmpty() || _isUnarchiving.value) return
+        _isUnarchiving.value = true
         viewModelScope.launch {
-            val restored = mutableSetOf<String>()
-            chatIds.forEach { chatId ->
-                chatRepository.updateConversationArchiveStatus(chatId, false)
-                    .onSuccess { restored += chatId }
-            }
-            val failures = chatIds.size - restored.size
-            if (failures > 0) _error.value = "Failed to unarchive $failures conversation(s)."
-            if (restored.isNotEmpty()) {
-                _archivedConversations.value = _archivedConversations.value.filterNot { it.chatId in restored }
-                refreshConversations()
+            try {
+                val restored = mutableSetOf<String>()
+                chatIds.forEach { chatId ->
+                    chatRepository.updateConversationArchiveStatus(chatId, false)
+                        .onSuccess { restored += chatId }
+                }
+                val failures = chatIds.size - restored.size
+                if (failures > 0) _error.value = "Failed to unarchive $failures conversation(s)."
+                if (restored.isNotEmpty()) {
+                    _archivedConversations.value = _archivedConversations.value.filterNot { it.chatId in restored }
+                    refreshConversations()
+                }
+            } finally {
+                _isUnarchiving.value = false
             }
         }
     }

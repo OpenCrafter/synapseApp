@@ -1,5 +1,6 @@
 package com.synapse.social.studioasinc.ui.settings
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.synapse.social.studioasinc.data.local.database.settings.SettingsConstants
@@ -49,11 +50,18 @@ class FlagsViewModel @Inject constructor(
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
 
+    private val _error = MutableStateFlow<String?>(null)
+    val error: StateFlow<String?> = _error.asStateFlow()
+
     fun setNavigationPlacement(placement: NavigationPlacement) {
         viewModelScope.launch {
             _isLoading.value = true
+            _error.value = null
             try {
                 settingsRepository.setNavigationPlacement(placement)
+            } catch (e: Exception) {
+                Log.e("FlagsViewModel", "Failed to update navigation placement", e)
+                _error.value = "Failed to update navigation placement"
             } finally {
                 _isLoading.value = false
             }
@@ -63,8 +71,12 @@ class FlagsViewModel @Inject constructor(
     fun setMessageSuggestionEnabled(enabled: Boolean) {
         viewModelScope.launch {
             _isLoading.value = true
+            _error.value = null
             try {
                 settingsRepository.setMessageSuggestionEnabled(enabled)
+            } catch (e: Exception) {
+                Log.e("FlagsViewModel", "Failed to update message suggestions", e)
+                _error.value = "Failed to update message suggestions"
             } finally {
                 _isLoading.value = false
             }
@@ -74,8 +86,12 @@ class FlagsViewModel @Inject constructor(
     fun setChatAvatarDisabled(disabled: Boolean) {
         viewModelScope.launch {
             _isLoading.value = true
+            _error.value = null
             try {
                 settingsRepository.setChatAvatarDisabled(disabled)
+            } catch (e: Exception) {
+                Log.e("FlagsViewModel", "Failed to update chat avatar setting", e)
+                _error.value = "Failed to update chat avatar setting"
             } finally {
                 _isLoading.value = false
             }
@@ -85,11 +101,19 @@ class FlagsViewModel @Inject constructor(
     fun setChatMessagePaginationLimit(limit: Int) {
         viewModelScope.launch {
             _isLoading.value = true
+            _error.value = null
             try {
                 settingsRepository.setChatMessagePaginationLimit(limit)
+            } catch (e: Exception) {
+                Log.e("FlagsViewModel", "Failed to update message pagination limit", e)
+                _error.value = "Failed to update message pagination limit"
             } finally {
                 _isLoading.value = false
             }
         }
+    }
+
+    fun clearError() {
+        _error.value = null
     }
 }

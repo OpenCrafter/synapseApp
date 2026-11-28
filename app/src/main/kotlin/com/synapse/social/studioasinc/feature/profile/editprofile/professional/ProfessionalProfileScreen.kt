@@ -79,7 +79,7 @@ fun ProfessionalProfileScreen(
             MediumTopAppBar(
                 title = { Text(text = stringResource(R.string.professional_profile_title)) },
                 navigationIcon = {
-                    IconButton(onClick = onBackClick, enabled = !uiState.isLoading) {
+                    IconButton(onClick = onBackClick, enabled = !uiState.isLoading && !uiState.isSaving) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = stringResource(R.string.settings_back_description)

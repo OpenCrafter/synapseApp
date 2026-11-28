@@ -307,6 +307,7 @@ fun SettingsNavHost(
             }
             val viewModel: PrivacySecurityViewModel = hiltViewModel(parentEntry)
             val selectedTimer by viewModel.disappearingMessagesTimer.collectAsState()
+            val isLoading by viewModel.isLoading.collectAsState()
 
             val timerOptions = listOf(
                 PrivacyOptionItem(
@@ -337,7 +338,8 @@ fun SettingsNavHost(
                 options = timerOptions,
                 selectedOption = selectedTimer,
                 onOptionSelected = { viewModel.setDisappearingMessagesTimer(it) },
-                onNavigateBack = { navController.popBackStack() }
+                onNavigateBack = { navController.popBackStack() },
+                isLoading = isLoading
             )
         }
 
@@ -584,22 +586,28 @@ fun SettingsNavHost(
 
         composable(route = SettingsDestination.ROUTE_REGION) {
             val scope = rememberCoroutineScope()
+            var isLoading by remember { mutableStateOf(false) }
             SelectRegionScreen(
                 currentRegion = "",
                 onRegionSelected = { region ->
                     scope.launch {
+                        isLoading = true
                         editProfileRepository?.let { repository ->
                             val userId = repository.getCurrentUserId()
                             if (userId != null) {
                                 repository.updateProfile(userId, mapOf("region" to region))
                             }
                         }
+                        isLoading = false
                         navController.popBackStack()
                     }
                 },
                 onBackClick = {
-                    navController.popBackStack()
-                }
+                    if (!isLoading) {
+                        navController.popBackStack()
+                    }
+                },
+                isLoading = isLoading
             )
         }
 

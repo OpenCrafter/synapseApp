@@ -113,6 +113,7 @@ fun InboxConversationRow(
     // the caller owns the save and the row stays dumb. Null leaves the action out of the menu
     // entirely (previews, the archive screen's own trailing action, selection mode).
     onToggleFavourite: ((Boolean) -> Unit)? = null,
+    enabledFavourite: Boolean = true,
     position: GroupedItemPosition = GroupedItemPosition.Single,
     // The scopes the inbox is navigated with. With them, the row's picture and name carry the same
     // shared-element identity the conversation's floating pill declares, so tapping a row hands them
@@ -273,7 +274,8 @@ fun InboxConversationRow(
                     onClick = {
                         showActionsMenu = false
                         favouriteAction(!isFavourite)
-                    }
+                    },
+                    enabled = enabledFavourite
                 )
             }
             if (selectAction != null) {
@@ -530,6 +532,10 @@ fun InboxSelectionToolbar(
     onArchive: () -> Unit,
     onFolder: () -> Unit,
     onDelete: () -> Unit,
+    enabledPin: Boolean = true,
+    enabledMute: Boolean = true,
+    enabledArchive: Boolean = true,
+    enabledDelete: Boolean = true,
     modifier: Modifier = Modifier
 ) {
     Surface(
@@ -542,19 +548,19 @@ fun InboxSelectionToolbar(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(Spacing.space4)
         ) {
-            IconButton(onClick = onPin, modifier = Modifier.size(InboxExpressiveDimens.IconTouchTarget)) {
+            IconButton(onClick = onPin, enabled = enabledPin, modifier = Modifier.size(InboxExpressiveDimens.IconTouchTarget)) {
                 Icon(Icons.Rounded.PushPin, contentDescription = stringResource(if (allPinned) R.string.inbox_action_unpin else R.string.inbox_action_pin))
             }
-            IconButton(onClick = onMute, modifier = Modifier.size(InboxExpressiveDimens.IconTouchTarget)) {
+            IconButton(onClick = onMute, enabled = enabledMute, modifier = Modifier.size(InboxExpressiveDimens.IconTouchTarget)) {
                 Icon(Icons.AutoMirrored.Rounded.VolumeOff, contentDescription = stringResource(if (allMuted) R.string.inbox_action_unmute else R.string.inbox_action_mute))
             }
-            IconButton(onClick = onArchive, modifier = Modifier.size(InboxExpressiveDimens.IconTouchTarget)) {
+            IconButton(onClick = onArchive, enabled = enabledArchive, modifier = Modifier.size(InboxExpressiveDimens.IconTouchTarget)) {
                 Icon(Icons.Rounded.Archive, contentDescription = stringResource(R.string.inbox_action_archive))
             }
             IconButton(onClick = onFolder, modifier = Modifier.size(InboxExpressiveDimens.IconTouchTarget)) {
                 Icon(Icons.Rounded.Folder, contentDescription = stringResource(R.string.inbox_action_folder))
             }
-            IconButton(onClick = onDelete, modifier = Modifier.size(InboxExpressiveDimens.IconTouchTarget)) {
+            IconButton(onClick = onDelete, enabled = enabledDelete, modifier = Modifier.size(InboxExpressiveDimens.IconTouchTarget)) {
                 Icon(Icons.Rounded.Delete, contentDescription = stringResource(R.string.inbox_action_delete), tint = MaterialTheme.colorScheme.error)
             }
         }

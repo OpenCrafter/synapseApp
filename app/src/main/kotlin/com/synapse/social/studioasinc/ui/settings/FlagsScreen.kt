@@ -36,10 +36,28 @@ fun FlagsScreen(
     val chatAvatarDisabled by viewModel.chatAvatarDisabled.collectAsState()
     val chatMessagePaginationLimit by viewModel.chatMessagePaginationLimit.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
+    val error by viewModel.error.collectAsState()
     var paginationLimitInput by remember(chatMessagePaginationLimit) {
         mutableStateOf(chatMessagePaginationLimit.toString())
     }
     val focusManager = LocalFocusManager.current
+
+    val snackbarHostState = remember { SnackbarHostState() }
+    val dismissLabel = stringResource(R.string.action_dismiss)
+
+    LaunchedEffect(error) {
+        val currentError = error
+        if (currentError != null) {
+            val result = snackbarHostState.showSnackbar(
+                message = currentError,
+                actionLabel = dismissLabel,
+                duration = SnackbarDuration.Indefinite
+            )
+            if (result == SnackbarResult.ActionPerformed) {
+                viewModel.clearError()
+            }
+        }
+    }
 
     Scaffold(
         containerColor = AppColors.screenBackground,
@@ -59,7 +77,8 @@ fun FlagsScreen(
                     scrolledContainerColor = AppColors.cardBackground
                 )
             )
-        }
+        },
+        snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { paddingValues ->
         LazyColumn(
             modifier = Modifier
@@ -137,6 +156,7 @@ fun FlagsScreen(
                             imageVector = Icons.Filled.Build,
                             checked = messageSuggestionEnabled,
                             onCheckedChange = { viewModel.setMessageSuggestionEnabled(it) },
+                            enabled = !isLoading,
                             position = SettingsItemPosition.Middle
                         )
                         SettingsToggleItem(
@@ -145,6 +165,7 @@ fun FlagsScreen(
                             imageVector = Icons.Filled.Person,
                             checked = chatAvatarDisabled,
                             onCheckedChange = { viewModel.setChatAvatarDisabled(it) },
+                            enabled = !isLoading,
                             position = SettingsItemPosition.Bottom
                         )
                     }

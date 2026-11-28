@@ -250,7 +250,20 @@ fun GroupInfoScreen(
                     val interaction = remember { MutableInteractionSource() }
                     IconButton(
                         onClick = onNavigateBack,
-                        enabled = !uiState.isLoading,
+                        enabled = !uiState.isLoading
+                            && !uiState.isRemoving
+                            && !uiState.isLeaving
+                            && !uiState.isDeleting
+                            && !uiState.isUpdatingName
+                            && !uiState.isUpdatingDescription
+                            && !uiState.isUpdatingDisappearingMode
+                            && !uiState.isRevokingInvite
+                            && !uiState.isProcessingJoinRequest
+                            && !uiState.isProcessingMemberRole
+                            && !uiState.isAddingMembers
+                            && !uiState.isAvatarUploading
+                            && !uiState.isReporting
+                            && !uiState.isMuteUpdating,
                         interactionSource = interaction,
                         modifier = Modifier.pressScale(interaction)
                     ) {

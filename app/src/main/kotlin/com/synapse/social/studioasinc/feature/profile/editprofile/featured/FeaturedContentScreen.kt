@@ -122,7 +122,7 @@ fun FeaturedContentScreen(
                     navigationIcon = {
                         IconButton(
                             onClick = { viewModel.onEvent(FeaturedContentEvent.BackClicked) },
-                            enabled = !uiState.isLoading,
+                            enabled = !uiState.isLoading && !uiState.isSaving,
                             modifier = Modifier.semantics {
                                 contentDescription = "Navigate back"
                             }

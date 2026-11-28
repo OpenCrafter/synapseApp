@@ -34,7 +34,7 @@ fun ChatPrivacyScreen(
             TopAppBar(
                 title = { Text(stringResource(R.string.chat_privacy_title)) },
                 navigationIcon = {
-                    IconButton(onClick = onNavigateBack, enabled = !uiState.isLoading) {
+                    IconButton(onClick = onNavigateBack, enabled = !uiState.isLoading && !uiState.isLocking) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = stringResource(R.string.cd_back)
@@ -113,7 +113,8 @@ fun ChatPrivacyScreen(
                     }
                     Switch(
                         checked = uiState.isLocked,
-                        onCheckedChange = { viewModel.toggleChatLock(chatId) }
+                        onCheckedChange = { viewModel.toggleChatLock(chatId) },
+                        enabled = !uiState.isLocking
                     )
                 }
             }
