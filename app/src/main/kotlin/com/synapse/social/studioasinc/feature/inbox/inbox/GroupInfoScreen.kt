@@ -391,6 +391,7 @@ fun GroupInfoScreen(
                             requireJoinApproval = requireJoinApproval,
                             allowMemberInvites = allowMemberInvites,
                             memberCount = members.size,
+                            isLoading = uiState.isLoading,
                             onOpenDisappearing = { showDisappearingDialog = true },
                             onToggleOnlyAdmins = { viewModel.toggleOnlyAdminsCanMessage(it) },
                             onToggleMemberSettings = { viewModel.toggleAllowMemberSettingsEdits(it) },
@@ -1065,6 +1066,7 @@ private fun GroupSettingsSection(
     requireJoinApproval: Boolean,
     allowMemberInvites: Boolean,
     memberCount: Int,
+    isLoading: Boolean,
     onOpenDisappearing: () -> Unit,
     onToggleOnlyAdmins: (Boolean) -> Unit,
     onToggleMemberSettings: (Boolean) -> Unit,
@@ -1099,6 +1101,7 @@ private fun GroupSettingsSection(
                 imageVector = Icons.Filled.Lock,
                 checked = onlyAdminsCanMessage,
                 onCheckedChange = onToggleOnlyAdmins,
+                enabled = !isLoading,
                 position = onlyAdminsPos
             )
         }
@@ -1108,6 +1111,7 @@ private fun GroupSettingsSection(
                 imageVector = Icons.Filled.Tune,
                 checked = allowMemberSettingsEdits,
                 onCheckedChange = onToggleMemberSettings,
+                enabled = !isLoading,
                 position = memberSettingsPos
             )
             SettingsToggleItem(
@@ -1115,6 +1119,7 @@ private fun GroupSettingsSection(
                 imageVector = Icons.Filled.HowToReg,
                 checked = requireJoinApproval,
                 onCheckedChange = onToggleApproval,
+                enabled = !isLoading,
                 position = approvalPos
             )
             SettingsToggleItem(
@@ -1122,6 +1127,7 @@ private fun GroupSettingsSection(
                 imageVector = Icons.Filled.Share,
                 checked = allowMemberInvites,
                 onCheckedChange = onToggleInvites,
+                enabled = !isLoading,
                 position = invitesPos
             )
         }
